@@ -1,10 +1,12 @@
 import map_builder.MapBuilder as mb
 import traci
 
-new_map = mb.MapBuilder().withType("grid").withNumberOfBlocks(3).withNumberOfDivisions(7).withBlockLength(30).build()
+builder = (mb.MapBuilder().withType("spider").withNumberOfJunctions(5).withNumberOfDivisions(3))
+builder.build()
+
 
 traci.start([
     "sumo-gui",
-    "-n", "maps/net.net.xml",
-    "-a", "maps/parking.add.xml"
+    "-n", builder.getNetworkFilePath(),
+    "-a", builder.getParkingFilePath(),
 ])

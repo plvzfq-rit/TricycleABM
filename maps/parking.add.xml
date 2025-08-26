@@ -1,7 +1,0 @@
-<additional>
-	<parkingArea id="hub0" lane="B4C4_0" startPos="5" endPos="14.6" lines="3"/>
-	<parkingArea id="hub1" lane="B0B1_0" startPos="5" endPos="25" lines="3"/>
-	<parkingArea id="hub2" lane="C4C5_0" startPos="5" endPos="25" lines="3"/>
-	<parkingArea id="hub3" lane="C3C2_0" startPos="5" endPos="25" lines="3"/>
-	<parkingArea id="hub4" lane="A2A3_0" startPos="5" endPos="25" lines="3"/>
-</additional>
