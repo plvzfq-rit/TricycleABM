@@ -1,8 +1,9 @@
-import map_builder.MapBuilder as mb
+import map_builder.RandomMapBuilder as mb
 import traci
 
-builder = (mb.MapBuilder().withType("spider").withNumberOfJunctions(5).withNumberOfDivisions(3))
+builder = (mb.RandomMapBuilder().withType("spider").withNumberOfJunctions(10).withNumberOfDivisions(7))
 builder.build()
+
 
 
 traci.start([

@@ -4,7 +4,7 @@ import sumolib
 from pathlib import Path
 from typing import Self
 
-class MapBuilder:
+class RandomMapBuilder:
     def __init__(self):
         self._type = None
         self.junctions = 5
@@ -103,7 +103,6 @@ class MapBuilder:
         assets_dir = script_dir.parent / self.directoryName
         parking_file = assets_dir / self.parkingFileName
         return str(parking_file)
-
     
     def build(self) -> None:
         if self._type == None or self._type not in ["grid", "spider", "rand"]:
