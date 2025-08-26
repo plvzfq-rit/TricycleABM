@@ -1,4 +1,6 @@
 import subprocess
+import random
+import sumolib
 from pathlib import Path
 from typing import Self
 
@@ -10,7 +12,8 @@ class MapBuilder:
         self.blockLength = 100.00
         self.divisionLength = 100.00
         self.directoryName = "maps"
-        self.fileName = "net.net.xml"
+        self.networkFileName = "net.net.xml"
+        self.parkingFileName = "parking.add.xml"
 
     def withType(self, _type: str) -> Self:
         if _type not in ["grid", "spider", "rand"]:
@@ -42,6 +45,54 @@ class MapBuilder:
         self.divisionLength = divisionLength
         return self
     
+    def _createParkingFile(self) -> None:
+        directory = Path(__file__).resolve().parent.parent / self.directoryName 
+        network = sumolib.net.readNet(directory / self.networkFileName)
+
+        edges = list(network.getEdges())
+
+        num_parkings = 5
+
+        random_edges = random.sample(edges, num_parkings)
+
+        output_file = directory / self.parkingFileName
+
+        with open(output_file, "w") as file:
+            file.write("<additional>\n")
+            for i, edge in enumerate(random_edges):
+                lane = edge.getLanes()[0]  
+                lane_id = lane.getID()
+                lane_length = lane.getLength()
+
+                start_pos = 5
+                end_pos = min(25, lane_length - 1)
+
+
+                file.write(f"\t<parkingArea id=\"hub{i}\" lane=\"{lane_id}\" startPos=\"{start_pos}\" endPos=\"{end_pos}\" lines=\"3\"/>\n")
+            file.write("</additional>\n")
+        
+        print(f"Wrote parking areas to {self.parkingFileName}")
+
+
+
+    
+    def _generateAndExportMap(self, cmd: list[str]) -> None:
+        script_dir = Path(__file__).resolve().parent
+        assets_dir = script_dir.parent / self.directoryName
+        assets_dir.mkdir(parents=True, exist_ok=True)
+
+        net_file = assets_dir / self.networkFileName
+
+        cmd.append(f"--output-file={net_file}")
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print("Error:", result.stderr)
+        else:
+            print("Network generated successfully.")
+
+    
     def build(self) -> None:
         if self._type == None or self._type not in ["grid", "spider", "rand"]:
             raise Exception("Invalid type. Was: " + type)
@@ -66,18 +117,6 @@ class MapBuilder:
             print("Ignoring all numeric arguments...")
             cmd.append("--rand")
 
-        script_dir = Path(__file__).resolve().parent
-        assets_dir = script_dir.parent / self.directoryName
-        assets_dir.mkdir(parents=True, exist_ok=True)
-
-        net_file = assets_dir / self.fileName
-
-        cmd.append(f"--output-file={net_file}")
-
-        result = subprocess.run(cmd, capture_output=True, text=True)
-
-        if result.returncode != 0:
-            print("Error:", result.stderr)
-        else:
-            print("Network generated successfully.")
-
+        self._generateAndExportMap(cmd)
+        self._createParkingFile()
+        
