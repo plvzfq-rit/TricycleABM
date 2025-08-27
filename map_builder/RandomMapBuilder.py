@@ -15,6 +15,8 @@ class RandomMapBuilder:
         self.directoryName = "maps"
         self.networkFileName = "net.net.xml"
         self.parkingFileName = "parking.add.xml"
+        self.hubDistribution = dict()
+        self.numberOfTricycles = 0
 
     def withType(self, _type: str) -> Self:
         if _type not in ["grid", "spider", "rand"]:
@@ -34,16 +36,16 @@ class RandomMapBuilder:
         self.divisions = divisions
         return self
 
-    def withBlockLength(self, blockLength: float) -> Self:
-        if not isinstance(blockLength, float) or blockLength <= 1:
-            raise Exception("Invalid block length. Was: " + str(blockLength))
-        self.blockLength = blockLength
+    def withBlockLength(self, block_length: float) -> Self:
+        if not isinstance(block_length, float) or block_length <= 1:
+            raise Exception("Invalid block length. Was: " + str(block_length))
+        self.blockLength = block_length
         return self
     
-    def withDivisionLength(self, divisionLength: float) -> Self:
-        if not isinstance(divisionLength, float) or divisionLength <= 1:
-            raise Exception("Invalid division length. Was: " + str(divisionLength))
-        self.divisionLength = divisionLength
+    def withDivisionLength(self, division_length: float) -> Self:
+        if not isinstance(division_length, float) or division_length <= 1:
+            raise Exception("Invalid division length. Was: " + str(division_length))
+        self.divisionLength = division_length
         return self
     
     def withParkings(self, parkings: int) -> Self:
@@ -62,6 +64,7 @@ class RandomMapBuilder:
 
         with open(output_file, "w") as file:
             file.write("<additional>\n")
+            file.write("<vType id=\"trike\" accel=\"0.8\" decel=\"4.5\" sigma=\"0.5\" length=\"2.5\" maxSpeed=\"10.0\" guiShape=\"bicycle\"/>")
             for i, edge in enumerate(random_edges):
                 lane = edge.getLanes()[0]  
                 lane_id = lane.getID()
@@ -70,7 +73,11 @@ class RandomMapBuilder:
                 start_pos = 5
                 end_pos = min(25, lane_length - 1)
 
-                file.write(f"\t<parkingArea id=\"hub{i}\" lane=\"{lane_id}\" startPos=\"{start_pos}\" endPos=\"{end_pos}\" lines=\"3\"/>\n")
+                file.write(f"\t<parkingArea id=\"hub{i}\" lane=\"{lane_id}\" startPos=\"{start_pos}\" endPos=\"{end_pos}\" lines=\"3\" roadsideCapacity=\"3\"/>\n")
+
+                self.hubDistribution[f"hub{i}"] = 3
+                self.numberOfTricycles += 3
+
             file.write("</additional>\n")
         
         print(f"Wrote parking areas to {self.parkingFileName}")
@@ -103,6 +110,12 @@ class RandomMapBuilder:
         assets_dir = script_dir.parent / self.directoryName
         parking_file = assets_dir / self.parkingFileName
         return str(parking_file)
+    
+    def getHubDistribution(self) -> dict:
+        return self.hubDistribution
+    
+    def getNumberOfTricycles(self) -> int:
+        return self.numberOfTricycles
     
     def build(self) -> None:
         if self._type == None or self._type not in ["grid", "spider", "rand"]:
