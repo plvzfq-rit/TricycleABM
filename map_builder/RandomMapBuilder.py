@@ -65,8 +65,9 @@ class RandomMapBuilder:
         with open(output_file, "w") as file:
             file.write("<additional>\n")
             file.write("<vType id=\"trike\" accel=\"0.8\" decel=\"4.5\" sigma=\"0.5\" length=\"2.5\" maxSpeed=\"10.0\" guiShape=\"bicycle\"/>")
+            file.write(f"<vType id=\"fatPed\" vClass=\"pedestrian\" guiShape=\"pedestrian\" color=\"yellow\"/>")
             for i, edge in enumerate(random_edges):
-                lane = edge.getLanes()[0]  
+                lane = edge.getLanes()[1]  
                 lane_id = lane.getID()
                 lane_length = lane.getLength()
 
@@ -121,7 +122,7 @@ class RandomMapBuilder:
         if self._type == None or self._type not in ["grid", "spider", "rand"]:
             raise Exception("Invalid type. Was: " + type)
         
-        cmd = ["netgenerate"]
+        cmd = ["netgenerate", "--sidewalks.guess", "--walkingareas", "--crossings.guess", "--junctions.join",]
 
         if self._type == "grid":
             cmd.append("--grid")
