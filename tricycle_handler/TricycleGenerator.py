@@ -12,7 +12,7 @@ class Tricycle:
 
 class TricycleGenerator:
     def __init__(self):
-        self.spawnedTricycles = set()
+        self.spawnedTricycles = []
 
     def generateTricycles(self, number_of_tricycles: int, simulation_duration: int, hub_distribution: dict) -> None:
         hubs = []
@@ -25,5 +25,5 @@ class TricycleGenerator:
             start_time = random.randint(0, simulation_duration // 2)
             end_time = random.randint(start_time, simulation_duration)
             tricycle = Tricycle(trike_name, hubs.pop(), start_time, end_time)
-            self.spawnedTricycles.add(tricycle)
+            self.spawnedTricycles.append(tricycle)
 
