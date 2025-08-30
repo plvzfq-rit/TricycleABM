@@ -38,4 +38,7 @@ class TricycleRepository:
 
     def getTricycles(self) -> list[Tricycle]:
         return list(self.tricycles.values())
+    
+    def getActiveTricycleIds(self) -> set[str]:
+        return set(self.activeTricycles.keys())
 

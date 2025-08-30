@@ -69,7 +69,7 @@ class PassengerGenerator:
             self.killedPassengers[passenger_id] = self.passengers[passenger_id]
             del self.activePassengers[passenger_id]
 
-    def getActivePassengerIds(self) -> None:
+    def getActivePassengerIds(self) -> set[str]:
         return set(self.activePassengers.keys())
     
     def getPassengerLocation(self, name: str) -> None:
