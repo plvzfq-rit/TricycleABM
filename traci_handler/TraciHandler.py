@@ -2,7 +2,7 @@ import traci
 import random
 import passenger_handler.Passenger as ph
 import map_builder.RandomMapBuilder as rmb
-import tricycle_handler.TricycleGenerator as tg
+import tricycle_handler.Tricycle as tg
 
 class TraciHandler:
     def __init__(self, network_file_path: str, parking_file_path: str, map_builder: rmb.RandomMapBuilder, duration: int) -> None:
@@ -11,7 +11,7 @@ class TraciHandler:
         self.network_file_path = network_file_path
         self.parking_file_path = parking_file_path
         self.passengerGenerator = ph.PassengerGenerator()
-        self.tricycleGenerator = tg.TricycleGenerator()
+        self.tricycleGenerator = tg.TricycleRepository()
 
         self.tricycleGenerator.generateTricycles(self.mapBuilder.getNumberOfTricycles(), duration, self.mapBuilder.getHubDistribution())
         

@@ -1,5 +1,4 @@
 import random
-import traci
 
 class Tricycle:
     def __init__(self, name: str, hub: str, start_time: int, end_time: int) -> None:
@@ -11,7 +10,7 @@ class Tricycle:
     def __str__(self) -> str:
         return f"Tricycle(name={self.name}, hub={self.hub}, start_time={self.startTime}, end_time={self.endTime})"
 
-class TricycleGenerator:
+class TricycleRepository:
     def __init__(self):
         self.tricycles = dict()
         self.activeTricycles = dict()
@@ -30,9 +29,9 @@ class TricycleGenerator:
             tricycle = Tricycle(trike_name, hubs.pop(), start_time, end_time)
             self.tricycles[trike_name] = tricycle
 
-    def killTricycle(self, tricycleId: str) -> None:
-        self.killedTricycles[tricycleId] = self.tricycles[tricycleId]
-        del self.activeTricycles[tricycleId]
+    def killTricycle(self, tricycle_id: str) -> None:
+        self.killedTricycles[tricycle_id] = self.tricycles[tricycle_id]
+        del self.activeTricycles[tricycle_id]
 
     def activateTricycle(self, tricycle_id: str) -> None:
         self.activeTricycles[tricycle_id] = self.tricycles[tricycle_id]
