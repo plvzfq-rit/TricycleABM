@@ -34,7 +34,7 @@ class TraciHandler:
                 traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)
                 self.tricycleRepository.activateTricycle(tricycle.name)
             elif tricycle.endTime == self.tick and tricycle.status == TricycleState.FREE:
-                traci.vehicle.resume(tricycle.name)
+                traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=0)
                 traci.vehicle.remove(tricycle.name)
                 self.tricycleRepository.killTricycle(tricycle.name)
             elif tricycle.status == TricycleState.BUSY and self.tricycleRepository.hasTricycleArrived(tricycle.name):

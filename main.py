@@ -10,7 +10,7 @@ map_builder = (
     )
 map_builder.build()
 
-duration = 1000
+duration = 200
 
 traci_loop = TraciHandler(map_builder, duration)
 traci_loop.doMainLoop(duration)

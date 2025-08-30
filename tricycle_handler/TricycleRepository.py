@@ -58,7 +58,8 @@ class TricycleRepository:
             self.killedTricycles[tricycle_id].destination = destination
     
     def assignPassengerToTricycle(self, tricycle_id: str, destination: Location) -> None:
-        traci.vehicle.resume(tricycle_id)
+        tricycle = self.tricycles[tricycle_id]
+        traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=0)
         traci.vehicle.changeTarget(tricycle_id, destination.location)
         self.setTricycleStatus(tricycle_id, TricycleState.BUSY)
         self.setTricycleDestination(tricycle_id, destination)
