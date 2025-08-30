@@ -13,7 +13,7 @@ class Passenger:
 
 class PassengerGenerator:
     def __init__(self) -> None:
-        self.passengers = []
+        self.passengers = dict()
         self.nextIndex = 0
         self.directoryName = "maps"
         self.networkFileName = "net.net.xml"
@@ -46,7 +46,7 @@ class PassengerGenerator:
 
         # track passenger
         passenger = Passenger(name, starting_edge.getID(), destination_edge.getID())
-        self.passengers.append(passenger)
+        self.passengers[name] = passenger
         self.nextIndex += 1
         return passenger
 
