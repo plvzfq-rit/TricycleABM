@@ -36,6 +36,9 @@ class TraciHandler:
         for _ in range(number_of_passengers):
             self.passengerGenerator.generateRandomPassenger()
 
+    def assignPassengersToTricycles(self) -> None:
+        pass
+
     def doMainLoop(self, simulation_duration: int) -> None:
         self.startTraci()
         while self.tick < simulation_duration:
