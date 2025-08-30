@@ -15,7 +15,7 @@ class Passenger:
     def kill(self) -> None:
         self.alive = False
 
-class PassengerGenerator:
+class PassengerRepository:
     def __init__(self) -> None:
         self.passengers = dict()
         self.activePassengers = dict()
