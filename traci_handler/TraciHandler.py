@@ -25,6 +25,11 @@ class TraciHandler:
         ])
 
     def toggleTricycles(self) -> None:
+        print("In SUMO:")
+        print(",".join(list(traci.vehicle.getIDList())))
+        print("In Memory:")
+        print(",".join(list(self.tricycleRepository.activeTricycles.keys())))
+        print()
         for tricycle in self.tricycleRepository.getTricycles():
             if tricycle.startTime == self.tick:
                 hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
@@ -51,16 +56,16 @@ class TraciHandler:
 
     def assignPassengersToTricycles(self) -> None:
         active_passenger_ids = self.passengerRepository.getActivePassengerIds()
-        active_tricycle_ids = self.tricycleRepository.getActiveTricycleIds()
+        active_tricycles = self.tricycleRepository.getActiveTricycles()
 
         for active_passenger_id in active_passenger_ids:
             active_passenger_location = self.passengerRepository.getPassengerLocation(active_passenger_id)
-            for active_tricycle_id in active_tricycle_ids:
-                active_tricycle_location = self.tricycleRepository.getTricycleLocation(active_tricycle_id)
+            for active_tricycle in active_tricycles:
+                active_tricycle_location = self.tricycleRepository.getTricycleLocation(active_tricycle.name)
 
-                if active_passenger_location.isNear(active_tricycle_location) and self.tricycleRepository.isTricycleFree(active_tricycle_id):
+                if active_passenger_location.isNear(active_tricycle_location) and self.tricycleRepository.isTricycleFree(active_tricycle.name):
                     self.passengerRepository.killPassenger(active_passenger_id)
-                    self.tricycleRepository.assignPassengerToTricycle(active_tricycle_id, active_passenger_location)
+                    self.tricycleRepository.assignPassengerToTricycle(active_tricycle.name, active_passenger_location)
                     break
 
 
@@ -70,6 +75,7 @@ class TraciHandler:
             self.passengerRepository.auditPassengers()
             self.generateRandomNumberOfPassengers()
             self.toggleTricycles()
+            self.assignPassengersToTricycles()
             self.tick += 1
             traci.simulationStep()
 

@@ -18,4 +18,4 @@ class Tricycle:
         current_edge = traci.vehicle.getRoadID(self.name)
         current_position = traci.vehicle.getLanePosition(self.name)
         current_location = Location(current_edge, current_position)
-        return current_location.isNear(self.destination, 5.0)
+        return current_location.isNear(self.destination)

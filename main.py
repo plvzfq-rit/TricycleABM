@@ -4,13 +4,13 @@ from traci_handler.TraciHandler import TraciHandler
 map_builder = (
     RandomMapBuilder()
         .withType("spider")
-        .withNumberOfJunctions(3)
-        .withNumberOfDivisions(7)
+        .withNumberOfJunctions(2)
+        .withNumberOfDivisions(3)
         .withBlockLength(50.0)
     )
 map_builder.build()
 
-duration = 200
+duration = 100
 
 traci_loop = TraciHandler(map_builder, duration)
 traci_loop.doMainLoop(duration)

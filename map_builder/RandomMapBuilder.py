@@ -64,8 +64,8 @@ class RandomMapBuilder:
 
         with open(output_file, "w") as file:
             file.write("<additional>\n")
-            file.write("<vType id=\"trike\" accel=\"0.8\" decel=\"4.5\" sigma=\"0.5\" length=\"2.5\" maxSpeed=\"10.0\" guiShape=\"bicycle\"/>")
-            file.write(f"<vType id=\"fatPed\" vClass=\"pedestrian\" guiShape=\"pedestrian\" color=\"yellow\"/>")
+            file.write("<vType id=\"trike\" accel=\"0.8\" decel=\"4.5\" sigma=\"0.5\" length=\"2.5\" maxSpeed=\"10.0\" guiShape=\"bicycle\"/>\n")
+            file.write(f"<vType id=\"fatPed\" vClass=\"pedestrian\" guiShape=\"pedestrian\" color=\"yellow\" width=\"1\" length=\"1\"/>\n")
             for i, edge in enumerate(random_edges):
                 lane = edge.getLanes()[1]  
                 lane_id = lane.getID()

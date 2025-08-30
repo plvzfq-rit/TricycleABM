@@ -25,7 +25,11 @@ class TricycleRepository:
             tricycle = Tricycle(trike_name, hubs.pop(), start_time, end_time)
             self.tricycles[trike_name] = tricycle
 
+        for _ in self.tricycles.values():
+            print(_)
+
     def killTricycle(self, tricycle_id: str) -> None:
+        self.setTricycleStatus(tricycle_id, TricycleState.FREE)
         self.killedTricycles[tricycle_id] = self.tricycles[tricycle_id]
         del self.activeTricycles[tricycle_id]
 
@@ -39,7 +43,9 @@ class TricycleRepository:
         return set(self.activeTricycles.values())
     
     def getTricycleLocation(self, tricycle_id: str) -> Location:
-        return Location(traci.vehicle.getRoadID(tricycle_id), traci.person.getLanePosition(tricycle_id))
+        current_edge = traci.vehicle.getRoadID(tricycle_id)
+        current_position = traci.vehicle.getLanePosition(tricycle_id)
+        return Location(current_edge, current_position)
     
     def setTricycleStatus(self, tricycle_id: str, status: TricycleState) -> None:
         if tricycle_id in self.tricycles.keys():
@@ -63,6 +69,7 @@ class TricycleRepository:
         traci.vehicle.changeTarget(tricycle_id, destination.location)
         self.setTricycleStatus(tricycle_id, TricycleState.BUSY)
         self.setTricycleDestination(tricycle_id, destination)
+        print("OMG WE GOT ASSIGNED")
 
     def hasTricycleArrived(self, tricycle_id: str) -> bool:
         return self.tricycles[tricycle_id].hasArrived()

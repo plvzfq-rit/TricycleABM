@@ -3,6 +3,7 @@ import traci
 import random
 from pathlib import Path
 from model.passenger.Passenger import Passenger
+from model.location.Location import Location
 
 class PassengerRepository:
     def __init__(self) -> None:
@@ -62,6 +63,8 @@ class PassengerRepository:
         return set(self.activePassengers.keys())
     
     def getPassengerLocation(self, passenger_id: str) -> tuple[str, float]:
-        return (traci.person.getRoadID(passenger_id), traci.person.getLanePosition(passenger_id))
+        current_edge = traci.person.getRoadID(passenger_id)
+        current_position = traci.person.getLanePosition(passenger_id)
+        return Location(current_edge, current_position)
 
 
