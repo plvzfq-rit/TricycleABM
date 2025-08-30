@@ -37,7 +37,9 @@ class TraciHandler:
                 self.tricycleGenerator.killTricycle(tricycle.name)
 
     def generateRandomNumberOfPassengers(self) -> None:
-        number_of_passengers = random.randint(0, 5)
+        LOWER_BOUND = 0
+        UPPER_BOUND = 5
+        number_of_passengers = random.randint(LOWER_BOUND, UPPER_BOUND)
         for _ in range(number_of_passengers):
             self.passengerGenerator.generateRandomPassenger()
 
