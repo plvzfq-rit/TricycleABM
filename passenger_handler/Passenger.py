@@ -2,18 +2,24 @@ import sumolib
 import traci
 import random
 from pathlib import Path
+from enum import Enum
 
 class Passenger:
     def __init__(self, name: str, starting_edge: str, destination_edge: str) -> None:
         self.destination = destination_edge
         self.name = name
         self.startingEdge = starting_edge
+        self.alive = True
     def __str__(self) -> str:
         return f"Passenger(destination=\"{self.destination}\")"
+    def kill(self) -> None:
+        self.alive = False
 
 class PassengerGenerator:
     def __init__(self) -> None:
         self.passengers = dict()
+        self.activePassengers = dict()
+        self.killedPassengers = dict()
         self.nextIndex = 0
         self.directoryName = "maps"
         self.networkFileName = "net.net.xml"
@@ -47,6 +53,20 @@ class PassengerGenerator:
         # track passenger
         passenger = Passenger(name, starting_edge.getID(), destination_edge.getID())
         self.passengers[name] = passenger
+        self.activePassengers[name] = passenger
         self.nextIndex += 1
         return passenger
+    
+    def killPassenger(self, passengerName: str) -> None:
+        self.killedPassengers[passengerName] = self.passengers[passengerName]
+        del self.activePassengers[passengerName]
+
+    def auditPassengers(self) -> None:
+        current_passengers = set(traci.person.getIDList())
+        passengers_in_memory = set(self.activePassengers.keys())
+        passengers_to_kill = passengers_in_memory - current_passengers
+        for passengerId in passengers_to_kill:
+            self.killedPassengers[passengerId] = self.passengers[passengerId]
+            del self.activePassengers[passengerId]
+
 

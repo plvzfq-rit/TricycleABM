@@ -25,7 +25,6 @@ class TraciHandler:
                 route_id = f"route_{tricycle.name}"
                 traci.route.add(route_id, [hub_edge])
                 traci.vehicle.add(tricycle.name, route_id, "trike")
-                # traci.vehicle.changeTarget(tricycle.name, hub_edge)
                 traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)
             elif tricycle.endTime == self.tick:
                 traci.vehicle.remove(tricycle.name)
@@ -40,6 +39,7 @@ class TraciHandler:
     def doMainLoop(self, simulation_duration: int) -> None:
         self.startTraci()
         while self.tick < simulation_duration:
+            self.passengerGenerator.auditPassengers()
             self.generateRandomNumberOfPassengers()
             self.toggleTricycles()
             self.tick += 1
