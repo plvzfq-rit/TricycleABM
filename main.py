@@ -7,9 +7,6 @@ builder.build()
 
 duration = 1000
 
-gen = tg.TricycleGenerator()
-gen.generateTricycles(builder.getNumberOfTricycles(), duration, builder.getHubDistribution())
-
-traci_loop = th.TraciHandler(builder.getNetworkFilePath(), builder.getParkingFilePath(), gen.spawnedTricycles)
+traci_loop = th.TraciHandler(builder.getNetworkFilePath(), builder.getParkingFilePath(), builder, duration)
 traci_loop.doMainLoop(duration)
 traci_loop.close()

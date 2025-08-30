@@ -1,14 +1,20 @@
 import traci
 import random
 import passenger_handler.Passenger as ph
+import map_builder.RandomMapBuilder as rmb
+import tricycle_handler.TricycleGenerator as tg
 
 class TraciHandler:
-    def __init__(self, network_file_path: str, parking_file_path: str, tricycles: set) -> None:
-        self.tricycles = tricycles
+    def __init__(self, network_file_path: str, parking_file_path: str, map_builder: rmb.RandomMapBuilder, duration: int) -> None:
+        self.tick = 0
+        self.mapBuilder = map_builder
         self.network_file_path = network_file_path
         self.parking_file_path = parking_file_path
         self.passengerGenerator = ph.PassengerGenerator()
-        self.tick = 0
+        self.tricycleGenerator = tg.TricycleGenerator()
+
+        self.tricycleGenerator.generateTricycles(self.mapBuilder.getNumberOfTricycles(), duration, self.mapBuilder.getHubDistribution())
+        
 
     def startTraci(self) -> None:
         traci.start([
@@ -18,18 +24,17 @@ class TraciHandler:
         ])
 
     def toggleTricycles(self) -> None:
-        to_remove = set()
-        for tricycle in self.tricycles:
+        for tricycle in self.tricycleGenerator.getTricycles():
             if tricycle.startTime == self.tick:
                 hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
                 route_id = f"route_{tricycle.name}"
                 traci.route.add(route_id, [hub_edge])
                 traci.vehicle.add(tricycle.name, route_id, "trike")
                 traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)
+                self.tricycleGenerator.activateTricycle(tricycle.name)
             elif tricycle.endTime == self.tick:
                 traci.vehicle.remove(tricycle.name)
-                to_remove.add(tricycle)
-        self.tricycles = [tricycle for tricycle in self.tricycles if tricycle not in to_remove]
+                self.tricycleGenerator.killTricycle(tricycle.name)
 
     def generateRandomNumberOfPassengers(self) -> None:
         number_of_passengers = random.randint(0, 5)
