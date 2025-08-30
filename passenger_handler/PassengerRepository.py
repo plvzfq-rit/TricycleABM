@@ -2,18 +2,7 @@ import sumolib
 import traci
 import random
 from pathlib import Path
-from enum import Enum
-
-class Passenger:
-    def __init__(self, name: str, starting_edge: str, destination_edge: str) -> None:
-        self.destination = destination_edge
-        self.name = name
-        self.startingEdge = starting_edge
-        self.alive = True
-    def __str__(self) -> str:
-        return f"Passenger(destination=\"{self.destination}\")"
-    def kill(self) -> None:
-        self.alive = False
+from model.passenger.Passenger import Passenger
 
 class PassengerRepository:
     def __init__(self) -> None:
@@ -72,7 +61,7 @@ class PassengerRepository:
     def getActivePassengerIds(self) -> set[str]:
         return set(self.activePassengers.keys())
     
-    def getPassengerLocation(self, name: str) -> None:
-        return (traci.person.getRoadID(name), traci.person.getLanePosition())
+    def getPassengerLocation(self, passenger_id: str) -> tuple[str, float]:
+        return (traci.person.getRoadID(passenger_id), traci.person.getLanePosition(passenger_id))
 
 

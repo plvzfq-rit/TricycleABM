@@ -1,9 +1,8 @@
-import map_builder.RandomMapBuilder as mb
-import tricycle_handler.Tricycle as tg
-import traci_handler.TraciHandler as th
+from map_builder.RandomMapBuilder import RandomMapBuilder
+from traci_handler.TraciHandler import TraciHandler
 
 map_builder = (
-    mb.RandomMapBuilder()
+    RandomMapBuilder()
         .withType("spider")
         .withNumberOfJunctions(3)
         .withNumberOfDivisions(7)
@@ -13,6 +12,6 @@ map_builder.build()
 
 duration = 1000
 
-traci_loop = th.TraciHandler(map_builder, duration)
+traci_loop = TraciHandler(map_builder, duration)
 traci_loop.doMainLoop(duration)
 traci_loop.close()

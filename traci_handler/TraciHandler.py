@@ -1,17 +1,18 @@
 import traci
 import random
-import passenger_handler.Passenger as ph
-import map_builder.RandomMapBuilder as rmb
-import tricycle_handler.Tricycle as tg
+from passenger_handler.PassengerRepository import PassengerRepository
+from map_builder.RandomMapBuilder import RandomMapBuilder
+from tricycle_handler.TricycleRepository import TricycleRepository
+from model.tricycle.TricycleState import TricycleState
 
 class TraciHandler:
-    def __init__(self, map_builder: rmb.RandomMapBuilder, duration: int) -> None:
+    def __init__(self, map_builder: RandomMapBuilder, duration: int) -> None:
         self.tick = 0
         self.mapBuilder = map_builder
         self.network_file_path = map_builder.getNetworkFilePath()
         self.parking_file_path = map_builder.getParkingFilePath()
-        self.passengerRepository = ph.PassengerRepository()
-        self.tricycleRepository = tg.TricycleRepository()
+        self.passengerRepository = PassengerRepository()
+        self.tricycleRepository = TricycleRepository()
 
         self.tricycleRepository.generateTricycles(self.mapBuilder.getNumberOfTricycles(), duration, self.mapBuilder.getHubDistribution())
         
@@ -32,9 +33,14 @@ class TraciHandler:
                 traci.vehicle.add(tricycle.name, route_id, "trike")
                 traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)
                 self.tricycleRepository.activateTricycle(tricycle.name)
-            elif tricycle.endTime == self.tick:
+            elif tricycle.endTime == self.tick and tricycle.status == TricycleState.FREE:
+                traci.vehicle.resume(tricycle.name)
                 traci.vehicle.remove(tricycle.name)
                 self.tricycleRepository.killTricycle(tricycle.name)
+            elif tricycle.status == TricycleState.BUSY and self.tricycleRepository.hasTricycleArrived(tricycle.name):
+                traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)
+                self.tricycleRepository.setTricycleDestination(tricycle.name, None)
+                self.tricycleRepository.setTricycleStatus(tricycle.name, TricycleState.FREE)
 
     def generateRandomNumberOfPassengers(self) -> None:
         LOWER_BOUND = 0
@@ -44,7 +50,19 @@ class TraciHandler:
             self.passengerRepository.generateRandomPassenger()
 
     def assignPassengersToTricycles(self) -> None:
-        pass
+        active_passenger_ids = self.passengerRepository.getActivePassengerIds()
+        active_tricycle_ids = self.tricycleRepository.getActiveTricycleIds()
+
+        for active_passenger_id in active_passenger_ids:
+            active_passenger_location = self.passengerRepository.getPassengerLocation(active_passenger_id)
+            for active_tricycle_id in active_tricycle_ids:
+                active_tricycle_location = self.tricycleRepository.getTricycleLocation(active_tricycle_id)
+
+                if active_passenger_location.isNear(active_tricycle_location) and self.tricycleRepository.isTricycleFree(active_tricycle_id):
+                    self.passengerRepository.killPassenger(active_passenger_id)
+                    self.tricycleRepository.assignPassengerToTricycle(active_tricycle_id, active_passenger_location)
+                    break
+
 
     def doMainLoop(self, simulation_duration: int) -> None:
         self.startTraci()
