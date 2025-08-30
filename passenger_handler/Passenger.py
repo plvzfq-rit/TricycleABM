@@ -57,17 +57,17 @@ class PassengerGenerator:
         self.nextIndex += 1
         return passenger
     
-    def killPassenger(self, passengerName: str) -> None:
-        self.killedPassengers[passengerName] = self.passengers[passengerName]
-        del self.activePassengers[passengerName]
+    def killPassenger(self, passenger_id: str) -> None:
+        self.killedPassengers[passenger_id] = self.passengers[passenger_id]
+        del self.activePassengers[passenger_id]
 
     def auditPassengers(self) -> None:
         current_passengers = set(traci.person.getIDList())
         passengers_in_memory = set(self.activePassengers.keys())
         passengers_to_kill = passengers_in_memory - current_passengers
-        for passengerId in passengers_to_kill:
-            self.killedPassengers[passengerId] = self.passengers[passengerId]
-            del self.activePassengers[passengerId]
+        for passenger_id in passengers_to_kill:
+            self.killedPassengers[passenger_id] = self.passengers[passenger_id]
+            del self.activePassengers[passenger_id]
 
     def getActivePassengerIds(self) -> None:
         return set(self.activePassengers.keys())
