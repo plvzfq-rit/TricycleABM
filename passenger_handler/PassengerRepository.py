@@ -13,6 +13,13 @@ class PassengerRepository:
         self.nextIndex = 0
         self.directoryName = "maps"
         self.networkFileName = "net.net.xml"
+        self.possibleSources = []
+
+    def initializePossibleSources(self):
+        hub_ids = traci.parkingarea.getIDList()
+        for hub_id in hub_ids:
+            edge = traci.parkingarea.getLaneID(hub_id).split("_")[0]
+            self.possibleSources.append(edge)
 
     def generateRandomPassenger(self) -> Passenger:
         directory = Path(__file__).resolve().parent.parent / self.directoryName 
@@ -22,17 +29,17 @@ class PassengerRepository:
         edges = [e for e in network.getEdges() if e.allows("pedestrian")]
 
         # pick start and destination
-        starting_edge = random.choice(edges)
+        starting_edge = random.choice(self.possibleSources)
         destination_edge = random.choice(edges)
-        while destination_edge == starting_edge:
+        while destination_edge.getID() == starting_edge:
             destination_edge = random.choice(edges)
 
         # start position
-        start_pos = 1.0
+        start_pos = 5.0
         name = f"ped{self.nextIndex}"
 
         # add the person
-        traci.person.add(name, starting_edge.getID(), start_pos, typeID="fatPed")
+        traci.person.add(name, starting_edge, start_pos, typeID="fatPed")
 
         # destination position
         dest_pos = 1.0
@@ -41,13 +48,15 @@ class PassengerRepository:
         traci.person.appendWalkingStage(name, destination_edge.getID(), dest_pos)
 
         # track passenger
-        passenger = Passenger(name, starting_edge.getID(), destination_edge.getID())
+        passenger = Passenger(name, starting_edge, destination_edge.getID())
         self.passengers[name] = passenger
         self.activePassengers[name] = passenger
         self.nextIndex += 1
+        # print(passenger)
         return passenger
     
     def killPassenger(self, passenger_id: str) -> None:
+        self.passengers[passenger_id].kill()
         self.killedPassengers[passenger_id] = self.passengers[passenger_id]
         del self.activePassengers[passenger_id]
 
@@ -56,8 +65,7 @@ class PassengerRepository:
         passengers_in_memory = set(self.activePassengers.keys())
         passengers_to_kill = passengers_in_memory - current_passengers
         for passenger_id in passengers_to_kill:
-            self.killedPassengers[passenger_id] = self.passengers[passenger_id]
-            del self.activePassengers[passenger_id]
+            self.killPassenger(passenger_id)
 
     def getActivePassengerIds(self) -> set[str]:
         return set(self.activePassengers.keys())
@@ -66,5 +74,6 @@ class PassengerRepository:
         current_edge = traci.person.getRoadID(passenger_id)
         current_position = traci.person.getLanePosition(passenger_id)
         return Location(current_edge, current_position)
-
-
+    
+    def getPassengerDestination(self, passenger_id: str) -> str:
+        return self.passengers[passenger_id].destination

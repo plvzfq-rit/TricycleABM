@@ -13,6 +13,8 @@ class TraciHandler:
         self.parking_file_path = map_builder.getParkingFilePath()
         self.passengerRepository = PassengerRepository()
         self.tricycleRepository = TricycleRepository()
+        self.LEAST_NUMBER_OF_PASSENGERS = 0
+        self.MOST_NUMBER_OF_PASSENGERS = 5
 
         self.tricycleRepository.generateTricycles(self.mapBuilder.getNumberOfTricycles(), duration, self.mapBuilder.getHubDistribution())
         
@@ -23,13 +25,14 @@ class TraciHandler:
             "-n", self.network_file_path,
             "-a", self.parking_file_path,
         ])
+        self.passengerRepository.initializePossibleSources()
 
     def toggleTricycles(self) -> None:
-        print("In SUMO:")
-        print(",".join(list(traci.vehicle.getIDList())))
-        print("In Memory:")
-        print(",".join(list(self.tricycleRepository.activeTricycles.keys())))
-        print()
+        # print("In SUMO:")
+        # print(",".join(list(traci.vehicle.getIDList())))
+        # print("In Memory:")
+        # print(",".join(list(self.tricycleRepository.activeTricycles.keys())))
+        # print()
         for tricycle in self.tricycleRepository.getTricycles():
             if tricycle.startTime == self.tick:
                 hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
@@ -39,17 +42,18 @@ class TraciHandler:
                 traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)
                 self.tricycleRepository.activateTricycle(tricycle.name)
             elif tricycle.endTime == self.tick and tricycle.status == TricycleState.FREE:
-                traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=0)
                 traci.vehicle.remove(tricycle.name)
                 self.tricycleRepository.killTricycle(tricycle.name)
             elif tricycle.status == TricycleState.BUSY and self.tricycleRepository.hasTricycleArrived(tricycle.name):
+                hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
+                # traci.vehicle.changeTarget(tricycle.name, hub_edge)
                 traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)
                 self.tricycleRepository.setTricycleDestination(tricycle.name, None)
                 self.tricycleRepository.setTricycleStatus(tricycle.name, TricycleState.FREE)
 
     def generateRandomNumberOfPassengers(self) -> None:
-        LOWER_BOUND = 0
-        UPPER_BOUND = 5
+        LOWER_BOUND = self.LEAST_NUMBER_OF_PASSENGERS
+        UPPER_BOUND = self.MOST_NUMBER_OF_PASSENGERS
         number_of_passengers = random.randint(LOWER_BOUND, UPPER_BOUND)
         for _ in range(number_of_passengers):
             self.passengerRepository.generateRandomPassenger()
@@ -63,10 +67,12 @@ class TraciHandler:
             for active_tricycle in active_tricycles:
                 active_tricycle_location = self.tricycleRepository.getTricycleLocation(active_tricycle.name)
 
-                if active_passenger_location.isNear(active_tricycle_location) and self.tricycleRepository.isTricycleFree(active_tricycle.name):
+                if active_passenger_location.isNear(active_tricycle_location) and self.tricycleRepository.isTricycleFree(active_tricycle.name) and self.passengerRepository.passengers[active_passenger_id].isAlive():
                     self.passengerRepository.killPassenger(active_passenger_id)
-                    self.tricycleRepository.assignPassengerToTricycle(active_tricycle.name, active_passenger_location)
-                    break
+                    active_passenger_destination = self.passengerRepository.getPassengerDestination(active_passenger_id)
+                    success = self.tricycleRepository.assignPassengerToTricycle(active_tricycle.name, active_passenger_destination)
+                    if success:
+                        break
 
 
     def doMainLoop(self, simulation_duration: int) -> None:
@@ -78,6 +84,10 @@ class TraciHandler:
             self.assignPassengersToTricycles()
             self.tick += 1
             traci.simulationStep()
+
+    def setPassengerBoundaries(self, lower_bound: int, upper_bound: int) -> None:
+        self.LEAST_NUMBER_OF_PASSENGERS = lower_bound
+        self.MOST_NUMBER_OF_PASSENGERS = upper_bound
 
     def close(self) -> None:
         traci.close()

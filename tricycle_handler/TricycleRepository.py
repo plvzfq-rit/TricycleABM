@@ -1,5 +1,6 @@
 import random
 import traci
+import uuid
 
 from model.location.Location import Location
 from model.tricycle.Tricycle import Tricycle
@@ -63,13 +64,40 @@ class TricycleRepository:
         if tricycle_id in self.killedTricycles.keys():
             self.killedTricycles[tricycle_id].destination = destination
     
-    def assignPassengerToTricycle(self, tricycle_id: str, destination: Location) -> None:
+    def assignPassengerToTricycle(self, tricycle_id: str, destination: Location) -> bool:
         tricycle = self.tricycles[tricycle_id]
-        traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=0)
-        traci.vehicle.changeTarget(tricycle_id, destination.location)
+
+        hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
+        dest_edge = destination.location
+        current_edge = traci.vehicle.getRoadID(tricycle_id)
+
+        if current_edge == dest_edge:
+            print("Failed to assign.")
+            return False
+
+        traci.vehicle.setParkingAreaStop(tricycle_id, self.tricycles[tricycle_id].hub, duration=0)
+
+        to_route = traci.simulation.findRoute(current_edge, dest_edge)
+        return_route = traci.simulation.findRoute(dest_edge, hub_edge)
+
+        full_route = list(to_route.edges) + list(return_route.edges)[1:]
+        print("Created route: " + str(full_route))
+
+        traci.vehicle.setRoute(tricycle_id, full_route)
+
+        traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=1, pos=destination.position, duration=10)
+
         self.setTricycleStatus(tricycle_id, TricycleState.BUSY)
         self.setTricycleDestination(tricycle_id, destination)
-        print("OMG WE GOT ASSIGNED")
+        # print("Assigned with built-in return route:", tricycle, "with return route: ", str(full_route))
+        print("Assign Trike", tricycle_id, 
+        "edge:", traci.vehicle.getRoadID(tricycle_id), 
+        "route:", traci.vehicle.getRoute(tricycle_id), 
+        "stopstate:", traci.vehicle.getStopState(tricycle_id), 
+        "speed:", traci.vehicle.getSpeed(tricycle_id))
+        # traci.vehicle.resume(tricycle_id)
+
+        return True
 
     def hasTricycleArrived(self, tricycle_id: str) -> bool:
         return self.tricycles[tricycle_id].hasArrived()
