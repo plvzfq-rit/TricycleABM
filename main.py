@@ -3,13 +3,8 @@ from traci_handler.TraciHandler import TraciHandler
 
 map_builder = (
     RandomMapBuilder()
-        .withType("spider")
-        .withNumberOfJunctions(3)
-        .withNumberOfDivisions(3)
-        .withBlockLength(40.0)
-        .withParkings(10)
+        .withType("final")
     )
-map_builder.build()
 
 duration = 1000
 

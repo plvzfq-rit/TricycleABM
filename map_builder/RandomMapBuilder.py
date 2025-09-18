@@ -19,7 +19,7 @@ class RandomMapBuilder:
         self.numberOfTricycles = 0
 
     def withType(self, _type: str) -> Self:
-        if _type not in ["grid", "spider", "rand"]:
+        if _type not in ["grid", "spider", "rand", "final"]:
             raise Exception("Invalid type. Was: " + _type)
         self._type = _type
         return self
@@ -119,12 +119,14 @@ class RandomMapBuilder:
         return self.numberOfTricycles
     
     def build(self) -> None:
-        if self._type == None or self._type not in ["grid", "spider", "rand"]:
+        if self._type == None or self._type not in ["grid", "spider", "rand","final"]:
             raise Exception("Invalid type. Was: " + type)
         
         cmd = ["netgenerate", "--sidewalks.guess", "--walkingareas", "--crossings.guess", "--junctions.join",]
 
-        if self._type == "grid":
+        if self._type == "final":
+            pass
+        elif self._type == "grid":
             cmd.append("--grid")
             cmd.append("--grid.x-number=" + str(self.junctions))
             cmd.append("--grid.y-number=" + str(self.divisions))
