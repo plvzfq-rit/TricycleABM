@@ -35,14 +35,14 @@ class PassengerRepository:
             destination_edge = random.choice(edges)
 
         # start position
-        start_pos = 5.0
+        start_pos = 0.0
         name = f"ped{self.nextIndex}"
 
         # add the person
         traci.person.add(name, starting_edge, start_pos, typeID="fatPed")
 
         # destination position
-        dest_pos = 1.0
+        dest_pos = 0.0
 
         # let SUMO compute walking route
         traci.person.appendWalkingStage(name, destination_edge.getID(), dest_pos)
