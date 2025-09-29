@@ -81,7 +81,7 @@ class TricycleRepository:
         return_route = traci.simulation.findRoute(dest_edge, hub_edge)
 
         full_route = list(to_route.edges) + list(return_route.edges)[1:]
-        print("Created route: " + str(full_route))
+        # print("Created route: " + str(full_route))
 
         traci.vehicle.setRoute(tricycle_id, full_route)
 
@@ -90,11 +90,11 @@ class TricycleRepository:
         self.setTricycleStatus(tricycle_id, TricycleState.BUSY)
         self.setTricycleDestination(tricycle_id, destination)
         # print("Assigned with built-in return route:", tricycle, "with return route: ", str(full_route))
-        print("Assign Trike", tricycle_id, 
-        "edge:", traci.vehicle.getRoadID(tricycle_id), 
-        "route:", traci.vehicle.getRoute(tricycle_id), 
-        "stopstate:", traci.vehicle.getStopState(tricycle_id), 
-        "speed:", traci.vehicle.getSpeed(tricycle_id))
+        # print("Assign Trike", tricycle_id, 
+        # "edge:", traci.vehicle.getRoadID(tricycle_id), 
+        # "route:", traci.vehicle.getRoute(tricycle_id), 
+        # "stopstate:", traci.vehicle.getStopState(tricycle_id), 
+        # "speed:", traci.vehicle.getSpeed(tricycle_id))
         # traci.vehicle.resume(tricycle_id)
 
         return True
