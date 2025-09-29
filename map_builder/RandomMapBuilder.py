@@ -3,6 +3,7 @@ import random
 import sumolib
 from pathlib import Path
 from typing import Self
+from model.traci_config.TraciConfig import TraciConfig
 
 class RandomMapBuilder:
     def __init__(self):
@@ -12,9 +13,7 @@ class RandomMapBuilder:
         self.parkings = 5
         self.blockLength = 100.00
         self.divisionLength = 100.00
-        self.directoryName = "maps"
-        self.networkFileName = "net.net.xml"
-        self.parkingFileName = "parking.add.xml"
+        self.traciConfig = TraciConfig()
         self.hubDistribution = dict()
         self.numberOfTricycles = 0
 
@@ -55,17 +54,19 @@ class RandomMapBuilder:
         return self
     
     def _createParkingFile(self) -> None:
-        directory = Path(__file__).resolve().parent.parent / self.directoryName 
-        network = sumolib.net.readNet(directory / self.networkFileName)
-        output_file = directory / self.parkingFileName
+        network = sumolib.net.readNet(self.traciConfig.getNetworkFilePath())
+        output_file = self.traciConfig.getParkingFilePath()
 
         edges = list(network.getEdges())
         random_edges = random.sample(edges, self.parkings)
 
         with open(output_file, "w") as file:
             file.write("<additional>\n")
+
+            # Put in custom tricycle and passenger types
             file.write("<vType id=\"trike\" accel=\"0.8\" decel=\"4.5\" sigma=\"0.5\" length=\"2.5\" maxSpeed=\"10.0\" guiShape=\"bicycle\"/>\n")
             file.write(f"<vType id=\"fatPed\" vClass=\"pedestrian\" guiShape=\"pedestrian\" color=\"yellow\" width=\"1\" length=\"1\"/>\n")
+
             for i, edge in enumerate(random_edges):
                 lane = edge.getLanes()[1]  
                 lane_id = lane.getID()
@@ -81,15 +82,14 @@ class RandomMapBuilder:
 
             file.write("</additional>\n")
         
-        print(f"Wrote parking areas to {self.parkingFileName}")
+        print(f"Wrote parking areas to {self.traciConfig.getParkingFileName()}")
 
     
     def _generateAndExportMap(self, cmd: list[str]) -> None:
-        script_dir = Path(__file__).resolve().parent
-        assets_dir = script_dir.parent / self.directoryName
+        assets_dir = self.traciConfig.getAssetDirectory()
         assets_dir.mkdir(parents=True, exist_ok=True)
 
-        net_file = assets_dir / self.networkFileName
+        net_file = self.traciConfig.getNetworkFilePath()
 
         cmd.append(f"--output-file={net_file}")
 

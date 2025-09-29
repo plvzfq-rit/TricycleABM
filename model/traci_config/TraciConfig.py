@@ -1,17 +1,25 @@
 from pathlib import Path
 
 class TraciConfig:
-    directoryName = "maps"
+    assetDirectoryName = "assets"
     networkFileName = "net.net.xml"
     parkingFileName = "parking.add.xml"
 
-    def __init__(self, directoryName: str, networkFileName: str, parkingFileName: str) -> None:
-        self.directoryName = directoryName
+    def __init__(self) -> None:
+        pass # Use default values
+
+    def __init__(self, assetDirectoryName: str, networkFileName: str, parkingFileName: str) -> None:
+        self.assetDirectoryName = assetDirectoryName
         self.networkFileName = networkFileName
         self.parkingFileName = parkingFileName
 
-    def getDirectoryName(self) -> str:
+    def getAssetDirectoryName(self) -> str:
         return self.directoryName
+    
+    def getAssetDirectory(self) -> str:
+        script_dir = Path(__file__).resolve().parent
+        assets_dir = script_dir.parent / self.assetDirectoryName
+        return assets_dir
     
     def getNetworkFileName(self) -> str:
         return self.networkFileName
@@ -20,21 +28,15 @@ class TraciConfig:
         return self.parkingFileName
     
     def getNetworkFilePath(self) -> str:
-        script_dir = Path(__file__).resolve().parent
-        assets_dir = script_dir.parent / self.directoryName
-        net_file = assets_dir / self.networkFileName
-        return str(net_file)
+        return str(self.getDirectory() / self.networkFileName)
     
     def getParkingFilePath(self) -> str:
-        script_dir = Path(__file__).resolve().parent
-        assets_dir = script_dir.parent / self.directoryName
-        parking_file = assets_dir / self.parkingFileName
-        return str(parking_file)
+        return str(self.getDirectory() / self.parkingFileName)
     
-    def setDirectoryName(self, directoryName: str) -> None:
-        if not directoryName.strip():
-            raise Exception("Invalid directory name. Was empty.")
-        self.directoryName = directoryName.strip()
+    def setAssetDirectoryName(self, assetDirectoryName: str) -> None:
+        if not assetDirectoryName.strip():
+            raise Exception("Invalid asset directory name. Was empty.")
+        self.directoryName = assetDirectoryName.strip()
 
     def setNetworkFileName(self, networkFileName: str) -> None:
         if not networkFileName.strip():
