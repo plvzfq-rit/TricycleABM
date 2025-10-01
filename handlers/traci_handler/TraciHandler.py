@@ -73,7 +73,7 @@ class TraciHandler:
     def doMainLoop(self, simulation_duration: int) -> None:
         self.startTraci()
         while self.tick < simulation_duration:
-            self.passengerRepository.auditPassengers()
+            self.passengerRepository.syncPassengers()
             self.generateRandomNumberOfPassengers()
             self.toggleTricycles()
             self.assignPassengersToTricycles()

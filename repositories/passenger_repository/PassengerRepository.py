@@ -59,7 +59,7 @@ class PassengerRepository:
         self.killedPassengers[passenger_id] = self.passengers[passenger_id]
         del self.activePassengers[passenger_id]
 
-    def auditPassengers(self) -> None:
+    def syncPassengers(self) -> None:
         current_passengers = set(traci.person.getIDList())
         passengers_in_memory = set(self.activePassengers.keys())
         passengers_to_kill = passengers_in_memory - current_passengers
