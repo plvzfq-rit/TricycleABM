@@ -1,4 +1,5 @@
 from builders.specific_map_builder.SpecificMapBuilder import SpecificMapBuilder
+from builders.random_map_builder.RandomMapBuilder import RandomMapBuilder
 from handlers.traci_handler.TraciHandler import TraciHandler
 from config.traci_config.TraciConfig import TraciConfig
 from config.map_config.MapConfig import MapConfig
@@ -10,8 +11,8 @@ map_config = MapConfig()
 source_config = SourceConfig()
 destination_config = DestinationConfig()
 
-map_builder = SpecificMapBuilder(map_config, traci_config, source_config, destination_config)
-
+# map_builder = SpecificMapBuilder(map_config, traci_config, source_config, destination_config)
+map_builder = RandomMapBuilder().withType("spider").withParkings(5).withNumberOfDivisions(3).withNumberOfJunctions(3).withBlockLength(50).withDivisionLength(30)
 map_config = map_builder.build()
 
 duration = 1000

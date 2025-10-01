@@ -8,12 +8,12 @@ from config.map_config.MapConfig import MapConfig
 
 class RandomMapBuilder:
     def __init__(self):
-        self._type = None
-        self.junctions = 5
-        self.divisions = 5
+        self._type = "spider"
+        self.junctions = 3
+        self.divisions = 3
         self.parkings = 5
-        self.blockLength = 100.00
-        self.divisionLength = 100.00
+        self.blockLength = 50.00
+        self.divisionLength = 30.00
         self.traciConfig = TraciConfig()
         self.mapConfig = MapConfig()
 

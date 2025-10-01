@@ -122,7 +122,7 @@ class TricycleRepository:
                 # traci.vehicle.changeTarget(tricycle.name, hub_edge)
                 traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)
                 self.setTricycleDestination(tricycle.name, None)
-                self.setTricycleStatus(tricycle.name, TricycleState.FRgiEE)
+                self.setTricycleStatus(tricycle.name, TricycleState.FREE)
 
     def syncTricycles(self) -> None:
         current_tricycles = set([tricycle_id for tricycle_id in list(traci.vehicle.getIDList()) if tricycle_id.startswith('trike')])
