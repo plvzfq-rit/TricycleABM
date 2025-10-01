@@ -2,9 +2,9 @@ import random
 import traci
 import uuid
 
-from model.location.Location import Location
-from model.tricycle.Tricycle import Tricycle
-from model.tricycle.TricycleState import TricycleState
+from domain.location.Location import Location
+from domain.tricycle.Tricycle import Tricycle
+from domain.tricycle.TricycleState import TricycleState
 
 class TricycleRepository:
     def __init__(self):

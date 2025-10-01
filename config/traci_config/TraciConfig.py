@@ -14,8 +14,8 @@ class TraciConfig:
         return self.directoryName
     
     def getAssetDirectory(self) -> str:
-        script_dir = Path(__file__).resolve().parent.parent
-        assets_dir = script_dir.parent / self.assetDirectoryName
+        script_dir = Path(__file__).resolve().parent.parent.parent
+        assets_dir = script_dir / self.assetDirectoryName
         return assets_dir
     
     def getNetworkFileName(self) -> str:

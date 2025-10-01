@@ -1,4 +1,4 @@
-from model.location.Location import Location
+from domain.location.Location import Location
 class Passenger:
     def __init__(self, name: str, starting_edge: str, destination_edge: str) -> None:
         self.destination = Location(destination_edge, 1.0)

@@ -2,9 +2,6 @@ class MapConfig:
     hubDistribution = dict()
     numberOfTricycles = 0
 
-    def __init__(self) -> None:
-        pass
-
     # Hub Distribution is a dictionary(hub_name: str -> number_of_tricycles_at_hub: int)
     def __init__(self, hub_distribution: dict=dict()) -> None:
         self.hubDistribution = hub_distribution

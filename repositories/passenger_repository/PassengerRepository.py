@@ -2,9 +2,9 @@ import sumolib
 import traci
 import random
 from pathlib import Path
-from model.passenger.Passenger import Passenger
-from model.location.Location import Location
-from model.traci_config.TraciConfig import TraciConfig
+from domain.passenger.Passenger import Passenger
+from domain.location.Location import Location
+from config.traci_config.TraciConfig import TraciConfig
 
 class PassengerRepository:
     def __init__(self, traci_config: TraciConfig) -> None:

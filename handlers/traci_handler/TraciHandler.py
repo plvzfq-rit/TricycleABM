@@ -1,11 +1,10 @@
 import traci
 import random
-from passenger_handler.PassengerRepository import PassengerRepository
-from map_builder.RandomMapBuilder import RandomMapBuilder
-from tricycle_handler.TricycleRepository import TricycleRepository
-from model.tricycle.TricycleState import TricycleState
-from model.map_config.MapConfig import MapConfig
-from model.traci_config.TraciConfig import TraciConfig
+from repositories.passenger_repository.PassengerRepository import PassengerRepository
+from repositories.tricycle_repository.TricycleRepository import TricycleRepository
+from domain.tricycle.TricycleState import TricycleState
+from config.map_config.MapConfig import MapConfig
+from config.traci_config.TraciConfig import TraciConfig
 
 class TraciHandler:
     def __init__(self, map_config: MapConfig, traci_config: TraciConfig, duration: int) -> None:
@@ -19,20 +18,6 @@ class TraciHandler:
         self.mapConfig = map_config
         self.traciConfig = traci_config
         self.tricycleRepository.generateTricycles(map_config.getNumberOfTricycles(), duration, map_config.getHubDistribution())
-
-
-    # def __init__(self, map_builder: RandomMapBuilder, duration: int) -> None:
-    #     self.tick = 0
-    #     self.mapBuilder = map_builder
-    #     self.network_file_path = map_builder.getNetworkFilePath()
-    #     self.parking_file_path = map_builder.getParkingFilePath()
-    #     self.passengerRepository = PassengerRepository()
-    #     self.tricycleRepository = TricycleRepository()
-    #     self.LEAST_NUMBER_OF_PASSENGERS = 0
-    #     self.MOST_NUMBER_OF_PASSENGERS = 5
-
-    #     self.tricycleRepository.generateTricycles(self.mapBuilder.getNumberOfTricycles(), duration, self.mapBuilder.getHubDistribution())
-        
 
     def startTraci(self) -> None:
         traci.start([
