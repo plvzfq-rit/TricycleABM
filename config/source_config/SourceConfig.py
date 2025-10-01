@@ -2,8 +2,8 @@ from pathlib import Path
 
 class SourceConfig:
     def __init__(self, source_directory_name:str = "maps", 
-                 network_file_name:str = "net.net.xml", 
-                 parking_file_name:str = "parking.add.xml"):
+                    network_file_name:str = "net.net.xml", 
+                    parking_file_name:str = "parking.add.xml"):
         self.sourceDirectoryName = source_directory_name
         self.networkFileName = network_file_name
         self.parkingFileName = parking_file_name

@@ -105,16 +105,16 @@ class TricycleRepository:
     def isTricycleFree(self, tricycle_id: str) -> bool:
         return self.tricycles[tricycle_id].status == TricycleState.FREE
     
-    def toggleTricycles(self) -> None:
+    def toggleTricycles(self, current_tick: int) -> None:
         for tricycle in self.getTricycles():
-            if tricycle.startTime == self.tick:
+            if tricycle.startTime == current_tick:
                 hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
                 route_id = f"route_{tricycle.name}"
                 traci.route.add(route_id, [hub_edge])
                 traci.vehicle.add(tricycle.name, route_id, "trike")
                 traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)
                 self.activateTricycle(tricycle.name)
-            elif tricycle.endTime == self.tick and tricycle.status == TricycleState.FREE:
+            elif tricycle.endTime == current_tick and tricycle.status == TricycleState.FREE:
                 traci.vehicle.remove(tricycle.name)
                 self.killTricycle(tricycle.name)
             elif tricycle.status == TricycleState.BUSY and self.hasTricycleArrived(tricycle.name):
@@ -122,11 +122,11 @@ class TricycleRepository:
                 # traci.vehicle.changeTarget(tricycle.name, hub_edge)
                 traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)
                 self.setTricycleDestination(tricycle.name, None)
-                self.setTricycleStatus(tricycle.name, TricycleState.FREE)
+                self.setTricycleStatus(tricycle.name, TricycleState.FRgiEE)
 
     def syncTricycles(self) -> None:
         current_tricycles = set([tricycle_id for tricycle_id in list(traci.vehicle.getIDList()) if tricycle_id.startswith('trike')])
         tricycles_in_memory = set(self.activeTricycles.keys())
         tricycles_to_kill = current_tricycles - tricycles_in_memory
         for tricycle_id in tricycles_to_kill:
-            self.killPassenger(tricycle_id)
+            self.killTricycle(tricycle_id)

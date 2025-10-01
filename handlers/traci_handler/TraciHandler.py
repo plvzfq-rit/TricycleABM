@@ -57,7 +57,7 @@ class TraciHandler:
             self.passengerRepository.syncPassengers()
             self.generateRandomNumberOfPassengers()
             self.tricycleRepository.syncTricycles()
-            self.tricycleRepository.toggleTricycles()
+            self.tricycleRepository.toggleTricycles(self.tick)
             self.assignPassengersToTricycles()
             self.tick += 1
             traci.simulationStep()
