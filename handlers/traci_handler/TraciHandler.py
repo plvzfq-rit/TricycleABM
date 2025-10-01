@@ -27,25 +27,6 @@ class TraciHandler:
         ])
         self.passengerRepository.initializePossibleSources()
 
-    def toggleTricycles(self) -> None:
-        for tricycle in self.tricycleRepository.getTricycles():
-            if tricycle.startTime == self.tick:
-                hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
-                route_id = f"route_{tricycle.name}"
-                traci.route.add(route_id, [hub_edge])
-                traci.vehicle.add(tricycle.name, route_id, "trike")
-                traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)
-                self.tricycleRepository.activateTricycle(tricycle.name)
-            elif tricycle.endTime == self.tick and tricycle.status == TricycleState.FREE:
-                traci.vehicle.remove(tricycle.name)
-                self.tricycleRepository.killTricycle(tricycle.name)
-            elif tricycle.status == TricycleState.BUSY and self.tricycleRepository.hasTricycleArrived(tricycle.name):
-                hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
-                # traci.vehicle.changeTarget(tricycle.name, hub_edge)
-                traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)
-                self.tricycleRepository.setTricycleDestination(tricycle.name, None)
-                self.tricycleRepository.setTricycleStatus(tricycle.name, TricycleState.FREE)
-
     def generateRandomNumberOfPassengers(self) -> None:
         LOWER_BOUND = self.LEAST_NUMBER_OF_PASSENGERS
         UPPER_BOUND = self.MOST_NUMBER_OF_PASSENGERS
@@ -75,7 +56,8 @@ class TraciHandler:
         while self.tick < simulation_duration:
             self.passengerRepository.syncPassengers()
             self.generateRandomNumberOfPassengers()
-            self.toggleTricycles()
+            self.tricycleRepository.syncTricycles()
+            self.tricycleRepository.toggleTricycles()
             self.assignPassengersToTricycles()
             self.tick += 1
             traci.simulationStep()
