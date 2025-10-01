@@ -4,35 +4,45 @@ from passenger_handler.PassengerRepository import PassengerRepository
 from map_builder.RandomMapBuilder import RandomMapBuilder
 from tricycle_handler.TricycleRepository import TricycleRepository
 from model.tricycle.TricycleState import TricycleState
+from model.map_config.MapConfig import MapConfig
+from model.traci_config.TraciConfig import TraciConfig
 
 class TraciHandler:
-    def __init__(self, map_builder: RandomMapBuilder, duration: int) -> None:
+    def __init__(self, map_config: MapConfig, traci_config: TraciConfig, duration: int) -> None:
         self.tick = 0
-        self.mapBuilder = map_builder
-        self.network_file_path = map_builder.getNetworkFilePath()
-        self.parking_file_path = map_builder.getParkingFilePath()
-        self.passengerRepository = PassengerRepository()
+        self.networkFilePath = traci_config.getNetworkFilePath()
+        self.parkingFilePath = traci_config.getParkingFilePath()
+        self.passengerRepository = PassengerRepository(traci_config)
         self.tricycleRepository = TricycleRepository()
         self.LEAST_NUMBER_OF_PASSENGERS = 0
         self.MOST_NUMBER_OF_PASSENGERS = 5
+        self.mapConfig = map_config
+        self.traciConfig = traci_config
+        self.tricycleRepository.generateTricycles(map_config.getNumberOfTricycles(), duration, map_config.getHubDistribution())
 
-        self.tricycleRepository.generateTricycles(self.mapBuilder.getNumberOfTricycles(), duration, self.mapBuilder.getHubDistribution())
+
+    # def __init__(self, map_builder: RandomMapBuilder, duration: int) -> None:
+    #     self.tick = 0
+    #     self.mapBuilder = map_builder
+    #     self.network_file_path = map_builder.getNetworkFilePath()
+    #     self.parking_file_path = map_builder.getParkingFilePath()
+    #     self.passengerRepository = PassengerRepository()
+    #     self.tricycleRepository = TricycleRepository()
+    #     self.LEAST_NUMBER_OF_PASSENGERS = 0
+    #     self.MOST_NUMBER_OF_PASSENGERS = 5
+
+    #     self.tricycleRepository.generateTricycles(self.mapBuilder.getNumberOfTricycles(), duration, self.mapBuilder.getHubDistribution())
         
 
     def startTraci(self) -> None:
         traci.start([
             "sumo-gui",
-            "-n", self.network_file_path,
-            "-a", self.parking_file_path,
+            "-n", self.networkFilePath,
+            "-a", self.parkingFilePath,
         ])
         self.passengerRepository.initializePossibleSources()
 
     def toggleTricycles(self) -> None:
-        # print("In SUMO:")
-        # print(",".join(list(traci.vehicle.getIDList())))
-        # print("In Memory:")
-        # print(",".join(list(self.tricycleRepository.activeTricycles.keys())))
-        # print()
         for tricycle in self.tricycleRepository.getTricycles():
             if tricycle.startTime == self.tick:
                 hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]

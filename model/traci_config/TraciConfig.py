@@ -5,10 +5,7 @@ class TraciConfig:
     networkFileName = "net.net.xml"
     parkingFileName = "parking.add.xml"
 
-    def __init__(self) -> None:
-        pass # Use default values
-
-    def __init__(self, assetDirectoryName: str, networkFileName: str, parkingFileName: str) -> None:
+    def __init__(self, assetDirectoryName: str="assets", networkFileName: str="net.net.xml", parkingFileName: str="parking.add.xml") -> None:
         self.assetDirectoryName = assetDirectoryName
         self.networkFileName = networkFileName
         self.parkingFileName = parkingFileName
@@ -17,7 +14,7 @@ class TraciConfig:
         return self.directoryName
     
     def getAssetDirectory(self) -> str:
-        script_dir = Path(__file__).resolve().parent
+        script_dir = Path(__file__).resolve().parent.parent
         assets_dir = script_dir.parent / self.assetDirectoryName
         return assets_dir
     
@@ -28,10 +25,10 @@ class TraciConfig:
         return self.parkingFileName
     
     def getNetworkFilePath(self) -> str:
-        return str(self.getDirectory() / self.networkFileName)
+        return str(self.getAssetDirectory() / self.networkFileName)
     
     def getParkingFilePath(self) -> str:
-        return str(self.getDirectory() / self.parkingFileName)
+        return str(self.getAssetDirectory() / self.parkingFileName)
     
     def setAssetDirectoryName(self, assetDirectoryName: str) -> None:
         if not assetDirectoryName.strip():

@@ -4,6 +4,7 @@ import sumolib
 from pathlib import Path
 from typing import Self
 from model.traci_config.TraciConfig import TraciConfig
+from model.map_config.MapConfig import MapConfig
 
 class RandomMapBuilder:
     def __init__(self):
@@ -14,8 +15,7 @@ class RandomMapBuilder:
         self.blockLength = 100.00
         self.divisionLength = 100.00
         self.traciConfig = TraciConfig()
-        self.hubDistribution = dict()
-        self.numberOfTricycles = 0
+        self.mapConfig = MapConfig()
 
     def withType(self, _type: str) -> Self:
         if _type not in ["grid", "spider", "rand"]:
@@ -23,31 +23,41 @@ class RandomMapBuilder:
         self._type = _type
         return self
 
-    def withNumberOfJunctions(self, junctions: int) -> Self:
+    def withNumberOfJunctions(self, junctions: int | float) -> Self:
+        if isinstance(junctions, float):
+            junctions = round(junctions)
         if not isinstance(junctions, int) or junctions <= 1:
             raise Exception("Invalid number of junctions. Was: " + str(junctions))
         self.junctions = junctions
         return self
 
-    def withNumberOfDivisions(self, divisions: int) -> Self:
+    def withNumberOfDivisions(self, divisions: int | float) -> Self:
+        if isinstance(divisions, float):
+            divisions = round(divisions)
         if not isinstance(divisions, int) or divisions <= 1:
             raise Exception("Invalid number of divisions. Was: " + str(divisions))
         self.divisions = divisions
         return self
 
-    def withBlockLength(self, block_length: float) -> Self:
+    def withBlockLength(self, block_length: int | float) -> Self:
+        if isinstance(block_length, int):
+            block_length = float(block_length)
         if not isinstance(block_length, float) or block_length <= 1:
             raise Exception("Invalid block length. Was: " + str(block_length))
         self.blockLength = block_length
         return self
     
-    def withDivisionLength(self, division_length: float) -> Self:
+    def withDivisionLength(self, division_length: int | float) -> Self:
+        if isinstance(division_length, int):
+            division_length = float(division_length)
         if not isinstance(division_length, float) or division_length <= 1:
             raise Exception("Invalid division length. Was: " + str(division_length))
         self.divisionLength = division_length
         return self
     
-    def withParkings(self, parkings: int) -> Self:
+    def withParkings(self, parkings: int | float) -> Self:
+        if isinstance(parkings, float):
+            parkings = round(parkings)
         if not isinstance(parkings, int) or parkings < 1:
             raise Exception("Invalid number of parking. Was: " + str(parkings))
         self.parkings = parkings
@@ -77,8 +87,7 @@ class RandomMapBuilder:
 
                 file.write(f"\t<parkingArea id=\"hub{i}\" lane=\"{lane_id}\" startPos=\"{start_pos}\" endPos=\"{end_pos}\" lines=\"3\" roadsideCapacity=\"3\"/>\n")
 
-                self.hubDistribution[f"hub{i}"] = 3
-                self.numberOfTricycles += 3
+                self.mapConfig.addHub(f"hub{i}", 3)
 
             file.write("</additional>\n")
         
@@ -101,24 +110,18 @@ class RandomMapBuilder:
             print("Network generated successfully.")
 
     def getNetworkFilePath(self) -> str:
-        script_dir = Path(__file__).resolve().parent
-        assets_dir = script_dir.parent / self.directoryName
-        net_file = assets_dir / self.networkFileName
-        return str(net_file)
+        return self.traciConfig.getNetworkFilePath()
     
     def getParkingFilePath(self) -> str:
-        script_dir = Path(__file__).resolve().parent
-        assets_dir = script_dir.parent / self.directoryName
-        parking_file = assets_dir / self.parkingFileName
-        return str(parking_file)
+        return self.traciConfig.getParkingFilePath()
     
     def getHubDistribution(self) -> dict:
-        return self.hubDistribution
+        return self.mapConfig.getHubDistribution()
     
     def getNumberOfTricycles(self) -> int:
-        return self.numberOfTricycles
+        return self.mapConfig.getNumberOfTricycles()
     
-    def build(self) -> None:
+    def build(self) -> MapConfig:
         if self._type == None or self._type not in ["grid", "spider", "rand"]:
             raise Exception("Invalid type. Was: " + type)
         
@@ -144,4 +147,6 @@ class RandomMapBuilder:
 
         self._generateAndExportMap(cmd)
         self._createParkingFile()
+
+        return self.mapConfig
         

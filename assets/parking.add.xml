@@ -1,0 +1,9 @@
+<additional>
+<vType id="trike" accel="0.8" decel="4.5" sigma="0.5" length="2.5" maxSpeed="10.0" guiShape="bicycle"/>
+<vType id="fatPed" vClass="pedestrian" guiShape="pedestrian" color="yellow" width="1" length="1"/>
+	<parkingArea id="hub0" lane="B1A1_1" startPos="5" endPos="23.09" lines="3" roadsideCapacity="3"/>
+	<parkingArea id="hub1" lane="B3A1_1" startPos="5" endPos="23.09" lines="3" roadsideCapacity="3"/>
+	<parkingArea id="hub2" lane="C3C2_1" startPos="5" endPos="25" lines="3" roadsideCapacity="3"/>
+	<parkingArea id="hub3" lane="D2D3_1" startPos="5" endPos="25" lines="3" roadsideCapacity="3"/>
+	<parkingArea id="hub4" lane="D1D2_1" startPos="5" endPos="25" lines="3" roadsideCapacity="3"/>
+</additional>

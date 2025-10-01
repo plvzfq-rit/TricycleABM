@@ -4,15 +4,15 @@ import random
 from pathlib import Path
 from model.passenger.Passenger import Passenger
 from model.location.Location import Location
+from model.traci_config.TraciConfig import TraciConfig
 
 class PassengerRepository:
-    def __init__(self) -> None:
+    def __init__(self, traci_config: TraciConfig) -> None:
         self.passengers = dict()
         self.activePassengers = dict()
         self.killedPassengers = dict()
         self.nextIndex = 0
-        self.directoryName = "maps"
-        self.networkFileName = "net.net.xml"
+        self.traciConfig = traci_config
         self.possibleSources = []
 
     def initializePossibleSources(self):
@@ -22,8 +22,7 @@ class PassengerRepository:
             self.possibleSources.append(edge)
 
     def generateRandomPassenger(self) -> Passenger:
-        directory = Path(__file__).resolve().parent.parent / self.directoryName 
-        network = sumolib.net.readNet(directory / self.networkFileName)
+        network = sumolib.net.readNet(self.traciConfig.getNetworkFilePath())
 
         # only pedestrian-allowed edges
         edges = [e for e in network.getEdges() if e.allows("pedestrian")]
