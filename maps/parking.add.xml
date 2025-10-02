@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2025-10-02 20:37:45 by Eclipse SUMO netedit Version 1.23.1
+<!-- generated on 2025-10-02 20:44:55 by Eclipse SUMO netedit Version 1.23.1
 -->
 
 <additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
     <!-- StoppingPlaces -->
-    <parkingArea id="hub0" lane="1065897746#0_2" startPos="5.00" endPos="20.00" roadsideCapacity="5" onRoad="1" lefthand="1"/>
+    <parkingArea id="hub0" lane="1065897746#0_3" startPos="5.00" endPos="20.00" roadsideCapacity="5" onRoad="1" lefthand="1"/>
     <parkingArea id="hub1" lane="156307482#0_1" startPos="5.00" endPos="50.00" roadsideCapacity="15" onRoad="1"/>
     <parkingArea id="hub2" lane="1064076178#0_0" startPos="0.00" endPos="15.00" roadsideCapacity="5" onRoad="1" lefthand="1"/>
     <parkingArea id="hub3" lane="492215391#0_0" startPos="15.34" endPos="30.34" roadsideCapacity="5" onRoad="1" lefthand="1"/>
@@ -15,4 +15,7 @@
     <parkingArea id="hub7" lane="25656027_1" startPos="34.00" endPos="64.00" roadsideCapacity="10" onRoad="1"/>
     <parkingArea id="hub8" lane="154835590#5_1" startPos="1.00" endPos="37.50" roadsideCapacity="15" onRoad="1" lefthand="1"/>
     <parkingArea id="hub9" lane="923242317#3_1" startPos="42.76" endPos="57.76" roadsideCapacity="5" onRoad="1"/>
+
+    <vType id="fatPed" vClass="pedestrian" color="yellow" width="1" length="1"/>
+    <vType id="trike" vClass="motorcycle" color="blue" width="1.5" length="2.5" maxSpeed="15"/>
 </additional>
