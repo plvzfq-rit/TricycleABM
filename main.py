@@ -17,7 +17,7 @@ map_builder = SpecificMapBuilder(map_config, traci_config, source_config, destin
 
 map_config = map_builder.build()
 
-duration = 1000
+duration = 1080
 
 traci_loop = TraciHandler(map_config=map_config, traci_config=traci_config, duration=duration)
 traci_loop.setPassengerBoundaries(2, 2)
