@@ -1,6 +1,7 @@
 import random
 import traci
 import uuid
+import sumolib
 
 from domain.location.Location import Location
 from domain.tricycle.Tricycle import Tricycle
@@ -64,7 +65,7 @@ class TricycleRepository:
         if tricycle_id in self.killedTricycles.keys():
             self.killedTricycles[tricycle_id].destination = destination
     
-    def assignPassengerToTricycle(self, tricycle_id: str, destination: Location) -> bool:
+    def assignPassengerToTricycle(self, tricycle_id: str, destination: Location, traci_config) -> bool:
         tricycle = self.tricycles[tricycle_id]
 
         hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
@@ -73,6 +74,11 @@ class TricycleRepository:
 
         if current_edge == dest_edge:
             print("Failed to assign.")
+            return False
+
+        net = sumolib.net.readNet(traci_config.getNetworkFilePath())
+        edge = net.getEdge(dest_edge)
+        if edge.getLaneNumber() <= 1:
             return False
 
         traci.vehicle.setParkingAreaStop(tricycle_id, self.tricycles[tricycle_id].hub, duration=0)

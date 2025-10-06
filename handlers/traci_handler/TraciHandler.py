@@ -24,6 +24,7 @@ class TraciHandler:
             "sumo-gui",
             "-n", self.networkFilePath,
             "-a", self.parkingFilePath,
+            "--lateral-resolution", "0.4"
         ])
         self.passengerRepository.initializePossibleSources()
 
@@ -46,7 +47,7 @@ class TraciHandler:
                 if active_passenger_location.isNear(active_tricycle_location) and self.tricycleRepository.isTricycleFree(active_tricycle.name) and self.passengerRepository.passengers[active_passenger_id].isAlive():
                     self.passengerRepository.killPassenger(active_passenger_id)
                     active_passenger_destination = self.passengerRepository.getPassengerDestination(active_passenger_id)
-                    success = self.tricycleRepository.assignPassengerToTricycle(active_tricycle.name, active_passenger_destination)
+                    success = self.tricycleRepository.assignPassengerToTricycle(active_tricycle.name, active_passenger_destination, self.traciConfig)
                     if success:
                         break
 

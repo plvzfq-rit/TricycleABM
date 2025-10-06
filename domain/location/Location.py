@@ -8,7 +8,7 @@ class Location:
             return False
         return self.location == value.location and self.position == value.position
     
-    def isNear(self, value: any, threshold: float = 10.0):
+    def isNear(self, value: any, threshold: float = 70.0):
         if type(self) != type(value):
             return False
         return self.location == value.location and abs(self.position - value.position) <= threshold
