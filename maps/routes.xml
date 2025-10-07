@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+<routes>
+
+  <vType id="car" vClass="passenger" color="red"/>
+  
+  <!-- Routes -->
+   <route id="RoxasBlvd_NS" edges="E70 E73 E93 -E235"/>
+   <route id="RoxasBlvd_NS_spawnPoint" edges="E70"/>
+   <route id="RoxasBlvd_SN" edges="E235 E91 E90 E89 E88 E87 E126 E127 E85 E69 E2"/>
+   <route id="RoxasBlvd_SN_spawnPoint" edges="E235"/>
+
+   <route id="TaftAve_NS" edges="E35 E39 E42 E105 E106 E96"/>
+   <route id="TaftAve_NS_spawnPoint" edges="E35"/>
+   <route id="TaftAve_SN" edges="E95 E97 E100 E101 E103 E43 E38"/>
+   <route id="TaftAve_SN_spawnPoint" edges="E95"/>
+
+   <route id="KalawAve_EW" edges="-E3 E15 E14 E13 E12 E8 E7 E6 E58 E57 E234"/>
+   <route id="KalawAve_EW_spawnPoint" edges="-E3"/>
+  <route id="KalawAve_WE" edges="-E234 E47 E48 E56 E59 E51 E52 E53 E54 E55 E45 E44 E37 E3"/>
+  <route id="KalawAve_WE_spawnPoint" edges="-E234"/>
+
+  <route id="PedroGil_WE" edges="E235 E189 E21 E22 E23 E24 E25 E26 E27 E28 E244"/>
+  <route id="PedroGil_WE_spawnPoint" edges="E235"/>
+
+  <route id="UNAve_EW" edges="-E107 E74 E75 E76 E77 E78 E79 E80 E81 E82 E187 E2"/>
+  <route id="UNAve_EW_spawnPoint" edges="-E107"/>
+  <route id="UNAve_WE" edges="-E236 E177 E176 -E175 E174 E183 E184 E185 E186 E118 E119 E120 E121 E122 E123 E124 E125 E107"/>
+  <route id="UNAve_WE_spawnPoint" edges="-E236"/>
+
+  <route id="PadreFaura_EW" edges="-E247 E104 E190 E191 E192 E193 E194 E195 -E174 E175 -E176 -E177 E236"/>
+  <route id="PadreFaura_EW_spawnPoint" edges="-E247"/> 
+
+  <route id="AMabini_SN" edges="-E236 E177 E176 -E175 E174 E183 E184 E138 E139 E134 E167 E130 E131 -E109 E65 E48 E56 E59 E51 E52 E53 E54 E55 E1"/>
+  <route id="AMabini_SN_spawnPoint" edges="-E236"/> 
+
+  <route id="DelPilar_NS" edges="-E234 E47 E48 E56 E60 E145 E146 E135 E133 E160 E203 E204 E205 E214 E215 E237"/>
+  <route id="DelPilar_NS_spawnPoint" edges="-E234"/> 
+
+  <route id="mostRoads" edges="E70 -E187 E118 E119 E66 E56 E60 E145 E146 E141 E110 E120 E145 E146 E141 E142 -E109 E119 E120 E121 E147 -E151 E146 E141 E110 E120 E121 E67 E51 E52 E53 E62 E76 E77 E61 E58 E60 E145 E151 E152 E113 E78 E147 E152 E153 E148 E156 E157 E163 E149 -E153 E150 E166 E170 E167 E130 E131 -E109 E119 E120 E145 E151 E152 E153 E148 E156 E157 E163 E165 E166 E160 E203 E208 E202 E161 E166 E170 E167 E130 E131 -E109 E119 E120 E145 E151 E152 E153 E148 E156 E157 E162 E191 E196 E197 -E213 E201 E202 E161 E166 E170 E167 E130 E131 -E109 E119 E120 E145 E151 E152 E153 E148 E156 E157 E162 E227 E228 E197 -E213 E201 E209 E197 -E213 -E212 E205 E214 -E217 E176 E211 E212 E201 E202 E193 E194 E195 -E174 E207 E204 E205 E216 E200 -E212 E205 E214 E215 E21 E199 E200 E213 E198 E23 E24 E25 E26 E27 E28 E97 E100 E101 E104 E154 E116 E125 E105 E104 E154 -E155 E157 E163 E149 -E153 E113 E123 E124 E63 E8 E7 E62 E76 E68 E53 E62 E115"/>
+  <route id="mostRoads_spawnPoint" edges="E70"/> 
+
+  <flow id="RoxasBlvd_NS_flow" type="car" route="RoxasBlvd_NS" begin="0" vehsPerHour="1200"/>
+  <flow id="RoxasBlvd_SN_flow" type="car" route="RoxasBlvd_SN" begin="0" vehsPerHour="1200"/>
+
+  <flow id="TaftAve_NS_flow" type="car" route="TaftAve_NS" begin="0" vehsPerHour="1000"/>
+  <flow id="TaftAve_SN_flow" type="car" route="TaftAve_SN" begin="0" vehsPerHour="1000"/>
+
+  <flow id="KalawAve_EW_flow" type="car" route="KalawAve_EW" begin="0" vehsPerHour="900"/>
+  <flow id="KalawAve_WE_flow" type="car" route="KalawAve_WE" begin="0" vehsPerHour="900"/>
+
+  <flow id="PedroGil_WE_flow" type="car" route="PedroGil_WE" begin="0" vehsPerHour="1200"/>
+
+  <flow id="UNAve_EW_flow" type="car" route="UNAve_EW" begin="0" vehsPerHour="1100"/>
+  <flow id="UNAve_WE_flow" type="car" route="UNAve_WE" begin="0" vehsPerHour="1100"/>
+
+  <flow id="PadreFaura_EW_flow" type="car" route="PadreFaura_EW" begin="0" vehsPerHour="800"/>
+
+  <flow id="AMabini_SN_flow" type="car" route="AMabini_SN" begin="0" vehsPerHour="1100"/>
+
+  <flow id="DelPilar_NS_flow" type="car" route="DelPilar_NS" begin="0" vehsPerHour="1400"/>
+
+  <flow id="mostRoads_NS_flow" type="car" route="mostRoads" begin="0" vehsPerHour="100"/>
+
+</routes>
