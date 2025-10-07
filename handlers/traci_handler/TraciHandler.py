@@ -11,6 +11,8 @@ class TraciHandler:
         self.tick = 0
         self.networkFilePath = traci_config.getNetworkFilePath()
         self.parkingFilePath = traci_config.getParkingFilePath()
+        self.decalFilePath = traci_config.getDecalFilePath()
+        self.routesFilePath = traci_config.getRoutesFilePath()
         self.passengerRepository = PassengerRepository(traci_config)
         self.tricycleRepository = TricycleRepository()
         self.LEAST_NUMBER_OF_PASSENGERS = 0
@@ -20,11 +22,13 @@ class TraciHandler:
         self.tricycleRepository.generateTricycles(map_config.getNumberOfTricycles(), duration, map_config.getHubDistribution())
 
     def startTraci(self) -> None:
+        additionalFiles = f"{self.parkingFilePath},{self.decalFilePath}"
         traci.start([
             "sumo-gui",
             "-n", self.networkFilePath,
-            "-a", self.parkingFilePath,
-            "--lateral-resolution", "0.4"
+            "-r", self.routesFilePath,
+            "-a", additionalFiles,
+            "--lateral-resolution", "2.0"
         ])
         self.passengerRepository.initializePossibleSources()
 
