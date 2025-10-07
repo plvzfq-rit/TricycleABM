@@ -73,7 +73,7 @@ class TricycleRepository:
         current_edge = traci.vehicle.getRoadID(tricycle_id)
 
         if current_edge == dest_edge:
-            print("Failed to assign.")
+            #print("Failed to assign.")
             return False
 
         net = sumolib.net.readNet(traci_config.getNetworkFilePath())
