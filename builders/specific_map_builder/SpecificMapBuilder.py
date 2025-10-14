@@ -6,7 +6,7 @@ from config.source_config.SourceConfig import SourceConfig
 import xml.etree.ElementTree as ET
 
 import shutil
-import sumolib
+import os
 
 class SpecificMapBuilder:
     def __init__(self, map_config:MapConfig = MapConfig(), 
@@ -27,13 +27,16 @@ class SpecificMapBuilder:
                 self.mapConfig.addHub(pa.get("id"), int(pa.get("roadsideCapacity")))
 
     def build(self) -> MapConfig:
-        source_network_file = self.sourceConfig.getSourceNetworkFilePath()
-        destination_network_file = self.destinationConfig.getDestinationNetworkFilePath()
-        shutil.copyfile(source_network_file, destination_network_file)
+        destination_directory = self.destinationConfig.getDestinationDirectory()
+        for file in os.listdir(destination_directory):
+            filepath = os.path.join(destination_directory, file)
+            os.remove(filepath)
 
-        source_parking_file = self.sourceConfig.getSourceParkingFilePath()
-        destination_parking_file = self.destinationConfig.getDestinationParkingFilePath()
-        shutil.copyfile(source_parking_file, destination_parking_file)
+        source_directory = self.sourceConfig.getSourceDirectory()
+        for file in os.listdir(source_directory):
+            source_file_path = os.path.join(source_directory, file)
+            destination_file_path = os.path.join(destination_directory, file)
+            shutil.copyfile(source_file_path, destination_file_path)
 
         self._constructMapConfig()
         return self.mapConfig

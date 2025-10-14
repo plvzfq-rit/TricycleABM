@@ -2,7 +2,6 @@ import traci
 import random
 from repositories.passenger_repository.PassengerRepository import PassengerRepository
 from repositories.tricycle_repository.TricycleRepository import TricycleRepository
-from domain.tricycle.TricycleState import TricycleState
 from config.map_config.MapConfig import MapConfig
 from config.traci_config.TraciConfig import TraciConfig
 
