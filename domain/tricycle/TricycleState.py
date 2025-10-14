@@ -7,3 +7,6 @@ class TricycleState(Enum):
     GOING_TO_REFUEL = 3
     REFUELLING = 4
     RETURNING_TO_TODA = 5
+    DEAD = 6
+    TO_SPAWN = 7
+    PARKED = 8
