@@ -93,7 +93,7 @@ class TricycleRepository:
 
         traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=1, pos=destination.position, duration=10)
 
-        self.setTricycleStatus(tricycle_id, TricycleState.BUSY)
+        self.setTricycleStatus(tricycle_id, TricycleState.HAS_PASSENGER)
         self.setTricycleDestination(tricycle_id, destination)
 
         return True
@@ -116,7 +116,7 @@ class TricycleRepository:
             elif tricycle.endTime == current_tick and tricycle.status == TricycleState.FREE:
                 traci.vehicle.remove(tricycle.name)
                 self.killTricycle(tricycle.name)
-            elif tricycle.status == TricycleState.BUSY and self.hasTricycleArrived(tricycle.name):
+            elif tricycle.status == TricycleState.HAS_PASSENGER and self.hasTricycleArrived(tricycle.name):
                 hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
                 # traci.vehicle.changeTarget(tricycle.name, hub_edge)
                 traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)

@@ -2,4 +2,4 @@ from enum import Enum
 
 class TricycleState(Enum):
     FREE = 0
-    BUSY = 1
+    HAS_PASSENGER = 1
