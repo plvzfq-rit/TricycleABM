@@ -24,7 +24,14 @@ class TricycleRepository:
             trike_name = "trike" + str(i)
             start_time = random.randint(0, simulation_duration // 2)
             end_time = random.randint(start_time, simulation_duration)
-            tricycle = Tricycle(trike_name, hubs.pop(), start_time, end_time)
+            lower_max_gas = 50.0
+            upper_max_gas = 52.0
+            max_gas = lower_max_gas + (upper_max_gas - lower_max_gas) * random.random()
+            lower_gas_consumption = 23.0
+            upper_gas_consumption = 25.0
+            gas_consumption = lower_gas_consumption + (upper_gas_consumption - lower_gas_consumption) * random.random()
+            gas_threshold = max_gas * random.random()
+            tricycle = Tricycle(trike_name, hubs.pop(), start_time, end_time, max_gas, gas_consumption, gas_threshold)
             self.tricycles[trike_name] = tricycle
 
         for _ in self.tricycles.values():
