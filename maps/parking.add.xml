@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2025-10-06 21:56:46 by Eclipse SUMO netedit Version 1.23.1
+<!-- generated on 2025-10-07 12:17:40 by Eclipse SUMO netedit Version 1.23.1
 -->
 
 <additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
     <!-- StoppingPlaces -->
+    <parkingArea id="gas0" lane="E56_0" startPos="13.42" endPos="23.42" friendlyPos="1" roadsideCapacity="5" onRoad="1"/>
+    <parkingArea id="gas1" lane="E28_0" startPos="49.25" endPos="59.25" friendlyPos="1" roadsideCapacity="5" onRoad="1"/>
+    <parkingArea id="gas2" lane="E106_0" startPos="427.43" endPos="437.43" friendlyPos="1" roadsideCapacity="5" onRoad="1"/>
     <parkingArea id="hub0" lane="E196_1" startPos="1.12" endPos="11.12" roadsideCapacity="5" onRoad="1"/>
     <parkingArea id="hub1" lane="E154_1" startPos="1.48" endPos="31.48" roadsideCapacity="15" onRoad="1"/>
     <parkingArea id="hub2" lane="E74_1" startPos="2.72" endPos="12.72" roadsideCapacity="5" onRoad="1"/>
@@ -16,7 +19,7 @@
     <parkingArea id="hub8" lane="E23_1" startPos="47.71" endPos="67.71" friendlyPos="1" roadsideCapacity="10" onRoad="1"/>
 
     <vType id="fatPed" vClass="pedestrian" color="yellow" width="1" length="1"/>
-    <vType id="trike" vClass="motorcycle" color="blue" width="1.5" length="2.5" maxSpeed="180"  laneChangeModel="SL2015"
+    <vType id="trike" vClass="motorcycle" color="blue" width="1.5" length="2.5" maxSpeed="15"  laneChangeModel="SL2015"
        maxSpeedLat="0.8"
        minGapLat="0.2"
        latAlignment="right"
