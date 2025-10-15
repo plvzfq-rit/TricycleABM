@@ -73,7 +73,7 @@ class TricycleRepository:
             #print("Failed to assign.")
             return False
 
-        net = sumolib.net.readNet(traci_config.getNetworkFilePath())
+        net = SumoService.getNetwork(traci_config.getNetworkFilePath())
         edge = net.getEdge(dest_edge)
         if edge.getLaneNumber() <= 1:
             return False
