@@ -1,17 +1,18 @@
-from builders.SpecificMapBuilder import SpecificMapBuilder
-from builders.RandomMapBuilder import RandomMapBuilder
+from application.SpecificMapBuilder import SpecificMapBuilder
+from application.RandomMapBuilder import RandomMapBuilder
 from handlers.TraciHandler import TraciHandler
 from config.TraciConfig import TraciConfig
-from domain.MapConfig import MapDescriptor
-from config.SourceConfig import SourceConfig
-from config.DestinationConfig import DestinationConfig
+
+from infrastructure.ParkingAreaParser import ParkingAreaParser
+from infrastructure.FileSystemDescriptor import FileSystemDescriptor
+from infrastructure.FileSyncService import FileSyncService
 
 traci_config = TraciConfig()
-map_config = MapDescriptor()
-source_config = SourceConfig()
-destination_config = DestinationConfig()
+file_system_descriptor = FileSystemDescriptor()
+parking_area_parser = ParkingAreaParser()
+file_sync_service = FileSyncService()
 
-map_builder = SpecificMapBuilder(map_config, traci_config, source_config, destination_config)
+map_builder = SpecificMapBuilder(traci_config, file_system_descriptor, parking_area_parser, file_sync_service)
 #map_builder = RandomMapBuilder().withType("spider").withParkings(5).withNumberOfDivisions(3).withNumberOfJunctions(3).withBlockLength(50).withDivisionLength(30)
 
 
