@@ -1,15 +1,15 @@
 from domain.MapDescriptor import MapDescriptor
-from config.TraciConfig import TraciConfig
+from config.SimulationConfig import SimulationConfig
 from infrastructure.ParkingAreaParser import ParkingAreaParser
 from infrastructure.FileSystemDescriptor import FileSystemDescriptor
 from infrastructure.FileSyncService import FileSyncService
 
 class SpecificMapBuilder:
-    def __init__(self, traci_config:TraciConfig | None, 
+    def __init__(self, traci_config:SimulationConfig | None, 
                 file_system_descriptor: FileSystemDescriptor | None,
                 parking_area_parser: ParkingAreaParser | None,
                 file_sync_service: FileSyncService | None) -> None:
-        self.traciConfig = traci_config or TraciConfig()
+        self.traciConfig = traci_config or SimulationConfig()
         self.fileSystemDescriptor = file_system_descriptor or FileSystemDescriptor()
         self.parkingAreaParser = parking_area_parser or ParkingAreaParser()
         self.fileSyncService = file_sync_service or FileSyncService()

@@ -3,11 +3,11 @@ import random
 from pathlib import Path
 from domain.Passenger import Passenger
 from domain.Location import Location
-from config.TraciConfig import TraciConfig
+from config.SimulationConfig import SimulationConfig
 from infrastructure.SumoService import SumoService
 
 class PassengerRepository:
-    def __init__(self, traci_config: TraciConfig) -> None:
+    def __init__(self, traci_config: SimulationConfig) -> None:
         self.passengers = dict()
         self.activePassengers = dict()
         self.killedPassengers = dict()

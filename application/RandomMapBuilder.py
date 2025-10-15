@@ -1,14 +1,14 @@
 import random
 from pathlib import Path
 from typing import Self
-from config.TraciConfig import TraciConfig
+from config.SimulationConfig import SimulationConfig
 from domain.MapDescriptor import MapDescriptor
 from infrastructure.SumoService import SumoService
 from infrastructure.MapGenerator import MapGenerator
 from infrastructure.ParkingFileGenerator import ParkingFileGenerator
 
 class RandomMapBuilder:
-    def __init__(self, traci_config: TraciConfig):
+    def __init__(self, traci_config: SimulationConfig):
         self._type = "spider"
         self.junctions = 3
         self.divisions = 3

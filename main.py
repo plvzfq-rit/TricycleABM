@@ -1,13 +1,13 @@
 from application.SpecificMapBuilder import SpecificMapBuilder
 from application.RandomMapBuilder import RandomMapBuilder
 from handlers.TraciHandler import TraciHandler
-from config.TraciConfig import TraciConfig
+from config.SimulationConfig import SimulationConfig
 
 from infrastructure.ParkingAreaParser import ParkingAreaParser
 from infrastructure.FileSystemDescriptor import FileSystemDescriptor
 from infrastructure.FileSyncService import FileSyncService
 
-traci_config = TraciConfig()
+traci_config = SimulationConfig()
 file_system_descriptor = FileSystemDescriptor()
 parking_area_parser = ParkingAreaParser()
 file_sync_service = FileSyncService()

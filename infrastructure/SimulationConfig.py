@@ -1,13 +1,19 @@
 from pathlib import Path
 
-class TraciConfig:
-    assetDirectoryName = "assets"
-    networkFileName = "net.net.xml"
-    parkingFileName = "parking.add.xml"
-    decalFileName = "map.xml"
-    gasPricePerLiter = 50.00
+class SimulationConfig:
+    DEFAULT_ASSET_DIRECTORY_NAME = "assets"
+    DEFAULT_NETWORK_FILE_NAME = "net.net.xml"
+    DEFAULT_PARKING_FILE_NAME = "parking.add.xml"
+    DEFAULT_DECAL_FILE_NAME = "map.xml"
+    DEFAULT_ROUTE_FILE_NAME = "routes.xml"
+    DEFAULT_GAS_PRICE_PER_LITER = 50.00
 
-    def __init__(self, assetDirectoryName: str="assets", networkFileName: str="net.net.xml", parkingFileName: str="parking.add.xml", decalFileName: str = "map.xml", routesFileName:str ="routes.xml", gasPricePerLiter=50.00) -> None:
+    def __init__(self, assetDirectoryName: str=DEFAULT_ASSET_DIRECTORY_NAME, 
+                networkFileName: str=DEFAULT_NETWORK_FILE_NAME, 
+                parkingFileName: str=DEFAULT_PARKING_FILE_NAME, 
+                decalFileName: str = DEFAULT_DECAL_FILE_NAME, 
+                routesFileName:str =DEFAULT_ROUTE_FILE_NAME, 
+                gasPricePerLiter=DEFAULT_GAS_PRICE_PER_LITER) -> None:
         self.assetDirectoryName = assetDirectoryName
         self.networkFileName = networkFileName
         self.parkingFileName = parkingFileName

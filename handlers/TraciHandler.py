@@ -2,11 +2,11 @@ import traci
 import random
 from repositories.PassengerRepository import PassengerRepository
 from repositories.TricycleRepository import TricycleRepository
-from domain.MapConfig import MapDescriptor
-from config.TraciConfig import TraciConfig
+from domain.MapDescriptor import MapDescriptor
+from config.SimulationConfig import SimulationConfig
 
 class TraciHandler:
-    def __init__(self, map_config: MapDescriptor, traci_config: TraciConfig, duration: int) -> None:
+    def __init__(self, map_config: MapDescriptor, traci_config: SimulationConfig, duration: int) -> None:
         self.tick = 0
         self.networkFilePath = traci_config.getNetworkFilePath()
         self.parkingFilePath = traci_config.getParkingFilePath()
