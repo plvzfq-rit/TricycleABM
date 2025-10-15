@@ -38,25 +38,25 @@ class TricycleRepository:
 
 
     def killTricycle(self, tricycle_id: str) -> None:
-        self.setTricycleStatus(tricycle_id, TricycleState.DEAD)
+        self.setTricycleState(tricycle_id, TricycleState.DEAD)
 
     def activateTricycle(self, tricycle_id: str) -> None:
-        self.tricycles[tricycle_id].status = TricycleState.FREE
+        self.tricycles[tricycle_id].state = TricycleState.FREE
 
     def getTricycles(self) -> list[Tricycle]:
         return list(self.tricycles.values())
     
     def getActiveTricycles(self) -> list[Tricycle]:
-        return set([tricycle for tricycle in self.tricycles.values() if tricycle.status not in [TricycleState.DEAD, TricycleState.TO_SPAWN]])
+        return set([tricycle for tricycle in self.tricycles.values() if tricycle.state not in [TricycleState.DEAD, TricycleState.TO_SPAWN]])
     
     def getTricycleLocation(self, tricycle_id: str) -> Location:
         current_edge = traci.vehicle.getRoadID(tricycle_id)
         current_position = traci.vehicle.getLanePosition(tricycle_id)
         return Location(current_edge, current_position)
     
-    def setTricycleStatus(self, tricycle_id: str, status: TricycleState) -> None:
+    def setTricycleState(self, tricycle_id: str, state: TricycleState) -> None:
         if tricycle_id in self.tricycles.keys():
-            self.tricycles[tricycle_id].status = status
+            self.tricycles[tricycle_id].state = state
 
     def setTricycleDestination(self, tricycle_id: str, destination: Location) -> None:
         if tricycle_id in self.tricycles.keys():
@@ -89,7 +89,7 @@ class TricycleRepository:
 
         traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=1, pos=destination.position, duration=10)
 
-        self.setTricycleStatus(tricycle_id, TricycleState.HAS_PASSENGER)
+        self.setTricycleState(tricycle_id, TricycleState.HAS_PASSENGER)
         self.setTricycleDestination(tricycle_id, destination)
 
         return True
@@ -98,11 +98,11 @@ class TricycleRepository:
         return self.tricycles[tricycle_id].hasArrived()
     
     def isTricycleFree(self, tricycle_id: str) -> bool:
-        return self.tricycles[tricycle_id].status == TricycleState.FREE
+        return self.tricycles[tricycle_id].state == TricycleState.FREE
     
     def toggleTricycles(self, current_tick: int) -> None:
         for tricycle in self.getTricycles():
-            if tricycle.startTime == current_tick and tricycle.status == TricycleState.TO_SPAWN:
+            if tricycle.startTime == current_tick and tricycle.state == TricycleState.TO_SPAWN:
                 hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
                 route_id = f"route_{tricycle.name}"
                 traci.route.add(route_id, [hub_edge])
@@ -111,19 +111,19 @@ class TricycleRepository:
                 self.activateTricycle(tricycle.name)
 
 
-            elif tricycle.endTime == current_tick and tricycle.status == TricycleState.FREE:
+            elif tricycle.endTime == current_tick and tricycle.state == TricycleState.FREE:
                 traci.vehicle.remove(tricycle.name)
                 self.killTricycle(tricycle.name)
-            elif tricycle.status == TricycleState.HAS_PASSENGER and self.hasTricycleArrived(tricycle.name):
+            elif tricycle.state == TricycleState.HAS_PASSENGER and self.hasTricycleArrived(tricycle.name):
                 hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
                 # traci.vehicle.changeTarget(tricycle.name, hub_edge)
                 traci.vehicle.setParkingAreaStop(tricycle.name, tricycle.hub, duration=99999)
                 self.setTricycleDestination(tricycle.name, None)
-                self.setTricycleStatus(tricycle.name, TricycleState.FREE)
+                self.setTricycleState(tricycle.name, TricycleState.FREE)
 
     def syncTricycles(self) -> None:
         current_tricycles = set([tricycle_id for tricycle_id in list(traci.vehicle.getIDList()) if tricycle_id.startswith('trike')])
-        tricycles_in_memory = set([tricycle_id for tricycle_id in self.tricycles.keys() if self.tricycles[tricycle_id].status not in [TricycleState.DEAD, TricycleState.TO_SPAWN]])
+        tricycles_in_memory = set([tricycle_id for tricycle_id in self.tricycles.keys() if self.tricycles[tricycle_id].state not in [TricycleState.DEAD, TricycleState.TO_SPAWN]])
         tricycles_to_kill = current_tricycles - tricycles_in_memory
         for tricycle_id in tricycles_to_kill:
             self.killTricycle(tricycle_id)
@@ -133,7 +133,7 @@ class TricycleRepository:
             current_location = Location(current_edge, current_position)
 
             if current_edge == '':
-                self.setTricycleStatus(tricycle_id, TricycleState.PARKED)
+                self.setTricycleState(tricycle_id, TricycleState.PARKED)
                 self.tricycles[tricycle_id].lastLocation = current_location
             else:
                 has_consumed = self.simulateConsumption(tricycle_id, current_location)

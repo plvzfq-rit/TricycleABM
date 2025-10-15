@@ -8,7 +8,7 @@ class Tricycle:
         self.hub = hub
         self.startTime = start_time
         self.endTime = end_time
-        self.status = TricycleState.TO_SPAWN
+        self.state = TricycleState.TO_SPAWN
         self.destination = None
         self.lastLocation = None
         self.maxGas = max_gas
