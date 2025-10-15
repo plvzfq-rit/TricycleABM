@@ -5,6 +5,6 @@ class DestinationConfig:
         self.destinationDirectoryName = destination_directory_name
 
     def getDestinationDirectory(self) -> str:
-        script_dir = Path(__file__).resolve().parent.parent.parent
+        script_dir = Path(__file__).resolve().parent.parent
         destination_dir = script_dir / self.destinationDirectoryName
         return destination_dir

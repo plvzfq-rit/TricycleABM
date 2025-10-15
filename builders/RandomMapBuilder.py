@@ -3,8 +3,8 @@ import random
 import sumolib
 from pathlib import Path
 from typing import Self
-from config.traci_config.TraciConfig import TraciConfig
-from config.map_config.MapConfig import MapConfig
+from config.TraciConfig import TraciConfig
+from config.MapConfig import MapConfig
 
 class RandomMapBuilder:
     def __init__(self):

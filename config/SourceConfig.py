@@ -7,7 +7,7 @@ class SourceConfig:
         self.parkingFileName = parking_file_name
 
     def getSourceDirectory(self) -> str:
-        script_dir = Path(__file__).resolve().parent.parent.parent
+        script_dir = Path(__file__).resolve().parent.parent
         source_dir = script_dir / self.sourceDirectoryName
         return source_dir
     

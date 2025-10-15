@@ -1,7 +1,7 @@
-from config.map_config.MapConfig import MapConfig
-from config.traci_config.TraciConfig import TraciConfig
-from config.destination_config.DestinationConfig import DestinationConfig
-from config.source_config.SourceConfig import SourceConfig
+from config.MapConfig import MapConfig
+from config.TraciConfig import TraciConfig
+from config.DestinationConfig import DestinationConfig
+from config.SourceConfig import SourceConfig
 
 import xml.etree.ElementTree as ET
 

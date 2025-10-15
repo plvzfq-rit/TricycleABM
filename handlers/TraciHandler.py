@@ -1,9 +1,9 @@
 import traci
 import random
-from repositories.passenger_repository.PassengerRepository import PassengerRepository
-from repositories.tricycle_repository.TricycleRepository import TricycleRepository
-from config.map_config.MapConfig import MapConfig
-from config.traci_config.TraciConfig import TraciConfig
+from repositories.PassengerRepository import PassengerRepository
+from repositories.TricycleRepository import TricycleRepository
+from config.MapConfig import MapConfig
+from config.TraciConfig import TraciConfig
 
 class TraciHandler:
     def __init__(self, map_config: MapConfig, traci_config: TraciConfig, duration: int) -> None:

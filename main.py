@@ -1,10 +1,10 @@
-from builders.specific_map_builder.SpecificMapBuilder import SpecificMapBuilder
-from builders.random_map_builder.RandomMapBuilder import RandomMapBuilder
-from handlers.traci_handler.TraciHandler import TraciHandler
-from config.traci_config.TraciConfig import TraciConfig
-from config.map_config.MapConfig import MapConfig
-from config.source_config.SourceConfig import SourceConfig
-from config.destination_config.DestinationConfig import DestinationConfig
+from builders.SpecificMapBuilder import SpecificMapBuilder
+from builders.RandomMapBuilder import RandomMapBuilder
+from handlers.TraciHandler import TraciHandler
+from config.TraciConfig import TraciConfig
+from config.MapConfig import MapConfig
+from config.SourceConfig import SourceConfig
+from config.DestinationConfig import DestinationConfig
 
 traci_config = TraciConfig()
 map_config = MapConfig()
