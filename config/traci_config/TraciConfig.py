@@ -5,13 +5,15 @@ class TraciConfig:
     networkFileName = "net.net.xml"
     parkingFileName = "parking.add.xml"
     decalFileName = "map.xml"
+    gasPricePerLiter = 50.00
 
-    def __init__(self, assetDirectoryName: str="assets", networkFileName: str="net.net.xml", parkingFileName: str="parking.add.xml", decalFileName: str = "map.xml", routesFileName:str ="routes.xml") -> None:
+    def __init__(self, assetDirectoryName: str="assets", networkFileName: str="net.net.xml", parkingFileName: str="parking.add.xml", decalFileName: str = "map.xml", routesFileName:str ="routes.xml", gasPricePerLiter=50.00) -> None:
         self.assetDirectoryName = assetDirectoryName
         self.networkFileName = networkFileName
         self.parkingFileName = parkingFileName
         self.decalFileName = decalFileName
         self.routesFileName = routesFileName
+        self.gasPricePerLiter = gasPricePerLiter
 
     def getAssetDirectoryName(self) -> str:
         return self.directoryName
@@ -44,6 +46,9 @@ class TraciConfig:
     
     def getRoutesFilePath(self) -> str:
         return str(self.getAssetDirectory() / self.routesFileName)
+    
+    def getGasPricePerLiter(self) -> float:
+        return float(self.gasPricePerLiter)
     
     def setAssetDirectoryName(self, assetDirectoryName: str) -> None:
         if not assetDirectoryName.strip():
