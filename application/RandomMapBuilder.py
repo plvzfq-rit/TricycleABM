@@ -3,19 +3,22 @@ from pathlib import Path
 from typing import Self
 from infrastructure.SimulationConfig import SimulationConfig
 from domain.MapDescriptor import MapDescriptor
-from infrastructure.SumoService import SumoService
 from infrastructure.MapGenerator import MapGenerator
 from infrastructure.ParkingFileGenerator import ParkingFileGenerator
 
 class RandomMapBuilder:
-    def __init__(self, traci_config: SimulationConfig):
+    def __init__(self, simulation_config: SimulationConfig | None, 
+                parking_file_generator: ParkingFileGenerator | None,
+                map_generator: MapGenerator | None):
         self._type = "spider"
         self.junctions = 3
         self.divisions = 3
         self.parkings = 5
         self.blockLength = 50.00
         self.divisionLength = 30.00
-        self.traciConfig = traci_config
+        self.simulationConfig = simulation_config or SimulationConfig()
+        self.parkingFileGenerator = parking_file_generator or ParkingFileGenerator()
+        self.mapGenerator = map_generator or MapGenerator()
 
     def ofType(self, _type: str) -> Self:
         if _type not in ["grid", "spider", "rand"]:
@@ -64,5 +67,5 @@ class RandomMapBuilder:
         return self
 
     def build(self) -> MapDescriptor:
-        MapGenerator.generate(self._type, self.junctions, self.divisions, self.blockLength, self.divisionLength, self.traciConfig.getAssetDirectory(), self.traciConfig.getNetworkFilePath())
-        return ParkingFileGenerator.createParkingFile(self.traciConfig.getNetworkFilePath(), self.traciConfig.getParkingFilePath(), self.parkings)
+        self.mapGenerator.generate(self._type, self.junctions, self.divisions, self.blockLength, self.divisionLength, self.simulationConfig.getAssetDirectory(), self.simulationConfig.getNetworkFilePath())
+        return self.parkingFileGenerator.createParkingFile(self.simulationConfig.getNetworkFilePath(), self.simulationConfig.getParkingFilePath(), self.parkings)

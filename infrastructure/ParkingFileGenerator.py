@@ -2,9 +2,12 @@ import random
 from domain.MapDescriptor import MapDescriptor
 from infrastructure.SumoService import SumoService
 class ParkingFileGenerator:
-    def createParkingFile(network_file_path:str, parking_file_path: str, number_of_parking: int) -> MapDescriptor:
+    def __init__(self, sumo_service: SumoService | None):
+        self.sumoService = sumo_service or SumoService()
+
+    def createParkingFile(self, network_file_path:str, parking_file_path: str, number_of_parking: int) -> MapDescriptor:
         map_descriptor = MapDescriptor()
-        network = SumoService.getNetwork(network_file_path)
+        network = self.sumoService.getNetwork(network_file_path)
         output_file = parking_file_path
 
         edges = list(network.getEdges())

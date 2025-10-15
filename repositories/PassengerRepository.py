@@ -5,27 +5,24 @@ from domain.Passenger import Passenger
 from domain.Location import Location
 from infrastructure.SimulationConfig import SimulationConfig
 from infrastructure.SumoService import SumoService
+from infrastructure.TraciService import TraciService
 
 class PassengerRepository:
-    def __init__(self, traci_config: SimulationConfig) -> None:
+    def __init__(self, simulation_config: SimulationConfig | None, 
+                sumo_service: SumoService | None, 
+                traci_service: TraciService | None) -> None:
         self.passengers = dict()
         self.activePassengers = dict()
         self.killedPassengers = dict()
         self.nextIndex = 0
-        self.traciConfig = traci_config
-        self.possibleSources = []
-
-    def initializePossibleSources(self):
-        hub_ids = traci.parkingarea.getIDList()
-        for hub_id in hub_ids:
-            edge = traci.parkingarea.getLaneID(hub_id).split("_")[0]
-            self.possibleSources.append(edge)
+        self.simulationConfig = simulation_config or SimulationConfig()
+        self.sumoService = sumo_service or SumoService()
+        self.traciService = traci_service or TraciService()
+        self.possibleSources = self.traciService.getListOfHubIds()
 
     def generateRandomPassenger(self) -> Passenger:
-        network = SumoService.getNetwork(self.traciConfig.getNetworkFilePath())
-
         # only pedestrian-allowed edges
-        edges = [e for e in network.getEdges() if e.allows("pedestrian")]
+        edges = self.sumoService.getNetworkPedestrianEdges()
 
         # pick start and destination
         starting_edge = random.choice(self.possibleSources)

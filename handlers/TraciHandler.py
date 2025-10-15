@@ -6,26 +6,22 @@ from domain.MapDescriptor import MapDescriptor
 from infrastructure.SimulationConfig import SimulationConfig
 
 class TraciHandler:
-    def __init__(self, map_config: MapDescriptor, traci_config: SimulationConfig, duration: int) -> None:
+    def __init__(self, map_descriptor: MapDescriptor, simulation_config: SimulationConfig, duration: int) -> None:
         self.tick = 0
-        self.networkFilePath = traci_config.getNetworkFilePath()
-        self.parkingFilePath = traci_config.getParkingFilePath()
-        self.decalFilePath = traci_config.getDecalFilePath()
-        self.routesFilePath = traci_config.getRoutesFilePath()
-        self.passengerRepository = PassengerRepository(traci_config)
+        self.passengerRepository = PassengerRepository(simulation_config)
         self.tricycleRepository = TricycleRepository()
         self.LEAST_NUMBER_OF_PASSENGERS = 0
         self.MOST_NUMBER_OF_PASSENGERS = 5
-        self.mapConfig = map_config
-        self.traciConfig = traci_config
-        self.tricycleRepository.generateTricycles(map_config.getNumberOfTricycles(), duration, map_config.getHubDistribution())
+        self.mapConfig = map_descriptor
+        self.simulationConfig = simulation_config
+        self.tricycleRepository.generateTricycles(map_descriptor.getNumberOfTricycles(), duration, map_descriptor.getHubDistribution())
 
     def startTraci(self) -> None:
-        additionalFiles = f"{self.parkingFilePath},{self.decalFilePath}"
+        additionalFiles = f"{self.simulationConfig.getParkingFilePath()},{self.simulationConfig.getDecalFilePath()}"
         traci.start([
             "sumo-gui",
-            "-n", self.networkFilePath,
-            "-r", self.routesFilePath,
+            "-n", self.simulationConfig.getNetworkFilePath(),
+            "-r", self.simulationConfig.getRoutesFilePath(),
             "-a", additionalFiles,
             "--lateral-resolution", "2.0"
         ])
