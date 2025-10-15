@@ -18,7 +18,7 @@ class RandomMapBuilder:
         self.mapConfig = MapConfig()
 
     def withType(self, _type: str) -> Self:
-        if _type not in ["grid", "spider", "rand", "final"]:
+        if _type not in ["grid", "spider", "rand"]:
             raise Exception("Invalid type. Was: " + _type)
         self._type = _type
         return self
