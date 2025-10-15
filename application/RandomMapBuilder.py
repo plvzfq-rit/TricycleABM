@@ -8,16 +8,16 @@ from infrastructure.MapGenerator import MapGenerator
 from infrastructure.ParkingFileGenerator import ParkingFileGenerator
 
 class RandomMapBuilder:
-    def __init__(self):
+    def __init__(self, traci_config: TraciConfig):
         self._type = "spider"
         self.junctions = 3
         self.divisions = 3
         self.parkings = 5
         self.blockLength = 50.00
         self.divisionLength = 30.00
-        self.traciConfig = TraciConfig()
+        self.traciConfig = traci_config
 
-    def withType(self, _type: str) -> Self:
+    def ofType(self, _type: str) -> Self:
         if _type not in ["grid", "spider", "rand"]:
             raise Exception("Invalid type. Was: " + _type)
         self._type = _type
@@ -64,5 +64,5 @@ class RandomMapBuilder:
         return self
 
     def build(self) -> MapDescriptor:
-        MapGenerator.generate(self._type, self.junctions, self.divisions, self.blockLength, self.divisionLength, self.traciConfig.getAssetDirectory, self.traciConfig.getNetworkFilePath)
+        MapGenerator.generate(self._type, self.junctions, self.divisions, self.blockLength, self.divisionLength, self.traciConfig.getAssetDirectory(), self.traciConfig.getNetworkFilePath())
         return ParkingFileGenerator.createParkingFile(self.traciConfig.getNetworkFilePath(), self.traciConfig.getParkingFilePath(), self.parkings)
