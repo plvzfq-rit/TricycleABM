@@ -3,9 +3,9 @@ import traci
 import uuid
 import sumolib
 
-from domain.location.Location import Location
-from domain.tricycle.Tricycle import Tricycle
-from domain.tricycle.TricycleState import TricycleState
+from domain.Location import Location
+from domain.Tricycle import Tricycle
+from domain.TricycleState import TricycleState
 
 class TricycleRepository:
     def __init__(self):

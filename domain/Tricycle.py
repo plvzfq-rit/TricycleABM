@@ -1,6 +1,6 @@
 import traci
-from domain.tricycle.TricycleState import TricycleState
-from domain.location.Location import Location
+from domain.TricycleState import TricycleState
+from domain.Location import Location
 
 class Tricycle:
     def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float) -> None:

@@ -1,5 +1,5 @@
 import random
-from domain.tricycle.Tricycle import Tricycle
+from domain.Tricycle import Tricycle
 
 class TricycleFactory:
     LOWER_MAX_GAS = 50.0
