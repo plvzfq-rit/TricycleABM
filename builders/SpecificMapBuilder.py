@@ -1,7 +1,8 @@
-from domain.MapConfig import MapDescriptor
+from domain.MapDescriptor import MapDescriptor
 from config.TraciConfig import TraciConfig
 from config.DestinationConfig import DestinationConfig
 from config.SourceConfig import SourceConfig
+from infrastructure.ParkingAreaParser import ParkingAreaParser
 
 import xml.etree.ElementTree as ET
 
@@ -18,14 +19,6 @@ class SpecificMapBuilder:
         self.sourceConfig = source_config
         self.destinationConfig = destination_config
 
-    def _constructMapConfig(self):
-        tree = ET.parse(self.sourceConfig.getSourceParkingFilePath())
-        root = tree.getroot()
-
-        for pa in root.findall("parkingArea"):
-            if pa.get("id").startswith("hub"):
-                self.mapConfig.addHub(pa.get("id"), int(pa.get("roadsideCapacity")))
-
     def build(self) -> MapDescriptor:
         destination_directory = self.destinationConfig.getDestinationDirectory()
         for file in os.listdir(destination_directory):
@@ -38,7 +31,6 @@ class SpecificMapBuilder:
             destination_file_path = os.path.join(destination_directory, file)
             shutil.copyfile(source_file_path, destination_file_path)
 
-        self._constructMapConfig()
-        return self.mapConfig
+        return ParkingAreaParser.parse(self.traciConfig.getParkingFilePath())
         
 
