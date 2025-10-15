@@ -1,7 +1,7 @@
 from application.SpecificMapBuilder import SpecificMapBuilder
 from application.RandomMapBuilder import RandomMapBuilder
 from handlers.TraciHandler import TraciHandler
-from config.SimulationConfig import SimulationConfig
+from infrastructure.SimulationConfig import SimulationConfig
 
 from infrastructure.ParkingAreaParser import ParkingAreaParser
 from infrastructure.FileSystemDescriptor import FileSystemDescriptor

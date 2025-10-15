@@ -1,7 +1,7 @@
 import random
 from pathlib import Path
 from typing import Self
-from config.SimulationConfig import SimulationConfig
+from infrastructure.SimulationConfig import SimulationConfig
 from domain.MapDescriptor import MapDescriptor
 from infrastructure.SumoService import SumoService
 from infrastructure.MapGenerator import MapGenerator

@@ -1,5 +1,5 @@
 from domain.MapDescriptor import MapDescriptor
-from config.SimulationConfig import SimulationConfig
+from infrastructure.SimulationConfig import SimulationConfig
 from infrastructure.ParkingAreaParser import ParkingAreaParser
 from infrastructure.FileSystemDescriptor import FileSystemDescriptor
 from infrastructure.FileSyncService import FileSyncService

@@ -3,7 +3,7 @@ import random
 from pathlib import Path
 from domain.Passenger import Passenger
 from domain.Location import Location
-from config.SimulationConfig import SimulationConfig
+from infrastructure.SimulationConfig import SimulationConfig
 from infrastructure.SumoService import SumoService
 
 class PassengerRepository:
