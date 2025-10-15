@@ -19,15 +19,37 @@ class Tricycle:
     def __str__(self) -> str:
         return f"Tricycle(name={self.name}, hub={self.hub}, start_time={self.startTime}, end_time={self.endTime})"
     
-    def hasArrived(self) -> bool:
-        current_edge = traci.vehicle.getRoadID(self.name)
-        current_position = traci.vehicle.getLanePosition(self.name)
-        current_location = Location(current_edge, current_position)
+    def activate(self) -> None:
+        self.state = TricycleState.FREE
+
+    def kill(self) -> None:
+        self.state = TricycleState.DEAD
+
+    def acceptPassenger(self, destination: Location) -> None:
+        if not destination:
+            raise Exception(f"destination given to {self.name} was None")
+        self.state = TricycleState.HAS_PASSENGER
+        self.destination = destination
+    
+    def hasArrived(self, current_location: Location) -> bool:
+        # current_edge = traci.vehicle.getRoadID(self.name)
+        # current_position = traci.vehicle.getLanePosition(self.name)
+        # current_location = Location(current_edge, current_position)
         return current_location.isNear(self.destination)
     
+    def dropOff(self):
+        self.destination = None
+        self.state = TricycleState.DROPPING_OFF
+
+    def park(self):
+        self.state = TricycleState.PARKED
+
+    def isActive(self):
+        return self.state not in [TricycleState.DEAD, TricycleState.TO_SPAWN]
+    
     def hasRunOutOfGas(self, distance_travelled: float) -> bool:
-        print(self.name, distance_travelled, self.gasConsumptionRate, self.currentGas, distance_travelled / self.gasConsumptionRate)
-        print(self.currentGas < (distance_travelled / self.gasConsumptionRate))
+        # print(self.name, distance_travelled, self.gasConsumptionRate, self.currentGas, distance_travelled / self.gasConsumptionRate)
+        # print(self.currentGas < (distance_travelled / self.gasConsumptionRate))
         return self.currentGas < (distance_travelled / self.gasConsumptionRate)
     
     def consumeGas(self, distance_travelled: float) -> bool:
