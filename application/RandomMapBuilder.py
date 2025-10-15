@@ -16,7 +16,6 @@ class RandomMapBuilder:
         self.blockLength = 50.00
         self.divisionLength = 30.00
         self.traciConfig = TraciConfig()
-        self.mapConfig = MapDescriptor()
 
     def withType(self, _type: str) -> Self:
         if _type not in ["grid", "spider", "rand"]:
