@@ -1,4 +1,4 @@
-class MapConfig:
+class MapDescriptor:
     hubDistribution = dict()
     numberOfTricycles = 0
 

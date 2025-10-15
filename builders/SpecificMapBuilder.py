@@ -1,4 +1,4 @@
-from config.MapConfig import MapConfig
+from domain.MapConfig import MapDescriptor
 from config.TraciConfig import TraciConfig
 from config.DestinationConfig import DestinationConfig
 from config.SourceConfig import SourceConfig
@@ -9,7 +9,7 @@ import shutil
 import os
 
 class SpecificMapBuilder:
-    def __init__(self, map_config:MapConfig = MapConfig(), 
+    def __init__(self, map_config:MapDescriptor = MapDescriptor(), 
                  traci_config:TraciConfig = TraciConfig(), 
                  source_config:SourceConfig = SourceConfig(), 
                  destination_config:DestinationConfig = DestinationConfig()) -> None:
@@ -26,7 +26,7 @@ class SpecificMapBuilder:
             if pa.get("id").startswith("hub"):
                 self.mapConfig.addHub(pa.get("id"), int(pa.get("roadsideCapacity")))
 
-    def build(self) -> MapConfig:
+    def build(self) -> MapDescriptor:
         destination_directory = self.destinationConfig.getDestinationDirectory()
         for file in os.listdir(destination_directory):
             filepath = os.path.join(destination_directory, file)

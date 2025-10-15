@@ -2,12 +2,12 @@ from builders.SpecificMapBuilder import SpecificMapBuilder
 from builders.RandomMapBuilder import RandomMapBuilder
 from handlers.TraciHandler import TraciHandler
 from config.TraciConfig import TraciConfig
-from config.MapConfig import MapConfig
+from domain.MapConfig import MapDescriptor
 from config.SourceConfig import SourceConfig
 from config.DestinationConfig import DestinationConfig
 
 traci_config = TraciConfig()
-map_config = MapConfig()
+map_config = MapDescriptor()
 source_config = SourceConfig()
 destination_config = DestinationConfig()
 

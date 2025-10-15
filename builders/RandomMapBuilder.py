@@ -1,10 +1,10 @@
 import subprocess
 import random
-import sumolib
 from pathlib import Path
 from typing import Self
 from config.TraciConfig import TraciConfig
-from config.MapConfig import MapConfig
+from domain.MapDescriptor import MapDescriptor
+from infrastructure.SumoService import SumoService
 
 class RandomMapBuilder:
     def __init__(self):
@@ -15,7 +15,7 @@ class RandomMapBuilder:
         self.blockLength = 50.00
         self.divisionLength = 30.00
         self.traciConfig = TraciConfig()
-        self.mapConfig = MapConfig()
+        self.mapConfig = MapDescriptor()
 
     def withType(self, _type: str) -> Self:
         if _type not in ["grid", "spider", "rand"]:
@@ -64,7 +64,7 @@ class RandomMapBuilder:
         return self
     
     def _createParkingFile(self) -> None:
-        network = sumolib.net.readNet(self.traciConfig.getNetworkFilePath())
+        network = SumoService.getNetwork(self.traciConfig.getNetworkFilePath())
         output_file = self.traciConfig.getParkingFilePath()
 
         edges = list(network.getEdges())
@@ -121,7 +121,7 @@ class RandomMapBuilder:
     def getNumberOfTricycles(self) -> int:
         return self.mapConfig.getNumberOfTricycles()
     
-    def build(self) -> MapConfig:
+    def build(self) -> MapDescriptor:
         if self._type == None or self._type not in ["grid", "spider", "rand"]:
             raise Exception("Invalid type. Was: " + type)
         

@@ -1,0 +1,35 @@
+import random
+from domain.MapDescriptor import MapDescriptor
+from infrastructure.SumoService import SumoService
+class ParkingFileGenerator:
+    def createParkingFile(self, network_file_path:str, parking_file_path: str) -> MapDescriptor:
+        map_descriptor = MapDescriptor()
+        network = SumoService.getNetwork(self.traciConfig.getNetworkFilePath())
+        output_file = parking_file_path
+
+        edges = list(network.getEdges())
+        random_edges = random.sample(edges, self.parkings)
+
+        with open(output_file, "w") as file:
+            file.write("<additional>\n")
+
+            # Put in custom tricycle and passenger types
+            file.write("<vType id=\"trike\" accel=\"0.8\" decel=\"4.5\" sigma=\"0.5\" length=\"2.5\" maxSpeed=\"10.0\" guiShape=\"bicycle\"/>\n")
+            file.write(f"<vType id=\"fatPed\" vClass=\"pedestrian\" guiShape=\"pedestrian\" color=\"yellow\" width=\"1\" length=\"1\"/>\n")
+
+            for i, edge in enumerate(random_edges):
+                lane = edge.getLanes()[1]  
+                lane_id = lane.getID()
+                lane_length = lane.getLength()
+
+                start_pos = 5
+                end_pos = min(25, lane_length - 1)
+
+                file.write(f"\t<parkingArea id=\"hub{i}\" lane=\"{lane_id}\" startPos=\"{start_pos}\" endPos=\"{end_pos}\" lines=\"3\" roadsideCapacity=\"3\"/>\n")
+
+                map_descriptor.addHub(f"hub{i}", 3)
+
+            file.write("</additional>\n")
+        
+        print(f"Wrote parking areas to {self.traciConfig.getParkingFileName()}")
+        return map_descriptor

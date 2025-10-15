@@ -1,11 +1,11 @@
 import random
 import traci
 import uuid
-import sumolib
 
 from domain.Location import Location
 from domain.Tricycle import Tricycle
 from domain.TricycleState import TricycleState
+from infrastructure.SumoService import SumoService
 
 class TricycleRepository:
     def __init__(self):

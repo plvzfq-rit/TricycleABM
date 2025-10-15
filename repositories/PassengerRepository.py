@@ -1,10 +1,10 @@
-import sumolib
 import traci
 import random
 from pathlib import Path
 from domain.Passenger import Passenger
 from domain.Location import Location
 from config.TraciConfig import TraciConfig
+from infrastructure.SumoService import SumoService
 
 class PassengerRepository:
     def __init__(self, traci_config: TraciConfig) -> None:
@@ -22,7 +22,7 @@ class PassengerRepository:
             self.possibleSources.append(edge)
 
     def generateRandomPassenger(self) -> Passenger:
-        network = sumolib.net.readNet(self.traciConfig.getNetworkFilePath())
+        network = SumoService.getNetwork(self.traciConfig.getNetworkFilePath())
 
         # only pedestrian-allowed edges
         edges = [e for e in network.getEdges() if e.allows("pedestrian")]
