@@ -1,6 +1,6 @@
 import subprocess
 class MapGenerator:
-    def generate(self, _type: str, junctions: int, divisions: int, block_length: float, division_length: float, asset_directory: str, network_file_path: str) -> None:
+    def create(self, _type: str, junctions: int, divisions: int, block_length: float, division_length: float, asset_directory: str, network_file_path: str) -> None:
         cmd = MapGenerator._buildCommand(_type, junctions, divisions, block_length, division_length)
         assets_dir = asset_directory
         assets_dir.mkdir(parents=True, exist_ok=True)

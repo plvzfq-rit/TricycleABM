@@ -67,5 +67,5 @@ class RandomMapBuilder:
         return self
 
     def build(self) -> MapDescriptor:
-        self.mapGenerator.generate(self._type, self.junctions, self.divisions, self.blockLength, self.divisionLength, self.simulationConfig.getAssetDirectory(), self.simulationConfig.getNetworkFilePath())
+        self.mapGenerator.create(self._type, self.junctions, self.divisions, self.blockLength, self.divisionLength, self.simulationConfig.getAssetDirectory(), self.simulationConfig.getNetworkFilePath())
         return self.parkingFileGenerator.createParkingFile(self.simulationConfig.getNetworkFilePath(), self.simulationConfig.getParkingFilePath(), self.parkings)

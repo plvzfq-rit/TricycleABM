@@ -1,6 +1,6 @@
 import traci
 import random
-from repositories.PassengerRepository import PassengerRepository
+from infrastructure.PassengerRepository import PassengerRepository
 from repositories.TricycleRepository import TricycleRepository
 from domain.MapDescriptor import MapDescriptor
 from infrastructure.SimulationConfig import SimulationConfig
@@ -32,7 +32,7 @@ class TraciHandler:
         UPPER_BOUND = self.MOST_NUMBER_OF_PASSENGERS
         number_of_passengers = random.randint(LOWER_BOUND, UPPER_BOUND)
         for _ in range(number_of_passengers):
-            self.passengerRepository.generateRandomPassenger()
+            self.passengerRepository.createRandomPassenger()
 
     def assignPassengersToTricycles(self) -> None:
         active_passenger_ids = self.passengerRepository.getActivePassengerIds()

@@ -36,7 +36,7 @@ class PassengerRepository:
     def getActivePassengerIds(self) -> set[str]:
         return set([passenger_id for passenger_id in self.passengers.keys() if self.getPassenger(passenger_id).isAlive()])
 
-    def generateRandomPassenger(self) -> Passenger:
+    def createRandomPassenger(self) -> Passenger:
         passenger_id, passenger = self.passengerFactory.createRandomPassenger(self.nextIndex)
         self.passengers[passenger_id] = passenger
         self.nextIndex += 1
