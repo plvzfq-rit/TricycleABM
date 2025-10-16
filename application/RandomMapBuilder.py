@@ -7,9 +7,9 @@ from infrastructure.MapGenerator import MapGenerator
 from infrastructure.ParkingFileGenerator import ParkingFileGenerator
 
 class RandomMapBuilder:
-    def __init__(self, simulation_config: SimulationConfig | None, 
-                parking_file_generator: ParkingFileGenerator | None,
-                map_generator: MapGenerator | None):
+    def __init__(self, simulation_config: SimulationConfig | None = None, 
+                parking_file_generator: ParkingFileGenerator | None = None,
+                map_generator: MapGenerator | None = None):
         self._type = "spider"
         self.junctions = 3
         self.divisions = 3

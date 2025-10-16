@@ -6,7 +6,7 @@ from infrastructure.SumoService import SumoService
 from infrastructure.TraciService import TraciService
 
 class PassengerFactory:
-    def __init__(self, sumo_service: SumoService | None, traci_service: TraciService | None):
+    def __init__(self, sumo_service: SumoService | None = None, traci_service: TraciService | None = None):
         self.sumoService = sumo_service or SumoService()
         self.traciService = traci_service or TraciService()
 

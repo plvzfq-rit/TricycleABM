@@ -5,10 +5,10 @@ from infrastructure.FileSystemDescriptor import FileSystemDescriptor
 from infrastructure.FileSyncService import FileSyncService
 
 class SpecificMapBuilder:
-    def __init__(self, traci_config:SimulationConfig | None, 
-                file_system_descriptor: FileSystemDescriptor | None,
-                parking_area_parser: ParkingAreaParser | None,
-                file_sync_service: FileSyncService | None) -> None:
+    def __init__(self, traci_config:SimulationConfig | None = None, 
+                file_system_descriptor: FileSystemDescriptor | None = None,
+                parking_area_parser: ParkingAreaParser | None = None,
+                file_sync_service: FileSyncService | None = None) -> None:
         self.traciConfig = traci_config or SimulationConfig()
         self.fileSystemDescriptor = file_system_descriptor or FileSystemDescriptor()
         self.parkingAreaParser = parking_area_parser or ParkingAreaParser()

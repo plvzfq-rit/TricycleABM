@@ -9,10 +9,10 @@ from infrastructure.SumoService import SumoService
 from infrastructure.TraciService import TraciService
 
 class PassengerRepository:
-    def __init__(self, simulation_config: SimulationConfig | None, 
-                sumo_service: SumoService | None, 
-                traci_service: TraciService | None,
-                passenger_factory: PassengerFactory | None) -> None:
+    def __init__(self, simulation_config: SimulationConfig | None = None, 
+                sumo_service: SumoService | None = None, 
+                traci_service: TraciService | None = None,
+                passenger_factory: PassengerFactory | None = None) -> None:
         self.passengers = dict()
         self.nextIndex = 0
         self.simulationConfig = simulation_config or SimulationConfig()

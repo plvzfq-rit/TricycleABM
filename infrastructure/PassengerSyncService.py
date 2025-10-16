@@ -2,7 +2,7 @@ from infrastructure.PassengerRepository import PassengerRepository
 from infrastructure.TraciService import TraciService
 
 class PassengerSyncService:
-    def __init__(self, passenger_repository: PassengerRepository | None, traci_service: TraciService | None):
+    def __init__(self, passenger_repository: PassengerRepository | None = None, traci_service: TraciService | None = None):
         self.passengerRepository = passenger_repository
         self.traciService = traci_service
     

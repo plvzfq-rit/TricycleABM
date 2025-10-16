@@ -2,7 +2,7 @@ import random
 from domain.MapDescriptor import MapDescriptor
 from infrastructure.SumoService import SumoService
 class ParkingFileGenerator:
-    def __init__(self, sumo_service: SumoService | None):
+    def __init__(self, sumo_service: SumoService | None = None):
         self.sumoService = sumo_service or SumoService()
 
     def createParkingFile(self, network_file_path:str, parking_file_path: str, number_of_parking: int) -> MapDescriptor:
