@@ -4,17 +4,19 @@ import uuid
 
 from domain.Location import Location
 from domain.Tricycle import Tricycle
+from domain.TricycleFactory import TricycleFactory
 from domain.TricycleState import TricycleState
 from infrastructure.SumoService import SumoService
+from infrastructure.TraciService import TraciService
+
 
 class TricycleRepository:
-    def __init__(self):
+    def __init__(self, tricycle_factory: TricycleFactory | None = None, traci_service: TraciService | None = None):
         self.tricycles = dict()
-        self.LOWER_MAX_GAS = 50.0
-        self.UPPER_MAX_GAS = 52.0
+        self.tricycleFactory = tricycle_factory or TricycleFactory()
+        self.traciService = traci_service or TraciService()
 
-    def generateTricycles(self, number_of_tricycles: int, simulation_duration: int, hub_distribution: dict) -> None:
-
+    def createTricycles(self, number_of_tricycles: int, simulation_duration: int, hub_distribution: dict) -> None:
         # create list of hub tags; each would be assigned to a new tricycle
         hubs = []
         for hub, number_of_tricycles_in_hub in hub_distribution.items():
@@ -24,43 +26,30 @@ class TricycleRepository:
         for i in range(number_of_tricycles):
             assigned_hub = hubs.pop()
             assigned_id = i
-            trike_name, tricycle = self._createRandomTricycle(assigned_id, simulation_duration, assigned_hub)
+            trike_name, tricycle = self.tricycleFactory.createRandomTricycle(assigned_id, simulation_duration, assigned_hub)
             self.tricycles[trike_name] = tricycle
 
-    def _createRandomTricycle(self, assigned_id: int, simulation_duration: int, assigned_hub: str) -> tuple[str, Tricycle]:
-        trike_name = "trike" + str(assigned_id)
-        start_time = random.randint(0, simulation_duration // 2)
-        end_time = random.randint(start_time, simulation_duration)
-        max_gas = self.LOWER_MAX_GAS + (self.UPPER_MAX_GAS - self.LOWER_MAX_GAS) * random.random()
-        gas_consumption = random.random()
-        gas_threshold = max_gas * random.random()
-        return (trike_name, Tricycle(trike_name, assigned_hub, start_time, end_time, max_gas, gas_consumption, gas_threshold))
-
-
-    def killTricycle(self, tricycle_id: str) -> None:
-        self.setTricycleState(tricycle_id, TricycleState.DEAD)
-
-    def activateTricycle(self, tricycle_id: str) -> None:
-        self.tricycles[tricycle_id].state = TricycleState.FREE
-
+    def getTricycle(self, tricycle_id: str) -> Tricycle:
+        return self.tricycles[tricycle_id]
+    
     def getTricycles(self) -> list[Tricycle]:
         return list(self.tricycles.values())
+
+    def killTricycle(self, tricycle_id: str) -> None:
+        self.getTricycle(tricycle_id).kill()
+
+    def activateTricycle(self, tricycle_id: str) -> None:
+        self.getTricycle(tricycle_id).activate()
     
-    def getActiveTricycles(self) -> list[Tricycle]:
-        return set([tricycle for tricycle in self.tricycles.values() if tricycle.state not in [TricycleState.DEAD, TricycleState.TO_SPAWN]])
+    def getActiveTricycles(self) -> set[Tricycle]:
+        return set([tricycle for tricycle in self.tricycles.values() if tricycle.isActive()])
     
     def getTricycleLocation(self, tricycle_id: str) -> Location:
-        current_edge = traci.vehicle.getRoadID(tricycle_id)
-        current_position = traci.vehicle.getLanePosition(tricycle_id)
-        return Location(current_edge, current_position)
+        return self.traciService.getTricycleLocation(tricycle_id)
     
-    def setTricycleState(self, tricycle_id: str, state: TricycleState) -> None:
-        if tricycle_id in self.tricycles.keys():
-            self.tricycles[tricycle_id].state = state
-
     def setTricycleDestination(self, tricycle_id: str, destination: Location) -> None:
         if tricycle_id in self.tricycles.keys():
-            self.tricycles[tricycle_id].destination = destination
+            self.getTricycle(tricycle_id).setDestination(destination)
     
     def assignPassengerToTricycle(self, tricycle_id: str, destination: Location, traci_config) -> bool:
         tricycle = self.tricycles[tricycle_id]
@@ -95,10 +84,15 @@ class TricycleRepository:
         return True
 
     def hasTricycleArrived(self, tricycle_id: str) -> bool:
-        return self.tricycles[tricycle_id].hasArrived()
+        return self.getTricycle(tricycle_id).hasArrived()
     
     def isTricycleFree(self, tricycle_id: str) -> bool:
-        return self.tricycles[tricycle_id].state == TricycleState.FREE
+        return self.getTricycle(tricycle_id).isFree()
+    
+    def simulateConsumption(self, tricycle_id: str) -> None:
+        if tricycle_id in self.tricycles.keys():
+            current_location = self.traciService.getTricycleLocation(tricycle_id)
+            return self.getTricycle(tricycle_id).consumeGas(current_location)
     
     def toggleTricycles(self, current_tick: int) -> None:
         for tricycle in self.getTricycles():
@@ -145,9 +139,5 @@ class TricycleRepository:
                     self.tricycles[tricycle_id].lastLocation = current_location
 
                 # if self.tricycles[tricycle_id].currentGas <= self.tricycles[tricycle_id].gasThreshold:
-                    
-            
-    def simulateConsumption(self, tricycle_id: str, current_location: Location) -> None:
-        distance_travelled = current_location.distanceTo(self.tricycles[tricycle_id].lastLocation)
-        if tricycle_id in self.tricycles.keys():
-            return self.tricycles[tricycle_id].consumeGas(distance_travelled)
+
+

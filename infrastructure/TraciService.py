@@ -21,5 +21,10 @@ class TraciService:
         current_position = traci.person.getLanePosition(passenger_id)
         return Location(current_edge, current_position)
     
+    def getTricycleLocation(self, tricycle_id: str) -> Location:
+        current_edge = traci.vehicle.getRoadID(tricycle_id)
+        current_position = traci.vehicle.getLanePosition(tricycle_id)
+        return Location(current_edge, current_position)
+    
     def setPassengerDestination(self, passenger_id: str, destination_edge, destination_position: float) -> None:
         traci.person.appendWalkingStage(passenger_id, destination_edge.getID(), destination_position)
