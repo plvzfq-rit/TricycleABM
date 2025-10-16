@@ -13,7 +13,13 @@ class TraciService:
     def addPassenger(self, name: str, starting_edge: str, starting_position: float):
         traci.person.add(name, starting_edge, starting_position, typeID="fatPed")
 
+    def getPassengerIds(self) -> list[str]:
+        return traci.person.getIDList()
+
     def getPassengerLocation(self, passenger_id: str) -> Location:
         current_edge = traci.person.getRoadID(passenger_id)
         current_position = traci.person.getLanePosition(passenger_id)
         return Location(current_edge, current_position)
+    
+    def setPassengerDestination(self, passenger_id: str, destination_edge, destination_position: float) -> None:
+        traci.person.appendWalkingStage(passenger_id, destination_edge.getID(), destination_position)
