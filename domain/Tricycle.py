@@ -58,3 +58,29 @@ class Tricycle:
         self.currentGas -= distance_travelled / self.gasConsumptionRate
         return True
     
+    def isFree(self) -> bool:
+        return self.state == TricycleState.FREE
+    
+    def hasPassenger(self) -> bool:
+        return self.state == TricycleState.HAS_PASSENGER
+    
+    def isDroppingOff(self) -> bool:
+        return self.state == TricycleState.DROPPING_OFF
+    
+    def isGoingToRefuel(self) -> bool:
+        return self.state == TricycleState.GOING_TO_REFUEL
+    
+    def isRefuelling(self) -> bool:
+        return self.state == TricycleState.REFUELLING
+    
+    def isReturningToToda(self) -> bool:
+        return self.state == TricycleState.RETURNING_TO_TODA
+    
+    def isDead(self) -> bool:
+        return self.state == TricycleState.DEAD
+    
+    def hasSpawned(self) -> bool:
+        return self.state != TricycleState.TO_SPAWN
+    
+    def isParked(self) -> bool:
+        return self.state == TricycleState.PARKED
