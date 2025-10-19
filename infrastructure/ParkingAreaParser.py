@@ -4,7 +4,7 @@ class ParkingAreaParser:
     def __init__(self):
         pass
 
-    def parse(parking_file_path: str) -> MapDescriptor:
+    def parse(self, parking_file_path: str) -> MapDescriptor:
         tree = ET.parse(parking_file_path)
         root = tree.getroot()
         map_descriptor = MapDescriptor()

@@ -7,7 +7,7 @@ class FileSystemDescriptor:
 
     def getInputDirectory(self) -> str:
         script_dir = Path(__file__).resolve().parent.parent
-        input_dir = script_dir / self.SOURCE_DIRECTORY_NAME
+        input_dir = script_dir / self.INPUT_DIRECTORY_NAME
         return input_dir
     
     def getInputParkingFilePath(self) -> str:
@@ -15,5 +15,5 @@ class FileSystemDescriptor:
     
     def getOutputDirectory(self) -> str:
         script_dir = Path(__file__).resolve().parent.parent
-        output_dir = script_dir / self.DESTINATION_DIRECTORY_NAME
+        output_dir = script_dir / self.OUTPUT_DIRECTORY_NAME
         return output_dir

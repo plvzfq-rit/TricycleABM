@@ -1,8 +1,5 @@
-import traci
-import random
-from pathlib import Path
 from domain.Passenger import Passenger
-from domain.PassengerFactory import PassengerFactory
+from infrastructure.PassengerFactory import PassengerFactory
 from domain.Location import Location
 from infrastructure.SimulationConfig import SimulationConfig
 from infrastructure.SumoService import SumoService
@@ -19,6 +16,8 @@ class PassengerRepository:
         self.sumoService = sumo_service or SumoService()
         self.traciService = traci_service or TraciService()
         self.passengerFactory = passenger_factory or PassengerFactory()
+
+    def discoverPossibleSources(self):
         self.possibleSources = self.traciService.getListOfHubIds()
 
     def getPassenger(self, passenger_id: str) -> Passenger:
@@ -37,7 +36,10 @@ class PassengerRepository:
         return set([passenger_id for passenger_id in self.passengers.keys() if self.getPassenger(passenger_id).isAlive()])
 
     def createRandomPassenger(self) -> Passenger:
-        passenger_id, passenger = self.passengerFactory.createRandomPassenger(self.nextIndex)
+        passenger_id, passenger = self.passengerFactory.createRandomPassenger(self.nextIndex, self.possibleSources)
         self.passengers[passenger_id] = passenger
         self.nextIndex += 1
         return passenger
+    
+    def isPassengerAlive(self, passenger_id: str) -> bool:
+        return self.getPassenger(passenger_id).isAlive()

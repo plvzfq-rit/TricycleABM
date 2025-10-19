@@ -41,8 +41,9 @@ class Tricycle:
         self.destination = None
         self.state = TricycleState.DROPPING_OFF
 
-    def park(self):
-        self.state = TricycleState.PARKED
+    def returnToToda(self):
+        self.destination = None
+        self.state = TricycleState.RETURNING_TO_TODA
 
     def isActive(self):
         return self.state not in [TricycleState.DEAD, TricycleState.TO_SPAWN]
@@ -91,3 +92,25 @@ class Tricycle:
     
     def setDestination(self, destination: Location) -> None:
         self.destination = destination
+
+    def shouldSpawn(self, time: int) -> bool:
+        return self.startTime == time and self.state == TricycleState.TO_SPAWN
+
+    def shouldDie(self, time: int) -> bool:
+        return self.endTime == time and self.state != TricycleState.DEAD
+    
+    def shouldReturnToToda(self, current_location) -> bool:
+        return self.hasArrived(current_location) and self.state == TricycleState.HAS_PASSENGER
+    
+    def getHub(self) -> str:
+        return self.hub
+    
+    def getName(self) -> str:
+        return self.name
+    
+    def park(self, current_location: Location) -> None:
+        self.state = TricycleState.PARKED
+        self.lastLocation = current_location
+
+    def setLastLocation(self, last_location: Location) -> None:
+        self.lastLocation = last_location

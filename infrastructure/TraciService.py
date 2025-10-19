@@ -28,3 +28,23 @@ class TraciService:
     
     def setPassengerDestination(self, passenger_id: str, destination_edge, destination_position: float) -> None:
         traci.person.appendWalkingStage(passenger_id, destination_edge.getID(), destination_position)
+
+    def getTricycleHubEdge(self, hub_string: str) -> str:
+        return traci.parkingarea.getLaneID(hub_string).split("_")[0]
+    
+    def returnTricycleToHub(self, tricycle_id: str, hub_string: str) -> None:
+        traci.vehicle.setParkingAreaStop(tricycle_id, hub_string, duration=99999)
+    
+    def initializeTricycle(self, tricycle_id: str, hub_string: str) -> None:
+        route_id = f"route_{tricycle_id}"
+        hub_edge = self.getTricycleHubEdge(hub_string)
+        traci.route.add(route_id, [hub_edge])
+        traci.vehicle.add(tricycle_id, route_id, "trike")
+        self.returnTricycleToHub(tricycle_id, hub_string)
+
+    def removeTricycle(self, tricycle_id: str) -> None:
+        traci.vehicle.remove(tricycle_id)
+
+    def getTricycleIds(self):
+        return [tricycle_id for tricycle_id in list(traci.vehicle.getIDList()) if tricycle_id.startswith('trike')]
+    

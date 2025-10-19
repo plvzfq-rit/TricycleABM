@@ -1,6 +1,6 @@
 import os
 import shutil
-class FileSyncService:
+class FileSynchronizer:
     def removeFilesInDirectory(self, destination_directory: str) -> None:
         for file in os.listdir(destination_directory):
             filepath = os.path.join(destination_directory, file)

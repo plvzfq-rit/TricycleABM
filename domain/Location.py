@@ -9,12 +9,18 @@ class Location:
             return False
         return self.location == value.location and self.position == value.position
     
-    def isNear(self, value: any, threshold: float = 70.0):
+    def __str__(self):
+        return f"Location(loc={self.location},pos={self.position})"
+    
+    def isNear(self, value: any, threshold: float = 100.0):
         if type(self) != type(value):
             return False
         return self.location == value.location and abs(self.position - value.position) <= threshold
     
     def distanceTo(self, another_location):
-        if another_location == None:
+        if another_location == None or another_location.isInvalid():
             return 0.0
         return traci.simulation.getDistanceRoad(self.location, self.position, another_location.location, another_location.position)
+    
+    def isInvalid(self) -> bool:
+        return self.location == '' and self.position == -1073741824.0

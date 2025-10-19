@@ -10,11 +10,11 @@ class PassengerFactory:
         self.sumoService = sumo_service or SumoService()
         self.traciService = traci_service or TraciService()
 
-    def createRandomPassenger(self, next_index: int) -> tuple[str, Passenger]:
+    def createRandomPassenger(self, next_index: int, possible_sources) -> tuple[str, Passenger]:
         edges = self.sumoService.getNetworkPedestrianEdges()
 
         # pick start and destination
-        starting_edge = random.choice(self.possibleSources)
+        starting_edge = random.choice(possible_sources)
         destination_edge = random.choice(edges)
         while destination_edge.getID() == starting_edge:
             destination_edge = random.choice(edges)

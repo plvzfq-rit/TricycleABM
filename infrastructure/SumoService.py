@@ -8,7 +8,7 @@ class SumoService:
     def getNetwork(self):
         if self.network:
             return self.network
-        self.network = sumolib.net.readNet(self.network_file_path)
+        self.network = sumolib.net.readNet(self.networkFilePath)
         return self.network
     
     def getNetworkPedestrianEdges(self):
