@@ -23,7 +23,7 @@ class TricycleStateManager:
 
             current_location = self.traciService.getTricycleLocation(tricycle_id)
             if not current_location:
-                tricycle.park(current_location)
+                tricycle.kill()
                 continue
             if current_location.isInvalid():
                 tricycle.park(current_location)
@@ -32,7 +32,7 @@ class TricycleStateManager:
             if tricycle.shouldReturnToToda(current_location):
                 self.traciService.returnTricycleToHub(tricycle_id, tricycle_hub)
                 tricycle.returnToToda()
-            # elif not self.tricycleRepository.simulateConsumption(tricycle_id) or tricycle.shouldDie(current_tick):
+                continue
             elif tricycle.shouldDie(current_tick):
                 self.traciService.removeTricycle(tricycle_id)
                 tricycle.kill()
@@ -40,3 +40,4 @@ class TricycleStateManager:
             else:
                 # self.tricycleRepository.updateTricycleLocation(tricycle_id, current_location)
                 tricycle.setLastLocation(current_location)
+                continue

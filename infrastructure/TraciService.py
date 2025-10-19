@@ -21,7 +21,9 @@ class TraciService:
         current_position = traci.person.getLanePosition(passenger_id)
         return Location(current_edge, current_position)
     
-    def getTricycleLocation(self, tricycle_id: str) -> Location:
+    def getTricycleLocation(self, tricycle_id: str) -> Location | None:
+        if not self.checkIfTricycleInSimulation(tricycle_id):
+            return None
         current_edge = traci.vehicle.getRoadID(tricycle_id)
         current_position = traci.vehicle.getLanePosition(tricycle_id)
         return Location(current_edge, current_position)
@@ -47,4 +49,7 @@ class TraciService:
 
     def getTricycleIds(self):
         return [tricycle_id for tricycle_id in list(traci.vehicle.getIDList()) if tricycle_id.startswith('trike')]
+    
+    def checkIfTricycleInSimulation(self, tricycle_id):
+        return tricycle_id in self.getTricycleIds()
     

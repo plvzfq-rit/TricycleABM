@@ -44,11 +44,13 @@ class SimulationEngine:
 
     def doMainLoop(self, simulation_duration: int) -> None:
         self.startTraci()
+        #TODO: 
         while self.tick < simulation_duration:
             self.passengerSynchronizer.sync()
             self.generateRandomNumberOfPassengers()
             self.tricycleSynchronizer.sync()
             self.tricycleStateManager.updateTricycleStates(self.tick)
+            self.tricycleSynchronizer.sync()
             self.tricycleDispatcher.dispatchTricycles()
             self.tick += 1
             traci.simulationStep()
