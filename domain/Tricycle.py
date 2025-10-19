@@ -61,7 +61,7 @@ class Tricycle:
         return True
     
     def isFree(self) -> bool:
-        return self.state == TricycleState.FREE
+        return self.state == TricycleState.FREE or self.state == TricycleState.PARKED
     
     def hasPassenger(self) -> bool:
         return self.state == TricycleState.HAS_PASSENGER

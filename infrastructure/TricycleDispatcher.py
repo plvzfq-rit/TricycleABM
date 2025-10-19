@@ -11,10 +11,10 @@ class TricycleDispatcher:
 
     def dispatchTricycles(self) -> None:
         active_passenger_ids = self.passengerRepository.getActivePassengerIds()
-        active_tricycles = self.tricycleRepository.getActiveTricycleIds()
 
         for passenger_id in active_passenger_ids:
             passenger_location = self.passengerRepository.getPassengerLocation(passenger_id)
+            active_tricycles = self.tricycleRepository.getActiveFreeTricycleIds()
             for tricycle_id in active_tricycles:
                 tricycle_location = self.tricycleRepository.getTricycleLocation(tricycle_id)
 
