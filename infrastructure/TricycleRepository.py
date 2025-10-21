@@ -7,6 +7,9 @@ from domain.TricycleState import TricycleState
 from infrastructure.SumoService import SumoService
 from infrastructure.TraciService import TraciService
 from infrastructure.SimulationConfig import SimulationConfig
+from infrastructure.SimulationLogger import SimulationLogger
+
+import math
 
 
 class TricycleRepository:
@@ -53,7 +56,7 @@ class TricycleRepository:
             self.getTricycle(tricycle_id).setDestination(destination)
     
     #TODO: Refactor this!!
-    def dispatchTricycle(self, tricycle_id: str, destination: Location) -> bool:
+    def dispatchTricycle(self, tricycle_id: str, destination: Location, simulationLogger) -> bool:
         tricycle = self.tricycles[tricycle_id]
 
         hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
@@ -83,6 +86,14 @@ class TricycleRepository:
         self.getTricycle(tricycle_id).acceptPassenger(destination)
         self.setTricycleDestination(tricycle_id, destination)
 
+        distance = traci.simulation.getDistanceRoad(current_edge, 0, dest_edge, 0, isDriving=True)
+
+        #TODO
+        # if : # something something bargain
+            # do bargaining
+        # else:
+        default_fare = 16 if distance < 1000 else 16 + 5 * math.ceil((distance - 1000) / 500)
+        simulationLogger.add("run002", tricycle_id, hub_edge, dest_edge, distance, default_fare)
         return True
 
     def hasTricycleArrived(self, tricycle_id: str) -> bool:

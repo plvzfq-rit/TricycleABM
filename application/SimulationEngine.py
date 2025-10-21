@@ -8,6 +8,7 @@ from infrastructure.TricycleDispatcher import TricycleDispatcher
 from infrastructure.TricycleSynchronizer import TricycleSynchronizer
 from infrastructure.PassengerSynchronizer import PassengerSynchronizer
 from infrastructure.TricycleStateManager import TricycleStateManager
+from infrastructure.SimulationLogger import SimulationLogger
 
 class SimulationEngine:
     def __init__(self, map_descriptor: MapDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, passenger_repository: PassengerRepository, tricycle_repository: TricycleRepository, passenger_synchronizer: PassengerSynchronizer, tricycle_synchronizer: TricycleSynchronizer, tricycle_state_manager: TricycleStateManager, duration: int) -> None:
@@ -23,6 +24,7 @@ class SimulationEngine:
         self.tricycleSynchronizer = tricycle_synchronizer
         self.tricycleStateManager = tricycle_state_manager
         self.tricycleRepository.createTricycles(map_descriptor.getNumberOfTricycles(), duration, map_descriptor.getHubDistribution())
+        self.simulationLogger = SimulationLogger(1, "orig") # put simulation number here
 
     def startTraci(self) -> None:
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()},{self.simulationConfig.getDecalFilePath()}"
@@ -51,7 +53,7 @@ class SimulationEngine:
             self.tricycleSynchronizer.sync()
             self.tricycleStateManager.updateTricycleStates(self.tick)
             # self.tricycleSynchronizer.sync()
-            self.tricycleDispatcher.dispatchTricycles()
+            self.tricycleDispatcher.dispatchTricycles(self.simulationLogger)
             self.tick += 1
             traci.simulationStep()
 
