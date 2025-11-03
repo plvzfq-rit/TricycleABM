@@ -7,16 +7,16 @@ class SimulationLogger:
     def __init__(self, sim_count: int, sim_type: str, log_dir: str = "logs"):
         """
         Creates a CSV logger with filename:
-        SIMCOUNT_TYPE_TIMESTAMP.csv
-        Example: 1_montecarlo_20251021-154530.csv
+        SIMCOUNT_TIMESTAMP/transactions.csv
         """
-        os.makedirs(log_dir, exist_ok=True)
-
         # Use current time as timestamp
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
+        run_dir = os.path.join(log_dir, f"{sim_count}_{timestamp}")
+        os.makedirs(run_dir, exist_ok=True)
+
         # Construct filename
-        self.filename = os.path.join(log_dir, f"{sim_count}_{sim_type}_{timestamp}.csv")
+        self.filename = os.path.join(run_dir, f"transactions.csv")
 
         # Define headers
         self.headers = ["run_id", "taxi_id", "origin_edge", "dest_edge", "distance", "price"]
@@ -34,3 +34,12 @@ class SimulationLogger:
             with open(self.filename, mode="a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow(row)
+
+    def addDriverInfo(self, tricycles: list):
+        drivers_path = os.path.join(os.path.dirname(self.filename), "drivers.csv")
+        drivers_path = os.path.normpath(drivers_path)
+        with self._lock:
+            with open(drivers_path, mode="a", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                for tricycle in tricycles:
+                    writer.writerow([tricycle.name, tricycle.hub, tricycle.startTime, tricycle.endTime])

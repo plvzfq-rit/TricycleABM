@@ -36,6 +36,8 @@ class SimulationEngine:
             "--lateral-resolution", "2.0"
         ])
         self.passengerRepository.discoverPossibleSources()
+        ## log tricycle info
+        self.simulationLogger.addDriverInfo(self.tricycleRepository.getTricycles())
 
     def generateRandomNumberOfPassengers(self) -> None:
         LOWER_BOUND = self.LEAST_NUMBER_OF_PASSENGERS
