@@ -3,8 +3,11 @@ from pathlib import Path
 class FileSystemDescriptor:
     INPUT_DIRECTORY_NAME = "maps"
     PARKING_FILE_NAME = "parking.add.xml"
-    OUTPUT_DIRECTORY_NAME = "assets"
+    # OUTPUT_DIRECTORY_NAME = "assets"
 
+    def __init__(self, temp_directory: str):
+        self.OUTPUT_DIRECTORY_NAME = temp_directory
+        
     def getInputDirectory(self) -> str:
         script_dir = Path(__file__).resolve().parent.parent
         input_dir = script_dir / self.INPUT_DIRECTORY_NAME

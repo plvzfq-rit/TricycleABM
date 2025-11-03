@@ -4,7 +4,7 @@ import threading
 from datetime import datetime
 
 class SimulationLogger:
-    def __init__(self, sim_count: int, sim_type: str, log_dir: str = "logs"):
+    def __init__(self, sim_count: int, log_dir: str = "logs"):
         """
         Creates a CSV logger with filename:
         SIMCOUNT_TIMESTAMP/transactions.csv
@@ -17,6 +17,7 @@ class SimulationLogger:
 
         # Construct filename
         self.filename = os.path.join(run_dir, f"transactions.csv")
+        self.filedirectory = run_dir
 
         # Define headers
         self.headers = ["run_id", "taxi_id", "origin_edge", "dest_edge", "distance", "price"]
@@ -43,3 +44,6 @@ class SimulationLogger:
                 writer = csv.writer(f)
                 for tricycle in tricycles:
                     writer.writerow([tricycle.name, tricycle.hub, tricycle.startTime, tricycle.endTime])
+
+    def getDirectory(self):
+        return self.filedirectory

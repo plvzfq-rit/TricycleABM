@@ -14,5 +14,6 @@ from .TricycleFactory import TricycleFactory
 from .TricycleRepository import TricycleRepository
 from .TricycleStateManager import TricycleStateManager
 from .TricycleSynchronizer import TricycleSynchronizer
+from .SimulationLogger import SimulationLogger
 
-__all__ = ["FileSynchronizer", "FileSystemDescriptor", "MapGenerator", "ParkingAreaParser", "ParkingFileGenerator", "PassengerRepository", "PassengerSynchronizer", "SimulationConfig", "SumoService", "TraciService", "TricycleDispatcher", "TricycleRepository", "TricycleStateManager", "TricycleSynchronizer", "PassengerFactory", "TricycleFactory"]
+__all__ = ["FileSynchronizer", "FileSystemDescriptor", "MapGenerator", "ParkingAreaParser", "ParkingFileGenerator", "PassengerRepository", "PassengerSynchronizer", "SimulationConfig", "SumoService", "TraciService", "TricycleDispatcher", "TricycleRepository", "TricycleStateManager", "TricycleSynchronizer", "PassengerFactory", "TricycleFactory", "SimulationLogger"]
