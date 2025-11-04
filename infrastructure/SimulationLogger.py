@@ -20,7 +20,7 @@ class SimulationLogger:
         self.filedirectory = run_dir
 
         # Define headers
-        self.headers = ["run_id", "taxi_id", "origin_edge", "dest_edge", "distance", "price", "start_tick"]
+        self.headers = ["run_id", "trike_id", "origin_edge", "dest_edge", "distance", "price", "tick"]
 
         if not os.path.exists(self.filename):
             with open(self.filename, mode="w", newline="", encoding="utf-8") as f:
