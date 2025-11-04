@@ -39,9 +39,12 @@ class SimulationLogger:
     def addDriverInfo(self, tricycles: list):
         drivers_path = os.path.join(os.path.dirname(self.filename), "drivers.csv")
         drivers_path = os.path.normpath(drivers_path)
+        header = ["trike_id", "hub_id", "start_tick", "end_tick"]
+
         with self._lock:
             with open(drivers_path, mode="a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
+                writer.writerow(header)
                 for tricycle in tricycles:
                     writer.writerow([tricycle.name, tricycle.hub, tricycle.startTime, tricycle.endTime])
 
