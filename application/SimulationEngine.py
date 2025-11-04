@@ -55,7 +55,7 @@ class SimulationEngine:
             self.tricycleSynchronizer.sync()
             self.tricycleStateManager.updateTricycleStates(self.tick)
             # self.tricycleSynchronizer.sync()
-            self.tricycleDispatcher.dispatchTricycles(self.simulationLogger)
+            self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick)
             self.tick += 1
             traci.simulationStep()
 

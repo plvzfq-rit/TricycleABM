@@ -20,7 +20,7 @@ class SimulationLogger:
         self.filedirectory = run_dir
 
         # Define headers
-        self.headers = ["run_id", "taxi_id", "origin_edge", "dest_edge", "distance", "price"]
+        self.headers = ["run_id", "taxi_id", "origin_edge", "dest_edge", "distance", "price", "start_tick"]
 
         if not os.path.exists(self.filename):
             with open(self.filename, mode="w", newline="", encoding="utf-8") as f:
@@ -29,8 +29,8 @@ class SimulationLogger:
 
         self._lock = threading.Lock()
 
-    def add(self, run_id: str, taxi_id: str, origin_edge: str, dest_edge: str, distance: float, price: float):
-        row = [run_id, taxi_id, origin_edge, dest_edge, distance, price]
+    def add(self, run_id: str, taxi_id: str, origin_edge: str, dest_edge: str, distance: float, price: float, tick:int):
+        row = [run_id, taxi_id, origin_edge, dest_edge, distance, price, tick]
         with self._lock:
             with open(self.filename, mode="a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)

@@ -56,7 +56,7 @@ class TricycleRepository:
             self.getTricycle(tricycle_id).setDestination(destination)
     
     #TODO: Refactor this!!
-    def dispatchTricycle(self, tricycle_id: str, destination: Location, simulationLogger) -> bool:
+    def dispatchTricycle(self, tricycle_id: str, destination: Location, simulationLogger, tick) -> bool:
         tricycle = self.tricycles[tricycle_id]
 
         hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
@@ -93,7 +93,7 @@ class TricycleRepository:
             # do bargaining
         # else:
         default_fare = 16 if distance < 1000 else 16 + 5 * math.ceil((distance - 1000) / 500)
-        simulationLogger.add("run002", tricycle_id, hub_edge, dest_edge, distance, default_fare)
+        simulationLogger.add("run002", tricycle_id, hub_edge, dest_edge, distance, default_fare, tick)
         return True
 
     def hasTricycleArrived(self, tricycle_id: str) -> bool:
