@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 class FileSystemDescriptor:
     INPUT_DIRECTORY_NAME = "maps"
@@ -6,7 +7,7 @@ class FileSystemDescriptor:
     # OUTPUT_DIRECTORY_NAME = "assets"
 
     def __init__(self, temp_directory: str):
-        self.OUTPUT_DIRECTORY_NAME = temp_directory
+        self.OUTPUT_DIRECTORY_NAME = os.path.join(temp_directory, 'temp_assets')
         
     def getInputDirectory(self) -> str:
         script_dir = Path(__file__).resolve().parent.parent

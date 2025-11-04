@@ -51,3 +51,6 @@ simulation_loop = SimulationEngine(map_descriptor, simulation_config, tricycle_d
 simulation_loop.setPassengerBoundaries(2, 2)
 simulation_loop.doMainLoop(duration)
 simulation_loop.close()
+
+# Delete temp files after sim
+file_sync_service.removeDirectory(file_system_descriptor.getOutputDirectory())
