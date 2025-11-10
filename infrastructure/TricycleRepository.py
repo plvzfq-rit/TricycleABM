@@ -48,6 +48,10 @@ class TricycleRepository:
     def getTricycleLocation(self, tricycle_id: str) -> Location:
         return self.traciService.getTricycleLocation(tricycle_id)
     
+    #Any tricycle literally moving
+    def getBusyTricycleIds(self) -> set[str]:
+        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).state not in{ TricycleState.FREE, TricycleState.REFUELLING, TricycleState.DEAD, TricycleState.TO_SPAWN, TricycleState.PARKED}])
+    
     def setTricycleDestination(self, tricycle_id: str, destination: Location) -> None:
         if tricycle_id in self.tricycles.keys():
             self.getTricycle(tricycle_id).setDestination(destination)
@@ -90,11 +94,6 @@ class TricycleRepository:
     
     def isTricycleFree(self, tricycle_id: str) -> bool:
         return self.getTricycle(tricycle_id).isFree()
-    
-    def simulateConsumption(self, tricycle_id: str) -> None:
-        if tricycle_id in self.tricycles.keys():
-            current_location = self.traciService.getTricycleLocation(tricycle_id)
-            return self.getTricycle(tricycle_id).consumeGas(current_location)
 
     def activateTricycle(self, tricycle_id: str):
         self.getTricycle(tricycle_id).activate()
@@ -108,4 +107,12 @@ class TricycleRepository:
     def updateTricycleLocation(self, tricycle_id: str, current_location: Location):
         self.getTricycle(tricycle_id).setLastLocation(current_location)
 
-
+    #FUNCTIONS FOR GAS CONSUMPTION
+    def simulateGasConsumption(self) -> None:
+        tricyles_ids = self.getBusyTricycleIds()
+        for tricycle_id in tricyles_ids:
+            tricycle = self.getTricycle(tricycle_id)
+            tricycle.consumeGas()
+            print(f"{tricycle_id} is in {tricycle.state} STATE")
+            print(f"{tricycle_id} has {tricycle.currentGas} / {tricycle.maxGas} \n \n")
+        return

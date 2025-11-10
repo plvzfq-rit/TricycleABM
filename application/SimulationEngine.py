@@ -50,8 +50,9 @@ class SimulationEngine:
             self.generateRandomNumberOfPassengers()
             self.tricycleSynchronizer.sync()
             self.tricycleStateManager.updateTricycleStates(self.tick)
-            # self.tricycleSynchronizer.sync()
             self.tricycleDispatcher.dispatchTricycles()
+            self.tricycleRepository.simulateGasConsumption()
+
             self.tick += 1
             traci.simulationStep()
 

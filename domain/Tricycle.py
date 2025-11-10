@@ -53,13 +53,6 @@ class Tricycle:
         # print(self.currentGas < (distance_travelled / self.gasConsumptionRate))
         return self.currentGas < (distance_travelled / self.gasConsumptionRate)
     
-    def consumeGas(self, current_location: Location) -> bool:
-        distance_travelled = current_location.distanceTo(self.lastLocation)
-        if self.hasRunOutOfGas(distance_travelled):
-            return False
-        self.currentGas -= distance_travelled / self.gasConsumptionRate
-        return True
-    
     def isFree(self) -> bool:
         return self.state == TricycleState.FREE or self.state == TricycleState.PARKED
     
@@ -114,3 +107,9 @@ class Tricycle:
 
     def setLastLocation(self, last_location: Location) -> None:
         self.lastLocation = last_location
+
+    #METHOD FOR GAS CONSUMPTION
+    def consumeGas(self) -> None:
+        gasConsumptionRate = 0.5 #Can be changed for testing
+        self.currentGas -= gasConsumptionRate
+        return
