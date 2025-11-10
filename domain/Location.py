@@ -20,7 +20,6 @@ class Location:
             x1, y1 = traci.simulation.convert2D(self.location, self.position)
             x2, y2 = traci.simulation.convert2D(value.location, value.position)
             distance = ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
-            print("Distance between", self, "and", value, "is", distance)
             return distance <= threshold
         except traci.TraCIException:
             print("Error converting positions for", self, "and", value)
