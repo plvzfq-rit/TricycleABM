@@ -110,6 +110,6 @@ class Tricycle:
 
     #METHOD FOR GAS CONSUMPTION
     def consumeGas(self) -> None:
-        gasConsumptionRate = 0.5 #Can be changed for testing
-        self.currentGas -= gasConsumptionRate
+        gasConsumptionRate = 55 #Can be changed for testing
+        self.currentGas = self.currentGas - gasConsumptionRate
         return

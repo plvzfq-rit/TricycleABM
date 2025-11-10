@@ -52,7 +52,7 @@ class SimulationEngine:
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.tricycleDispatcher.dispatchTricycles()
             self.tricycleRepository.simulateGasConsumption()
-
+            #Have gas stations check if a tricycle needing to refuel is near, to refuel to max (change to actual number later)
             self.tick += 1
             traci.simulationStep()
 

@@ -7,7 +7,7 @@
     <!-- StoppingPlaces -->
     <parkingArea id="gas0" lane="E56_0" startPos="13.42" endPos="23.42" friendlyPos="1" roadsideCapacity="5" onRoad="1"/>
     <parkingArea id="gas1" lane="E28_0" startPos="49.25" endPos="59.25" friendlyPos="1" roadsideCapacity="5" onRoad="1"/>
-    <parkingArea id="gas2" lane="E106_0" startPos="427.43" endPos="437.43" friendlyPos="1" roadsideCapacity="5" onRoad="1"/>
+    
     <parkingArea id="hub0" lane="E196_1" startPos="1.12" endPos="11.12" roadsideCapacity="5" onRoad="1"/>
     <parkingArea id="hub1" lane="E154_1" startPos="1.48" endPos="31.48" roadsideCapacity="15" onRoad="1"/>
     <parkingArea id="hub2" lane="E74_1" startPos="2.72" endPos="12.72" roadsideCapacity="5" onRoad="1"/>

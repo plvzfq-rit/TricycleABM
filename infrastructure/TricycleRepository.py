@@ -107,12 +107,29 @@ class TricycleRepository:
     def updateTricycleLocation(self, tricycle_id: str, current_location: Location):
         self.getTricycle(tricycle_id).setLastLocation(current_location)
 
-    #FUNCTIONS FOR GAS CONSUMPTION
+    #FUNCTIONS FOR GAS CONSUMPTION AND GAS REFUELLING
     def simulateGasConsumption(self) -> None:
         tricyles_ids = self.getBusyTricycleIds()
         for tricycle_id in tricyles_ids:
             tricycle = self.getTricycle(tricycle_id)
             tricycle.consumeGas()
-            print(f"{tricycle_id} is in {tricycle.state} STATE")
-            print(f"{tricycle_id} has {tricycle.currentGas} / {tricycle.maxGas} \n \n")
+            if tricycle.currentGas <= 0:
+                tricycle.state = TricycleState.GOING_TO_REFUEL
+                self.rerouteToGasStation(tricycle_id)
+        return
+    
+    def rerouteToGasStation(self,tricycle_id: str) -> None:
+        tricycle = self.getTricycle(tricycle_id)
+        gas_stations = self.traciService.getListofGasIds()
+
+        start_edge = traci.vehicle.getRoadID(tricycle_id)
+
+        nearest_station_edge = min(
+            gas_stations,
+            key=lambda edge_id: traci.simulation.findRoute(start_edge, edge_id).travelTime
+        )
+        traci.vehicle.changeTarget(tricycle_id, nearest_station_edge)
+        route = traci.vehicle.getRoute(tricycle_id)
+        dest_route = route[-1]
+        print(f"{tricycle_id} new destination is: {dest_route}")
         return

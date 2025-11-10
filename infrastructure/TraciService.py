@@ -9,7 +9,14 @@ class TraciService:
                 edge = traci.parkingarea.getLaneID(parking_area_id).split("_")[0]
                 hub_ids.append(edge)
         return hub_ids
-    
+    def getListofGasIds(self) -> list[str]:
+        hub_ids = []
+        parking_area_ids = traci.parkingarea.getIDList()
+        for gas_station_id in parking_area_ids:
+            if gas_station_id.lower().startswith("gas"):
+                edge = traci.parkingarea.getLaneID(gas_station_id).split("_")[0]
+                hub_ids.append(edge)
+        return hub_ids
     def addPassenger(self, name: str, starting_edge: str, starting_position: float):
         traci.person.add(name, starting_edge, starting_position, typeID="fatPed")
 
