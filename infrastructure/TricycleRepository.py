@@ -36,6 +36,9 @@ class TricycleRepository:
     def getTricycles(self) -> list[Tricycle]:
         return list(self.tricycles.values())
     
+    def getGoingToRefuelTricycleIds(self) -> list[Tricycle]:
+        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isGoingToRefuel()])
+    
     def getActiveTricycles(self) -> set[Tricycle]:
         return set([tricycle for tricycle in self.tricycles.values() if tricycle.isActive()])
     
@@ -120,16 +123,41 @@ class TricycleRepository:
     
     def rerouteToGasStation(self,tricycle_id: str) -> None:
         tricycle = self.getTricycle(tricycle_id)
-        gas_stations = self.traciService.getListofGasIds()
+        gas_stations = self.traciService.getListofGasEdges()
 
         start_edge = traci.vehicle.getRoadID(tricycle_id)
-
+        
         nearest_station_edge = min(
             gas_stations,
             key=lambda edge_id: traci.simulation.findRoute(start_edge, edge_id).travelTime
         )
-        traci.vehicle.changeTarget(tricycle_id, nearest_station_edge)
-        route = traci.vehicle.getRoute(tricycle_id)
-        dest_route = route[-1]
-        print(f"{tricycle_id} new destination is: {dest_route}")
+
+        hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
+        current_edge = traci.vehicle.getRoadID(tricycle_id)
+
+        to_route = traci.simulation.findRoute(current_edge, nearest_station_edge)
+        return_route = traci.simulation.findRoute(nearest_station_edge, hub_edge)
+
+        full_route = list(to_route.edges) + list(return_route.edges)[1:]
+
+        traci.vehicle.setRoute(tricycle_id, full_route)
+
+        traci.vehicle.setStop(
+            vehID= tricycle_id,
+            edgeID= nearest_station_edge,
+            duration=9999,
+            flags=0x01 | 0x02
+        )
+        return
+    
+    def CheckGasStationForTricycles(self ) -> None:
+        tricycle_ids = self.getGoingToRefuelTricycleIds()
+
+        for tricycle_id in tricycle_ids:
+            route = traci.vehicle.getRoute(tricycle_id)
+            current_edge = traci.vehicle.getRoadID(tricycle_id)
+
+            if current_edge == route[-1]:
+                print("I hate thesis :D")
+
         return

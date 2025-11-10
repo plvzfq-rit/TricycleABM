@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2025-10-07 14:22:30 by Eclipse SUMO netedit Version 1.23.1
+<!-- generated on 2025-11-10 21:56:21 by Eclipse SUMO netedit Version 1.23.1
 <neteditConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/neteditConfiguration.xsd">
 
     <input>
-        <additional-files value="D:\TricycleABM\maps\parking.add.xml"/>
-        <route-files value="D:\TricycleABM\assets\routesfinal.rou.xml"/>
         <sumo-net-file value="D:\TricycleABM\maps\net.net.xml"/>
     </input>
 
@@ -43,7 +41,7 @@
         <lane id=":J0_0_0" index="0" speed="3.65" length="4.67" shape="-162.36,530.77 -163.65,531.40 -164.55,531.34 -165.04,530.59 -165.12,529.15"/>
     </edge>
     <edge id=":J1_0" function="internal">
-        <lane id=":J1_0_0" index="0" speed="5.58" length="9.35" shape="219.62,728.77 221.47,732.68 221.27,735.36 219.01,736.80 214.68,737.00"/>
+        <lane id=":J1_0_0" index="0" speed="5.58" length="9.35" shape="219.62,728.77 221.47,732.68 221.27,735.36 219.00,736.80 214.68,737.01"/>
         <lane id=":J1_0_1" index="1" speed="3.65" length="9.35" shape="217.97,731.52 218.59,732.82 218.52,733.71 217.77,734.19 216.33,734.26"/>
     </edge>
     <edge id=":J105_0" function="internal">
@@ -1483,7 +1481,7 @@
         <lane id=":clusterJ34_J66_J67_J69_2_0" index="0" disallow="pedestrian" speed="12.98" length="10.78" shape="189.15,717.96 180.44,711.60"/>
     </edge>
     <edge id=":clusterJ34_J66_J67_J69_17" function="internal">
-        <lane id=":clusterJ34_J66_J67_J69_17_0" index="0" disallow="pedestrian" speed="12.98" length="24.99" shape="180.44,711.60 179.88,711.18 174.26,704.14 172.30,696.85 173.99,689.31"/>
+        <lane id=":clusterJ34_J66_J67_J69_17_0" index="0" disallow="pedestrian" speed="12.98" length="24.99" shape="180.44,711.60 179.88,711.18 174.26,704.15 172.30,696.85 173.99,689.31"/>
     </edge>
     <edge id=":clusterJ34_J66_J67_J69_3" function="internal">
         <lane id=":clusterJ34_J66_J67_J69_3_0" index="0" disallow="pedestrian" speed="9.08" length="16.73" shape="191.25,697.22 189.44,702.50 189.04,706.80 190.03,710.12 192.44,712.47"/>
@@ -1947,7 +1945,7 @@
         <lane id="-E247_2" index="2" disallow="pedestrian" speed="13.89" length="43.74" shape="448.45,260.85 410.88,238.45"/>
     </edge>
     <edge id="-E3" from="J1" to="clusterJ34_J66_J67_J69" priority="-1">
-        <lane id="-E3_0" index="0" speed="13.89" length="31.69" shape="214.68,737.00 187.50,720.71"/>
+        <lane id="-E3_0" index="0" speed="13.89" length="31.69" shape="214.68,737.01 187.50,720.71"/>
         <lane id="-E3_1" index="1" speed="13.89" length="31.69" shape="216.33,734.26 189.15,717.96"/>
     </edge>
     <edge id="E0" from="J132" to="J129" priority="-1">
@@ -2613,10 +2611,10 @@
         <lane id="E27_3" index="3" disallow="pedestrian" speed="13.89" length="82.41" shape="487.81,-346.00 561.21,-308.54"/>
     </edge>
     <edge id="E28" from="J51" to="clusterJ128_J130_J131_J133_#2more" priority="-1" shape="560.65,-307.03 620.19,-277.59">
-        <lane id="E28_0" index="0" allow="pedestrian" speed="13.89" length="66.24" width="2.00" shape="565.51,-316.45 624.89,-287.09"/>
-        <lane id="E28_1" index="1" disallow="pedestrian" speed="13.89" length="66.24" shape="564.36,-314.12 623.74,-284.76"/>
-        <lane id="E28_2" index="2" disallow="pedestrian" speed="13.89" length="66.24" shape="562.94,-311.25 622.32,-281.89"/>
-        <lane id="E28_3" index="3" disallow="pedestrian" speed="13.89" length="66.24" shape="561.52,-308.38 620.90,-279.02"/>
+        <lane id="E28_0" index="0" speed="13.89" length="66.24" width="2.00" shape="565.51,-316.45 624.89,-287.09"/>
+        <lane id="E28_1" index="1" speed="13.89" length="66.24" shape="564.36,-314.12 623.74,-284.76"/>
+        <lane id="E28_2" index="2" speed="13.89" length="66.24" shape="562.94,-311.25 622.32,-281.89"/>
+        <lane id="E28_3" index="3" speed="13.89" length="66.24" shape="561.52,-308.38 620.90,-279.02"/>
     </edge>
     <edge id="E3" from="clusterJ34_J66_J67_J69" to="J1" priority="-1">
         <lane id="E3_0" index="0" speed="13.89" length="31.69" shape="192.44,712.47 219.62,728.77"/>
@@ -2719,10 +2717,10 @@
         <lane id="E55_4" index="4" disallow="pedestrian" speed="13.89" length="38.48" shape="-175.82,466.18 -143.71,486.65"/>
     </edge>
     <edge id="E56" from="J81" to="clusterclusterJ91_J94_J95_clusterJ92_J93" priority="-1" shape="-444.51,284.54 -412.83,302.84">
-        <lane id="E56_0" index="0" allow="pedestrian" speed="13.89" length="26.29" width="2.00" shape="-431.64,279.73 -408.63,293.03"/>
-        <lane id="E56_1" index="1" disallow="pedestrian" speed="13.89" length="26.29" shape="-432.94,281.99 -410.08,295.19"/>
-        <lane id="E56_2" index="2" disallow="pedestrian" speed="13.89" length="26.29" shape="-434.54,284.76 -411.86,297.86"/>
-        <lane id="E56_3" index="3" disallow="pedestrian" speed="13.89" length="26.29" shape="-436.14,287.53 -413.64,300.52"/>
+        <lane id="E56_0" index="0" speed="13.89" length="26.29" width="2.00" shape="-431.64,279.73 -408.63,293.03"/>
+        <lane id="E56_1" index="1" speed="13.89" length="26.29" shape="-432.94,281.99 -410.08,295.19"/>
+        <lane id="E56_2" index="2" speed="13.89" length="26.29" shape="-434.54,284.76 -411.86,297.86"/>
+        <lane id="E56_3" index="3" speed="13.89" length="26.29" shape="-436.14,287.53 -413.64,300.52"/>
     </edge>
     <edge id="E57" from="clusterclusterJ91_J94_J95_clusterJ92_J93" to="clusterJ79_clusterJ108_J109_J112_J113_#1more" priority="-1" shape="-419.59,317.95 -553.94,228.24">
         <lane id="E57_0" index="0" allow="pedestrian" speed="13.89" length="122.94" width="2.00" shape="-429.41,324.14 -531.59,255.91"/>
@@ -4435,7 +4433,7 @@
         <request index="12" response="00000000001110" foes="00000000001110" cont="0"/>
         <request index="13" response="00111101001110" foes="00111101001110" cont="0"/>
     </junction>
-    <junction id="clusterJ34_J66_J67_J69" type="traffic_light" x="167.17" y="702.92" incLanes="-E3_0 -E3_1 E43_0 E43_1 E43_2 E43_3 E37_0 E37_1 E37_2 E37_3 E35_0 E35_1 E35_2 E35_3" intLanes=":clusterJ34_J66_J67_J69_0_0 :clusterJ34_J66_J67_J69_1_0 :clusterJ34_J66_J67_J69_17_0 :clusterJ34_J66_J67_J69_3_0 :clusterJ34_J66_J67_J69_4_0 :clusterJ34_J66_J67_J69_4_1 :clusterJ34_J66_J67_J69_4_2 :clusterJ34_J66_J67_J69_18_0 :clusterJ34_J66_J67_J69_8_0 :clusterJ34_J66_J67_J69_9_0 :clusterJ34_J66_J67_J69_9_1 :clusterJ34_J66_J67_J69_19_0 :clusterJ34_J66_J67_J69_12_0 :clusterJ34_J66_J67_J69_13_0 :clusterJ34_J66_J67_J69_13_1 :clusterJ34_J66_J67_J69_13_2 :clusterJ34_J66_J67_J69_20_0" shape="186.68,722.08 193.26,711.10 191.95,708.85 191.94,707.02 192.37,704.73 193.23,701.96 194.53,698.72 164.90,685.14 164.27,686.00 163.90,686.17 163.49,686.16 163.05,685.98 162.57,685.63 149.32,703.90 150.41,704.96 150.68,705.49 150.76,706.03 150.67,706.58 150.39,707.13 180.91,727.21 182.20,725.36 183.35,723.90 184.38,722.85 185.28,722.19 186.04,721.94">
+    <junction id="clusterJ34_J66_J67_J69" type="traffic_light" x="167.17" y="702.92" incLanes="-E3_0 -E3_1 E43_0 E43_1 E43_2 E43_3 E37_0 E37_1 E37_2 E37_3 E35_0 E35_1 E35_2 E35_3" intLanes=":clusterJ34_J66_J67_J69_0_0 :clusterJ34_J66_J67_J69_1_0 :clusterJ34_J66_J67_J69_17_0 :clusterJ34_J66_J67_J69_3_0 :clusterJ34_J66_J67_J69_4_0 :clusterJ34_J66_J67_J69_4_1 :clusterJ34_J66_J67_J69_4_2 :clusterJ34_J66_J67_J69_18_0 :clusterJ34_J66_J67_J69_8_0 :clusterJ34_J66_J67_J69_9_0 :clusterJ34_J66_J67_J69_9_1 :clusterJ34_J66_J67_J69_19_0 :clusterJ34_J66_J67_J69_12_0 :clusterJ34_J66_J67_J69_13_0 :clusterJ34_J66_J67_J69_13_1 :clusterJ34_J66_J67_J69_13_2 :clusterJ34_J66_J67_J69_20_0" shape="186.68,722.08 193.26,711.10 191.94,708.85 191.94,707.02 192.37,704.73 193.23,701.96 194.53,698.72 164.90,685.14 164.27,686.00 163.90,686.17 163.49,686.16 163.05,685.98 162.57,685.63 149.32,703.90 150.41,704.96 150.68,705.49 150.76,706.03 150.67,706.58 150.39,707.13 180.91,727.21 182.20,725.36 183.35,723.90 184.38,722.85 185.27,722.19 186.04,721.94">
         <request index="0"  response="00000000001110000" foes="00000000001110000" cont="0"/>
         <request index="1"  response="11111000011110000" foes="11111100011110000" cont="0"/>
         <request index="2"  response="11110011011110000" foes="11110011011110000" cont="1"/>

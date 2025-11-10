@@ -14,7 +14,7 @@ map_builder = SpecificMapBuilder(simulation_config, file_system_descriptor, park
 map_descriptor = map_builder.build()
 
 
-duration = 1080
+duration = 2000
 
 # PHASE 2: INITIALIZING SERVICES
 traci_service = TraciService()
