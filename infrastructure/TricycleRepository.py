@@ -46,7 +46,7 @@ class TricycleRepository:
         return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive()])
     
     def getActiveTricycleIds(self) -> set[Tricycle]:
-        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() and self.getTricycle(tricycle_id).isFree()])
+        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() or self.getTricycle(tricycle_id).isFree()])
     
     def getTricycleLocation(self, tricycle_id: str) -> Location:
         return self.traciService.getTricycleLocation(tricycle_id)
