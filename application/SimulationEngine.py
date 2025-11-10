@@ -8,9 +8,10 @@ from infrastructure.TricycleDispatcher import TricycleDispatcher
 from infrastructure.TricycleSynchronizer import TricycleSynchronizer
 from infrastructure.PassengerSynchronizer import PassengerSynchronizer
 from infrastructure.TricycleStateManager import TricycleStateManager
+from infrastructure.SimulationLogger import SimulationLogger
 
 class SimulationEngine:
-    def __init__(self, map_descriptor: MapDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, passenger_repository: PassengerRepository, tricycle_repository: TricycleRepository, passenger_synchronizer: PassengerSynchronizer, tricycle_synchronizer: TricycleSynchronizer, tricycle_state_manager: TricycleStateManager, duration: int) -> None:
+    def __init__(self, map_descriptor: MapDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, passenger_repository: PassengerRepository, tricycle_repository: TricycleRepository, passenger_synchronizer: PassengerSynchronizer, tricycle_synchronizer: TricycleSynchronizer, tricycle_state_manager: TricycleStateManager, logger: SimulationLogger, duration: int) -> None:
         self.tick = 0
         self.passengerRepository = passenger_repository
         self.tricycleRepository = tricycle_repository
@@ -23,6 +24,7 @@ class SimulationEngine:
         self.tricycleSynchronizer = tricycle_synchronizer
         self.tricycleStateManager = tricycle_state_manager
         self.tricycleRepository.createTricycles(map_descriptor.getNumberOfTricycles(), duration, map_descriptor.getHubDistribution())
+        self.simulationLogger = logger
 
     def startTraci(self) -> None:
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()},{self.simulationConfig.getDecalFilePath()}"
@@ -34,6 +36,8 @@ class SimulationEngine:
             "--lateral-resolution", "2.0"
         ])
         self.passengerRepository.discoverPossibleSources()
+        ## log tricycle info
+        self.simulationLogger.addDriverInfo(self.tricycleRepository.getTricycles())
 
     def generateRandomNumberOfPassengers(self) -> None:
         LOWER_BOUND = self.LEAST_NUMBER_OF_PASSENGERS
@@ -50,10 +54,11 @@ class SimulationEngine:
             self.generateRandomNumberOfPassengers()
             self.tricycleSynchronizer.sync()
             self.tricycleStateManager.updateTricycleStates(self.tick)
-            self.tricycleDispatcher.dispatchTricycles()
             self.tricycleRepository.simulateGasConsumption()
             #Have gas stations check if a tricycle needing to refuel is near, to refuel to max (change to actual number later)
             self.tricycleRepository.CheckGasStationForTricycles()
+            # self.tricycleSynchronizer.sync()
+            self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick)
             self.tick += 1
             traci.simulationStep()
 

@@ -2,19 +2,29 @@ from domain import *
 from infrastructure import *
 from application import *
 
+import argparse
+
+# hotfix
+# Initialize logger
+parser = argparse.ArgumentParser()
+parser.add_argument("--sim_count", type=int, required=True)
+args = parser.parse_args()
+logger = SimulationLogger(args.sim_count)
+
+## place temp (for multithreading, each thread gets a separate temp/assets dir)
+temp_directory = logger.getDirectory()
 
 # PHASE 1: INITIALIZING THE MAP ENVIRONMENT
 
 simulation_config = SimulationConfig()
-file_system_descriptor = FileSystemDescriptor()
+file_system_descriptor = FileSystemDescriptor(temp_directory)
 parking_area_parser = ParkingAreaParser()
 file_sync_service = FileSynchronizer()
 
 map_builder = SpecificMapBuilder(simulation_config, file_system_descriptor, parking_area_parser, file_sync_service)
 map_descriptor = map_builder.build()
 
-
-duration = 2000
+duration = 1080
 
 # PHASE 2: INITIALIZING SERVICES
 traci_service = TraciService()
@@ -37,7 +47,10 @@ tricycle_synchronizer = TricycleSynchronizer(tricycle_repository, traci_service)
 tricycle_state_manager = TricycleStateManager(tricycle_repository, traci_service)
 
 # PHASE 6: RUNNING SIMULATION LOOP
-simulation_loop = SimulationEngine(map_descriptor, simulation_config, tricycle_dispatcher, passenger_repository, tricycle_repository, passenger_synchronizer, tricycle_synchronizer, tricycle_state_manager, duration)
+simulation_loop = SimulationEngine(map_descriptor, simulation_config, tricycle_dispatcher, passenger_repository, tricycle_repository, passenger_synchronizer, tricycle_synchronizer, tricycle_state_manager, logger, duration)
 simulation_loop.setPassengerBoundaries(2, 2)
 simulation_loop.doMainLoop(duration)
 simulation_loop.close()
+
+# Delete temp files after sim
+file_sync_service.removeDirectory(file_system_descriptor.getOutputDirectory())

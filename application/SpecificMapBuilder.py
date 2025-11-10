@@ -3,6 +3,7 @@ from infrastructure.SimulationConfig import SimulationConfig
 from infrastructure.ParkingAreaParser import ParkingAreaParser
 from infrastructure.FileSystemDescriptor import FileSystemDescriptor
 from infrastructure.FileSynchronizer import FileSynchronizer
+import os
 
 class SpecificMapBuilder:
     def __init__(self, traci_config:SimulationConfig | None = None, 
@@ -16,6 +17,7 @@ class SpecificMapBuilder:
 
     def build(self) -> MapDescriptor:
         destination_directory = self.fileSystemDescriptor.getOutputDirectory()
+        os.makedirs(destination_directory, exist_ok=True)
         self.fileSyncService.removeFilesInDirectory(destination_directory)
 
         source_directory = self.fileSystemDescriptor.getInputDirectory()
