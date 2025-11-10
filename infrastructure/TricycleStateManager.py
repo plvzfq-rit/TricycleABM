@@ -1,5 +1,6 @@
 from infrastructure.TricycleRepository import TricycleRepository
 from infrastructure.TraciService import TraciService
+import traci
 
 class TricycleStateManager:
     def __init__(self, tricycle_repository: TricycleRepository, traci_service: TraciService):
@@ -27,6 +28,10 @@ class TricycleStateManager:
                 continue
             if current_location.isInvalid():
                 tricycle.park(current_location)
+                continue
+            
+            if tricycle.isReturningToToda() and self.traciService.checkIfTricycleParked(tricycle_id, tricycle_hub):
+                tricycle.activate()
                 continue
             
             if tricycle.shouldReturnToToda(current_location):

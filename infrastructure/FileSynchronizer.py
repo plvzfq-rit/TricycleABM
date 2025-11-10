@@ -6,6 +6,12 @@ class FileSynchronizer:
             filepath = os.path.join(destination_directory, file)
             os.remove(filepath)
 
+    def removeDirectory(self, destination_directory: str) -> None:
+        for file in os.listdir(destination_directory):
+            filepath = os.path.join(destination_directory, file)
+            os.remove(filepath)
+        os.rmdir(destination_directory)
+
     def copyFilesFromDirectory(self, source_directory: str, destination_directory: str) -> None:
         for file in os.listdir(source_directory):
             source_file_path = os.path.join(source_directory, file)

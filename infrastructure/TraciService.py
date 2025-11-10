@@ -48,7 +48,7 @@ class TraciService:
         route_id = f"route_{tricycle_id}"
         hub_edge = self.getTricycleHubEdge(hub_string)
         traci.route.add(route_id, [hub_edge])
-        traci.vehicle.add(tricycle_id, route_id, "trike")
+        traci.vehicle.add(tricycle_id, route_id, "trike", departLane="best_prob", departPos="last", departSpeed="last")
         self.returnTricycleToHub(tricycle_id, hub_string)
 
     def removeTricycle(self, tricycle_id: str) -> None:
@@ -60,3 +60,5 @@ class TraciService:
     def checkIfTricycleInSimulation(self, tricycle_id):
         return tricycle_id in self.getTricycleIds()
     
+    def checkIfTricycleParked(self, tricycle_id: str, tricycle_hub: str) -> bool:
+        return tricycle_id in traci.parkingarea.getVehicleIDs(tricycle_hub)

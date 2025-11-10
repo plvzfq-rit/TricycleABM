@@ -9,7 +9,7 @@ class TricycleDispatcher:
         self.tricycleRepository = tricycle_repository
         self.passengerRepository = passenger_repository
 
-    def dispatchTricycles(self) -> None:
+    def dispatchTricycles(self, simulationLogger, tick) -> None:
         active_passenger_ids = self.passengerRepository.getActivePassengerIds()
 
         for passenger_id in active_passenger_ids:
@@ -21,8 +21,11 @@ class TricycleDispatcher:
                 if self.canDispatch(tricycle_id, passenger_id, tricycle_location, passenger_location):
                     self.passengerRepository.killPassenger(passenger_id)
                     passenger_destination = self.passengerRepository.getPassengerDestination(passenger_id)
-                    success = self.tricycleRepository.dispatchTricycle(tricycle_id, passenger_destination)
+                    ## TODO = change success into a dict object
+                    success = self.tricycleRepository.dispatchTricycle(tricycle_id, passenger_destination, simulationLogger, tick)
+                    ## negotiation part here??? 
                     if success:
+                        # simulationLogger.add("run002", tricycle_id, "edge_010", "edge_200", 7.3, 14.80)
                         break
 
     def canDispatch(self, tricycle_id: str, passenger_id: str, tricycle_location: Location, passenger_location: Location):
