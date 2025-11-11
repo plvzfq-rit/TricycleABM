@@ -122,53 +122,59 @@ class TricycleRepository:
         self.getTricycle(tricycle_id).setLastLocation(current_location)
 
     #FUNCTIONS FOR GAS CONSUMPTION AND GAS REFUELLING
-    def simulateGasConsumption(self) -> None:
-        tricyles_ids = self.getBusyTricycleIds()
-        for tricycle_id in tricyles_ids:
-            tricycle = self.getTricycle(tricycle_id)
-            tricycle.consumeGas()
-            if tricycle.currentGas <= 0:
-                tricycle.state = TricycleState.GOING_TO_REFUEL
-                self.rerouteToGasStation(tricycle_id)
+    def simulateGasConsumption(self, tricycle_id: str) -> None:
+        tricycle = self.getTricycle(tricycle_id)
+        tricycle.consumeGas()
         return
     
     def rerouteToGasStation(self,tricycle_id: str) -> None:
-        tricycle = self.getTricycle(tricycle_id)
-        gas_stations = self.traciService.getListofGasEdges()
 
-        start_edge = traci.vehicle.getRoadID(tricycle_id)
-        
-        nearest_station_edge = min(
-            gas_stations,
-            key=lambda edge_id: traci.simulation.findRoute(start_edge, edge_id).travelTime
-        )
+        tricycle = self.getTricycle(tricycle_id)
+        gasHub_id = self.findClosestGasStation(tricycle_id)
+        gasHub_edge = traci.parkingarea.getLaneID(gasHub_id).split("_")[0]
 
         hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
         current_edge = traci.vehicle.getRoadID(tricycle_id)
 
-        to_route = traci.simulation.findRoute(current_edge, nearest_station_edge)
-        return_route = traci.simulation.findRoute(nearest_station_edge, hub_edge)
+        to_route = traci.simulation.findRoute(current_edge, gasHub_edge)
+        return_route = traci.simulation.findRoute(gasHub_edge, hub_edge)
 
         full_route = list(to_route.edges) + list(return_route.edges)[1:]
 
         traci.vehicle.setRoute(tricycle_id, full_route)
-
-        traci.vehicle.setStop(
-            vehID= tricycle_id,
-            edgeID= nearest_station_edge,
-            duration=9999,
-            flags=0x01 | 0x02
-        )
+        try:
+            traci.vehicle.setParkingAreaStop(
+                vehID= tricycle_id,
+                stopID= gasHub_id,
+                duration=2
+            )
+        except Exception:
+            pass
         return
     
-    def CheckGasStationForTricycles(self ) -> None:
-        tricycle_ids = self.getGoingToRefuelTricycleIds()
-
-        for tricycle_id in tricycle_ids:
-            route = traci.vehicle.getRoute(tricycle_id)
-            current_edge = traci.vehicle.getRoadID(tricycle_id)
-
-            if current_edge == route[-1]:
-                print("I hate thesis :D")
-
+    def findClosestGasStation(self, tricycle_id: str) -> str:
+        start_edge = traci.vehicle.getRoadID(tricycle_id)
+        gas_stations_edges = self.traciService.getListofGasEdges()
+        gas_stations = self.traciService.getListofGasIds()
+        nearest_station_edge = min(
+            gas_stations_edges,
+            key=lambda edge_id: traci.simulation.findRoute(start_edge, edge_id).travelTime
+        )
+        for gas_id in gas_stations:
+            parking_lane=traci.parkingarea.getLaneID(gas_id).split("_")[0]
+            if parking_lane == nearest_station_edge:
+                hub_id = gas_id
+                return hub_id
+        return "No Gas Station Found!"
+    
+    def refuelTricycle(self, tricycle_id: str) -> None:
+        tricycle = self.getTricycle(tricycle_id)
+        tricycle.currentGas = tricycle.maxGas
+        traci.vehicle.setSpeed(tricycle_id, -1)
         return
+    #IDEA: 
+    #1. Put the states in the update tricycle states, with the consumption as well
+    #2. If gas at 0, change speed to 20
+    #3. at refuel, reset to old speed
+    #4. make gas transactions work
+

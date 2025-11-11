@@ -30,7 +30,7 @@ class Tricycle:
             raise Exception(f"destination given to {self.name} was None")
         self.state = TricycleState.HAS_PASSENGER
         self.destination = destination
-    
+
     def hasArrived(self, current_location: Location) -> bool:
         # current_edge = traci.vehicle.getRoadID(self.name)
         # current_position = traci.vehicle.getLanePosition(self.name)
@@ -41,6 +41,10 @@ class Tricycle:
         self.destination = None
         self.state = TricycleState.DROPPING_OFF
 
+    def goingToRefuel(self):
+        self.state = TricycleState.GOING_TO_REFUEL
+        return 
+
     def returnToToda(self):
         self.destination = None
         self.state = TricycleState.RETURNING_TO_TODA
@@ -49,8 +53,6 @@ class Tricycle:
         return self.state not in [TricycleState.DEAD, TricycleState.TO_SPAWN]
     
     def hasRunOutOfGas(self, distance_travelled: float) -> bool:
-        # print(self.name, distance_travelled, self.gasConsumptionRate, self.currentGas, distance_travelled / self.gasConsumptionRate)
-        # print(self.currentGas < (distance_travelled / self.gasConsumptionRate))
         return self.currentGas < (distance_travelled / self.gasConsumptionRate)
     
     def isFree(self) -> bool:

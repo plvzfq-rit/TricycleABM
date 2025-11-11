@@ -27,5 +27,6 @@
        lcPushy="0.5"
        lcAssertive="0.3"
        lcImpatience="0.2"
-       lcAccelLat="1.0"/>
+       lcAccelLat="1.0"
+    />
 </additional>

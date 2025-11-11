@@ -6,10 +6,11 @@ import argparse
 
 # hotfix
 # Initialize logger
-parser = argparse.ArgumentParser()
-parser.add_argument("--sim_count", type=int, required=True)
-args = parser.parse_args()
-logger = SimulationLogger(args.sim_count)
+#parser = argparse.ArgumentParser()
+#parser.add_argument("--sim_count", type=int, required=True)
+#args = parser.parse_args()
+#args.sim_count
+logger = SimulationLogger(2)
 
 ## place temp (for multithreading, each thread gets a separate temp/assets dir)
 temp_directory = logger.getDirectory()
