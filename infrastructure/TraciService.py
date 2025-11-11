@@ -59,6 +59,8 @@ class TraciService:
         hub_edge = self.getTricycleHubEdge(hub_string)
         traci.route.add(route_id, [hub_edge])
         traci.vehicle.add(tricycle_id, route_id, "trike", departLane="best_prob", departPos="last", departSpeed="last")
+        # brute force entry
+        traci.vehicle.moveTo(tricycle_id, hub_edge + "_0", 0)
         traci.vehicle.setSpeed(tricycle_id, 8.33)
         self.returnTricycleToHub(tricycle_id, hub_string)
 
