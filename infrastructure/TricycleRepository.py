@@ -78,8 +78,10 @@ class TricycleRepository:
         edge = net.getEdge(dest_edge)
         if edge.getLaneNumber() <= 1:
             return False
-
-        traci.vehicle.setParkingAreaStop(tricycle_id, self.tricycles[tricycle_id].hub, duration=0)
+        try:
+            traci.vehicle.setParkingAreaStop(tricycle_id, self.tricycles[tricycle_id].hub, duration=0)
+        except:
+            pass
 
         to_route = traci.simulation.findRoute(current_edge, dest_edge)
         return_route = traci.simulation.findRoute(dest_edge, hub_edge)

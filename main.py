@@ -49,7 +49,7 @@ tricycle_state_manager = TricycleStateManager(tricycle_repository, traci_service
 
 # PHASE 6: RUNNING SIMULATION LOOP
 simulation_loop = SimulationEngine(map_descriptor, simulation_config, tricycle_dispatcher, passenger_repository, tricycle_repository, passenger_synchronizer, tricycle_synchronizer, tricycle_state_manager, logger, duration)
-simulation_loop.setPassengerBoundaries(2, 2)
+simulation_loop.setPassengerBoundaries(1, 1)
 simulation_loop.doMainLoop(duration)
 simulation_loop.close()
 

@@ -11,8 +11,10 @@ class TricycleFactory:
 
     def createRandomTricycle(self, assigned_id: int, simulation_duration: int, assigned_hub: str) -> tuple[str, Tricycle]:
         trike_name = "trike" + str(assigned_id)
-        start_time = random.randint(0, simulation_duration // 2)
-        end_time = random.randint(start_time, simulation_duration)
+        #start_time = random.randint(0, simulation_duration // 2)
+        #end_time = random.randint(start_time, simulation_duration)
+        start_time = 0
+        end_time = simulation_duration
         max_gas = self.lowerGasBound + (self.upperGasBound - self.lowerGasBound) * random.random()
         gas_consumption = random.random()
         gas_threshold = max_gas * random.random()

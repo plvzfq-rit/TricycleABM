@@ -52,7 +52,7 @@ class SimulationEngine:
         while self.tick < simulation_duration:
             self.passengerSynchronizer.sync()
             self.generateRandomNumberOfPassengers()
-            self.tricycleSynchronizer.sync()
+            #self.tricycleSynchronizer.sync()
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick)
             self.tick += 1

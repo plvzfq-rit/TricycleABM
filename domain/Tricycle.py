@@ -3,7 +3,7 @@ from domain.TricycleState import TricycleState
 from domain.Location import Location
 
 class Tricycle:
-    def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float, money: float) -> None:
+    def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float) -> None:
         self.name = name
         self.hub = hub
         self.startTime = start_time
@@ -15,7 +15,6 @@ class Tricycle:
         self.currentGas = max_gas
         self.gasConsumptionRate = gas_consumption_rate
         self.gasThreshold = gas_threshold
-        self.money = 0
 
     def __str__(self) -> str:
         return f"Tricycle(name={self.name}, hub={self.hub}, start_time={self.startTime}, end_time={self.endTime})"
