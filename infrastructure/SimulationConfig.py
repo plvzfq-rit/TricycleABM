@@ -1,7 +1,7 @@
 from pathlib import Path
 
 class SimulationConfig:
-    DEFAULT_ASSET_DIRECTORY_NAME = "assets"
+    DEFAULT_ASSET_DIRECTORY_NAME = "maps"
     DEFAULT_NETWORK_FILE_NAME = "net.net.xml"
     DEFAULT_PARKING_FILE_NAME = "parking.add.xml"
     DEFAULT_DECAL_FILE_NAME = "map.xml"
