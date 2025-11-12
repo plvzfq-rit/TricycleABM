@@ -135,7 +135,8 @@ class TricycleRepository:
     #FUNCTIONS FOR GAS CONSUMPTION AND GAS REFUELLING
     def simulateGasConsumption(self, tricycle_id: str) -> None:
         tricycle = self.getTricycle(tricycle_id)
-        tricycle.consumeGas()
+        current_location = self.traciService.getTricycleLocation(tricycle_id)
+        tricycle.consumeGas(current_location)
         return
     
     def rerouteToGasStation(self,tricycle_id: str) -> None:

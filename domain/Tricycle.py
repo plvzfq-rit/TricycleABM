@@ -3,7 +3,7 @@ from domain.TricycleState import TricycleState
 from domain.Location import Location
 
 class Tricycle:
-    def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float, usualGasPayment: float) -> None:
+    def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float, usualGasPayment: float, getsAFullTank: bool, farthestDistance: float, dailyExpense: float) -> None:
         self.name = name
         self.hub = hub
         self.startTime = start_time
@@ -17,6 +17,9 @@ class Tricycle:
         self.gasThreshold = gas_threshold
         self.wallet = 0
         self.usualGasPayment = usualGasPayment
+        self.getsAFullTank = getsAFullTank
+        self.dailyExpense = dailyExpense
+        self.farthestDistance = farthestDistance
 
     def __str__(self) -> str:
         return f"Tricycle(name={self.name}, hub={self.hub}, start_time={self.startTime}, end_time={self.endTime})"
@@ -113,7 +116,9 @@ class Tricycle:
         self.lastLocation = last_location
 
     #METHOD FOR GAS CONSUMPTION
-    def consumeGas(self) -> None:
-        gasConsumptionRate = 55 #Can be changed for testing
-        self.currentGas = self.currentGas - gasConsumptionRate
-        return
+    def consumeGas(self, current_location: Location) -> bool:
+        distance_travelled = current_location.distanceTo(self.lastLocation)
+        if self.hasRunOutOfGas(distance_travelled):
+            return False
+        self.currentGas -= distance_travelled / self.gasConsumptionRate
+        return True
