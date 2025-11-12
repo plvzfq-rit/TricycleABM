@@ -37,7 +37,7 @@ class TricycleStateManager:
                 tricycle.returnToToda()
                 continue
 
-            if current_location.location == self.traciService.getTricycleHubEdge(tricycle_hub):
+            if current_location.location == self.traciService.getTricycleHubEdge(tricycle_hub) and traci.vehicle.isStoppedParking(tricycle_id):
                 tricycle.activate()
                 continue
             
