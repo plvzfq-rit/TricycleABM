@@ -74,4 +74,7 @@ class TraciService:
         return tricycle_id in self.getTricycleIds()
     
     def checkIfTricycleParked(self, tricycle_id: str, tricycle_hub: str) -> bool:
-        return tricycle_id in traci.parkingarea.getVehicleIDs(tricycle_hub)
+        try:
+            return tricycle_id in traci.parkingarea.getVehicleIDs(tricycle_hub)
+        except traci.TraCIException:
+            return False

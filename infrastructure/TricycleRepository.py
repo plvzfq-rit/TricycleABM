@@ -110,6 +110,10 @@ class TricycleRepository:
     
     def isTricycleFree(self, tricycle_id: str) -> bool:
         return self.getTricycle(tricycle_id).isFree()
+    
+    def isTricycleParked(self, tricycle_id: str) -> bool:
+        tricycle = self.tricycles[tricycle_id]
+        return self.traciService.checkIfTricycleParked(tricycle_id, tricycle.hub)
 
     def activateTricycle(self, tricycle_id: str):
         self.getTricycle(tricycle_id).activate()
