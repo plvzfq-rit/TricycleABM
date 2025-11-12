@@ -22,10 +22,10 @@ class TricycleDispatcher:
             for passenger_id in active_passenger_ids:
                 passenger_location = self.passengerRepository.getPassengerLocation(passenger_id)
                 if self.canDispatch(tricycle_id, passenger_id, tricycle_location, passenger_location):
+                    passenger = self.passengerRepository.getPassenger(passenger_id)
                     self.passengerRepository.killPassenger(passenger_id)
-                    passenger_destination = self.passengerRepository.getPassengerDestination(passenger_id)
                     ## TODO = change success into a dict object
-                    success = self.tricycleRepository.dispatchTricycle(tricycle_id, passenger_destination, simulationLogger, tick)
+                    success = self.tricycleRepository.dispatchTricycle(tricycle_id, passenger, simulationLogger, tick)
                     ## negotiation part here??? 
                     if success:
                         # simulationLogger.add("run002", tricycle_id, "edge_010", "edge_200", 7.3, 14.80)
