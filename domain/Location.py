@@ -1,4 +1,6 @@
 import traci
+import re
+import difflib
 class Location:
     def __init__(self, location: str, position: float) -> None:
         self.location = location
@@ -13,18 +15,29 @@ class Location:
         return f"Location(loc={self.location},pos={self.position})"
     
     def isNear(self, value: any, threshold: float = 200.0):
+        # Check if the types of self and value match
         if type(self) != type(value):
             return False
-        # return self.location == value.location and abs(self.position - value.position) <= threshold
-        try:
-            x1, y1 = traci.simulation.convert2D(self.location, self.position)
-            x2, y2 = traci.simulation.convert2D(value.location, value.position)
-            distance = ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
-            return distance <= threshold
-        except traci.TraCIException:
-            print("Error converting positions for", self, "and", value)
-            return False
-    
+
+        # Get coordinates for self
+        coordinates_self = get_coordinates(self.location, self.position)
+        if coordinates_self is None:
+            return False  # Invalid location, can't proceed
+
+        # Get coordinates for value
+        coordinates_value = get_coordinates(value.location, value.position)
+        if coordinates_value is None:
+            return False  # Invalid location, can't proceed
+
+        # Unpack the coordinates
+        x1, y1 = coordinates_self
+        x2, y2 = coordinates_value
+
+        # Calculate the Euclidean distance between the two points
+        distance = ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+
+        # Return whether the distance is within the threshold
+        return distance <= threshold
     def distanceTo(self, another_location):
         if another_location == None or another_location.isInvalid():
             return 0.0
@@ -32,3 +45,17 @@ class Location:
     
     def isInvalid(self) -> bool:
         return self.location == '' and self.position == -1073741824.0
+    
+
+def get_coordinates(location, position):
+    """Helper function to extract coordinates, handling cluster logic and junctions."""
+    try:
+        # Lazy way, whole day trying to figure this out
+        if "J" in location:
+            junctions = list(traci.junction.getIDList())
+            closest_junction = difflib.get_close_matches(location, junctions, n=1)[0]
+            return traci.junction.getPosition(closest_junction) 
+        return traci.simulation.convert2D(location, position)
+    except traci.TraCIException:
+        print("Didn't work")
+        return None
