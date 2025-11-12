@@ -32,5 +32,8 @@ class TricycleDispatcher:
                         break
 
     def canDispatch(self, tricycle_id: str, passenger_id: str, tricycle_location: Location, passenger_location: Location, tricycle_farthest_distance: float):
-        estimated_distance = traci.simulation.getDistanceRoad(tricycle_location.location, tricycle_location.position, passenger_location.location, passenger_location.position)
+        try:
+            estimated_distance = traci.simulation.getDistanceRoad(tricycle_location.location, tricycle_location.position, passenger_location.location, passenger_location.position)
+        except:
+            estimated_distance = 100000000000000000000
         return passenger_location.isNear(tricycle_location) and self.tricycleRepository.isTricycleFree(tricycle_id) and self.passengerRepository.isPassengerAlive(passenger_id) and self.tricycleRepository.isTricycleParked(tricycle_id) and estimated_distance <= tricycle_farthest_distance
