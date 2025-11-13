@@ -118,9 +118,12 @@ class Tricycle:
     #METHOD FOR GAS CONSUMPTION
     def consumeGas(self, current_location: Location) -> bool:
         distance_travelled = current_location.distanceTo(self.lastLocation)
-        if self.hasRunOutOfGas(distance_travelled):
+
+        answer = distance_travelled / 1000.0
+
+        if self.hasRunOutOfGas(answer):
             return False
-        self.currentGas -= distance_travelled / self.gasConsumptionRate
+        self.currentGas -= answer / self.gasConsumptionRate
         return True
     
     def payForGas(self) -> None:
