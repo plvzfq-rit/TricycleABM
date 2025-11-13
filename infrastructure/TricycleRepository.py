@@ -105,7 +105,7 @@ class TricycleRepository:
         # else:
         default_fare = 16 if distance < 1000 else 16 + 5 * math.ceil((distance - 1000) / 500)
 
-
+        tricycle.money += default_fare
 
         simulationLogger.add("run002", tricycle_id, hub_edge, dest_edge, distance, default_fare, tick)
         return True
@@ -181,8 +181,20 @@ class TricycleRepository:
     
     def refuelTricycle(self, tricycle_id: str) -> None:
         tricycle = self.getTricycle(tricycle_id)
-        tricycle.currentGas = tricycle.maxGas
+        tricycle.currentGas += tricycle.usualGasPayment / self.simulationConfig.gasPricePerLiter
         tricycle.payForGas()
+
         traci.vehicle.setSpeed(tricycle_id, -1)
         return
+    
+    def startRefuelTricycle(self, tricycle_id: str) -> None:
+        tricycle = self.getTricycle(tricycle_id)
+        if tricycle.getsAFullTank():
+            amount = tricycle.maxGas - tricycle.currentGas
+            payment = amount * self.simulationConfig.gasPricePerLiter
+        else:
+            amount = tricycle.usualGasPayment / self.simulationConfig.gasPricePerLiter
+            payment = tricycle.usualGasPayment
+        tricycle.money -=payment
+        tricycle.currentGas += amount
 

@@ -61,9 +61,10 @@ class TricycleStateManager:
             if tricycle.isGoingToRefuel() and traci.vehicle.isStoppedParking(tricycle_id):
                 self.tricycleRepository.refuelTricycle(tricycle_id)
                 tricycle.returnToToda()
+
                 continue
             if tricycle.currentGas <= 0:
                 tricycle.goingToRefuel()
-                traci.vehicle.setSpeed(tricycle_id, 1.34112)
+                traci.vehicle.setSpeed(tricycle_id, 1)
                 continue
             

@@ -15,7 +15,7 @@ class Tricycle:
         self.currentGas = max_gas
         self.gasConsumptionRate = gas_consumption_rate
         self.gasThreshold = gas_threshold
-        self.wallet = 0
+        self.money = 0
         self.usualGasPayment = usualGasPayment
         self.getsAFullTank = getsAFullTank
         self.dailyExpense = dailyExpense
