@@ -45,7 +45,7 @@ passenger_repository = PassengerRepository(simulation_config, sumo_service, trac
 tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_repository)
 passenger_synchronizer = PassengerSynchronizer(passenger_repository, traci_service)
 tricycle_synchronizer = TricycleSynchronizer(tricycle_repository, traci_service)
-tricycle_state_manager = TricycleStateManager(tricycle_repository, traci_service)
+tricycle_state_manager = TricycleStateManager(tricycle_repository, traci_service, logger)
 
 # PHASE 6: RUNNING SIMULATION LOOP
 simulation_loop = SimulationEngine(map_descriptor, simulation_config, tricycle_dispatcher, passenger_repository, tricycle_repository, passenger_synchronizer, tricycle_synchronizer, tricycle_state_manager, logger, duration)

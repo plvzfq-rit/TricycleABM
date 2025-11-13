@@ -1,11 +1,13 @@
 from infrastructure.TricycleRepository import TricycleRepository
 from infrastructure.TraciService import TraciService
+from infrastructure.SimulationLogger import SimulationLogger
 import traci
 
 class TricycleStateManager:
-    def __init__(self, tricycle_repository: TricycleRepository, traci_service: TraciService):
+    def __init__(self, tricycle_repository: TricycleRepository, traci_service: TraciService, simulation_logger: SimulationLogger):
         self.tricycleRepository = tricycle_repository
         self.traciService = traci_service
+        self.simulationService = simulation_logger
 
     def updateTricycleStates(self, current_tick: int):
         for tricycle in self.tricycleRepository.getTricycles():
@@ -30,6 +32,7 @@ class TricycleStateManager:
 
             if tricycle.hasArrived(current_location):
                 tricycle.dropOff()
+                self.simulationService.add(*tricycle.currentLog)
                 continue
 
             if tricycle.isDroppingOff():

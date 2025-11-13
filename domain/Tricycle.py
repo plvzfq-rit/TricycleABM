@@ -1,6 +1,7 @@
 import traci
 from domain.TricycleState import TricycleState
 from domain.Location import Location
+from collections import namedtuple
 
 class Tricycle:
     def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float, usualGasPayment: float, getsAFullTank: bool, farthestDistance: float, dailyExpense: float) -> None:
@@ -20,9 +21,14 @@ class Tricycle:
         self.getsAFullTank = getsAFullTank
         self.dailyExpense = dailyExpense
         self.farthestDistance = farthestDistance
+        self.log = namedtuple("log", ["run_id","trike_id","origin_edge", "dest_edge", "distance", "price","tick"])
+        self.currentLog = None
 
     def __str__(self) -> str:
         return f"Tricycle(name={self.name}, hub={self.hub}, start_time={self.startTime}, end_time={self.endTime})"
+    
+    def recordLog(self, run_id:str, trike_id: str, origin_edge: str, dest_edge:str, distance:str, price:str, tick:str) -> None:
+        self.currentLog = self.log(run_id, trike_id, origin_edge, dest_edge, distance, price, tick)
     
     def activate(self) -> None:
         self.state = TricycleState.FREE
@@ -37,9 +43,6 @@ class Tricycle:
         self.destination = destination
 
     def hasArrived(self, current_location: Location) -> bool:
-        # current_edge = traci.vehicle.getRoadID(self.name)
-        # current_position = traci.vehicle.getLanePosition(self.name)
-        # current_location = Location(current_edge, current_position)
         return current_location.isNear(self.destination)
     
     def dropOff(self):

@@ -107,7 +107,12 @@ class TricycleRepository:
 
         tricycle.money += default_fare
 
-        simulationLogger.add("run002", tricycle_id, hub_edge, dest_edge, distance, default_fare, tick)
+        tricycle.recordLog("run002", str(tricycle_id), str(hub_edge), str(dest_edge), str(distance), str(default_fare), str(tick))
+
+        #1. create a trip object
+        #2. make a record
+        #3. refactor simulationLogger.add
+        #4. tricycle is in a "trip" state, 
         return True
 
     def hasTricycleArrived(self, tricycle_id: str) -> bool:
