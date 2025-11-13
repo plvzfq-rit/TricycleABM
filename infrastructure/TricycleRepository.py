@@ -182,11 +182,7 @@ class TricycleRepository:
     def refuelTricycle(self, tricycle_id: str) -> None:
         tricycle = self.getTricycle(tricycle_id)
         tricycle.currentGas = tricycle.maxGas
+        tricycle.payForGas()
         traci.vehicle.setSpeed(tricycle_id, -1)
         return
-    #IDEA: 
-    #1. Put the states in the update tricycle states, with the consumption as well
-    #2. If gas at 0, change speed to 20
-    #3. at refuel, reset to old speed
-    #4. make gas transactions work
 

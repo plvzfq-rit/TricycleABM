@@ -122,3 +122,6 @@ class Tricycle:
             return False
         self.currentGas -= distance_travelled / self.gasConsumptionRate
         return True
+    
+    def payForGas(self) -> None:
+        self.money -= self.usualGasPayment
