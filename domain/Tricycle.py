@@ -123,11 +123,11 @@ class Tricycle:
         distance_travelled = current_location.distanceTo(self.lastLocation)
 
         answer = distance_travelled / 1000.0
-
         if self.hasRunOutOfGas(answer):
             return False
         self.currentGas -= answer / self.gasConsumptionRate
         return True
     
-    def payForGas(self) -> None:
+    def payForGas(self) -> float:
         self.money -= self.usualGasPayment
+        return self.usualGasPayment

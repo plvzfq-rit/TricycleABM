@@ -7,7 +7,7 @@ class TricycleStateManager:
     def __init__(self, tricycle_repository: TricycleRepository, traci_service: TraciService, simulation_logger: SimulationLogger):
         self.tricycleRepository = tricycle_repository
         self.traciService = traci_service
-        self.simulationService = simulation_logger
+        self.simulationLogger = simulation_logger
 
     def updateTricycleStates(self, current_tick: int):
         for tricycle in self.tricycleRepository.getTricycles():
@@ -32,7 +32,7 @@ class TricycleStateManager:
 
             if tricycle.hasArrived(current_location):
                 tricycle.dropOff()
-                self.simulationService.add(*tricycle.currentLog)
+                self.simulationLogger.add(*tricycle.currentLog)
                 continue
 
             if tricycle.isDroppingOff():
@@ -54,7 +54,6 @@ class TricycleStateManager:
                 self.traciService.removeTricycle(tricycle_id)
                 tricycle.kill()
                 continue
-
             if not (tricycle.isFree() or tricycle.isRefuelling() or tricycle.isDead() or tricycle.hasSpawned() or tricycle.isParked() or tricycle.isGoingToRefuel()):
                 self.tricycleRepository.simulateGasConsumption(tricycle_id)
                 continue
@@ -62,7 +61,8 @@ class TricycleStateManager:
                 self.tricycleRepository.rerouteToGasStation(tricycle_id)
                 continue
             if tricycle.isGoingToRefuel() and traci.vehicle.isStoppedParking(tricycle_id):
-                self.tricycleRepository.refuelTricycle(tricycle_id)
+                gas_amt = self.tricycleRepository.refuelTricycle(tricycle_id)
+                self.simulationLogger.addExpenseToLog(tricycle_id, "gas", gas_amt, current_tick)
                 tricycle.returnToToda()
 
                 continue

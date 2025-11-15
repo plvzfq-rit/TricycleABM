@@ -184,13 +184,13 @@ class TricycleRepository:
                 return hub_id
         return "No Gas Station Found!"
     
-    def refuelTricycle(self, tricycle_id: str) -> None:
+    def refuelTricycle(self, tricycle_id: str) -> float:
         tricycle = self.getTricycle(tricycle_id)
         tricycle.currentGas += tricycle.usualGasPayment / self.simulationConfig.gasPricePerLiter
-        tricycle.payForGas()
+        gasPrice = tricycle.payForGas()
 
         traci.vehicle.setSpeed(tricycle_id, -1)
-        return
+        return gasPrice
     
     def startRefuelTricycle(self, tricycle_id: str) -> None:
         tricycle = self.getTricycle(tricycle_id)
