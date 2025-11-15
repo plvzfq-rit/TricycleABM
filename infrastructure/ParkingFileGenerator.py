@@ -7,7 +7,7 @@ class ParkingFileGenerator:
 
     def createParkingFile(self, network_file_path:str, parking_file_path: str, number_of_parking: int) -> MapDescriptor:
         map_descriptor = MapDescriptor()
-        network = self.sumoService.getNetwork(network_file_path)
+        network = self.sumoService.getNetwork()
         output_file = parking_file_path
 
         edges = list(network.getEdges())

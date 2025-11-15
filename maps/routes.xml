@@ -1,5 +1,6 @@
-<?xml version="1.0" ?>
-<routes>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
 
   <vType id="car" vClass="passenger" color="red"/>
   
@@ -24,8 +25,8 @@
 
   <route id="UNAve_EW" edges="-E107 E74 E75 E76 E77 E78 E79 E80 E81 E82 E187 E2"/>
   <route id="UNAve_EW_spawnPoint" edges="-E107"/>
-  <route id="UNAve_WE" edges="-E236 E177 E176 -E175 E174 E183 E184 E185 E186 E118 E119 E120 E121 E122 E123 E124 E125 E107"/>
-  <route id="UNAve_WE_spawnPoint" edges="-E236"/>
+  <route id="UNAve_WE" edges="E119 E120 E121 E122 E123 E124 E125 E107"/>
+  <route id="UNAve_WE_spawnPoint" edges="E119"/>
 
   <route id="PadreFaura_EW" edges="-E247 E104 E190 E191 E192 E193 E194 E195 -E174 E175 -E176 -E177 E236"/>
   <route id="PadreFaura_EW_spawnPoint" edges="-E247"/> 
@@ -35,30 +36,341 @@
 
   <route id="DelPilar_NS" edges="-E234 E47 E48 E56 E60 E145 E146 E135 E133 E160 E203 E204 E205 E214 E215 E237"/>
   <route id="DelPilar_NS_spawnPoint" edges="-E234"/> 
+  
+  <!-- Baclaran Jeep Routes -->
+  <route id="Orosa_Bocobo_Adritatico_NS" edges="-E1 E8 E7 E62 E115 E156 E157 E162 E191 E196 E197 E198 E239"/>
+  <route id="Orosa_Bocobo_Adritatico_NS_spawn" edges="-E1"/> 
+  <route id="Orosa_Kalaw_Mabini_NS" edges="-E1 E8 E7 E6 E58 E60 E145 E146 E135 E133 E160 E203 E204 E205 E214 E215 E237"/>
+  <route id="Orosa_Kalaw_Mabini_NS_spawn" edges="-E1"/> 
+  <route id="Mabini_Kalaw_Orosa_SN" edges="-E238 E199 E200 E201 E202 E161 E150 E113 E61 E52 E53 E54 E55 E1"/>
+  <route id="Mabini_Kalaw_Orosa_SN_spawn" edges="-E238"/> 
+  <route id="Faura_Orosa_SN" edges="-E247 E104 E154 E116 E63 E1"/>
+  <route id="Faura_Orosa_SN_spawn" edges="-E247"/>
 
-  <route id="mostRoads" edges="E70 -E187 E118 E119 E66 E56 E60 E145 E146 E141 E110 E120 E145 E146 E141 E142 -E109 E119 E120 E121 E147 -E151 E146 E141 E110 E120 E121 E67 E51 E52 E53 E62 E76 E77 E61 E58 E60 E145 E151 E152 E113 E78 E147 E152 E153 E148 E156 E157 E163 E149 -E153 E150 E166 E170 E167 E130 E131 -E109 E119 E120 E145 E151 E152 E153 E148 E156 E157 E163 E165 E166 E160 E203 E208 E202 E161 E166 E170 E167 E130 E131 -E109 E119 E120 E145 E151 E152 E153 E148 E156 E157 E162 E191 E196 E197 -E213 E201 E202 E161 E166 E170 E167 E130 E131 -E109 E119 E120 E145 E151 E152 E153 E148 E156 E157 E162 E227 E228 E197 -E213 E201 E209 E197 -E213 -E212 E205 E214 -E217 E176 E211 E212 E201 E202 E193 E194 E195 -E174 E207 E204 E205 E216 E200 -E212 E205 E214 E215 E21 E199 E200 E213 E198 E23 E24 E25 E26 E27 E28 E97 E100 E101 E104 E154 E116 E125 E105 E104 E154 -E155 E157 E163 E149 -E153 E113 E123 E124 E63 E8 E7 E62 E76 E68 E53 E62 E115"/>
-  <route id="mostRoads_spawnPoint" edges="E70"/> 
+  <!-- Rush Hour (i assume mga naghahatid sa NBI/Court/UPM) -->
+  <route id="Taft_Faura" edges="E35 E39 E42 E105 E104"/>
+  <route id="Taft_Faura_spawn" edges="E35"/>
+  <route id="Orosa_Kalaw_Bocobo_UN" edges="E7 E62 E124 E125 E107"/>
+  <route id="Orosa_Kalaw_Bocobo_UN_spawn" edges="E7"/>  
 
-  <flow id="RoxasBlvd_NS_flow" type="car" route="RoxasBlvd_NS" begin="0" vehsPerHour="1200"/>
-  <flow id="RoxasBlvd_SN_flow" type="car" route="RoxasBlvd_SN" begin="0" vehsPerHour="1200"/>
+  <!-- Traffic sabi ni Google Maps -->
+  <route id="Bocobo_Arquiza_Roxas" edges="-E1 E8 E7 E62 E115 E156 E157 E163 E165 E166 E170 E167 E168"/>
+  <route id="Bocobo_Arquiza_Roxas_spawn" edges="-E1"/>
 
-  <flow id="TaftAve_NS_flow" type="car" route="TaftAve_NS" begin="0" vehsPerHour="1000"/>
-  <flow id="TaftAve_SN_flow" type="car" route="TaftAve_SN" begin="0" vehsPerHour="1000"/>
+  <!-- eskinita ermita dishwasher -->
+  <route id="backroad1" edges="E130 E131 -E109 E65"/>
+  <route id="backroad1_spawn" edges="E130"/>
+  <route id="backroad2" edges="E138 E139 E134"/>
+  <route id="backroad2_spawn" edges="E138"/>
+  <route id="backroad3" edges="E138 E139 E136 E110 E66"/>
+  <route id="backroad3_spawn" edges="E138"/>
+  <route id="backroad4" edges="E176 E211 E212 E201"/>
+  <route id="backroad4_spawn" edges="E176"/>
+  <route id="backroad5" edges="E197 -E213 -E212 -E211 -E175"/>
+  <route id="backroad5_spawn" edges="E197"/>
+  <route id="backroad6" edges="E198 E23"/>
+  <route id="backroad6_spawn" edges="E198"/>
+  <route id="backroad7" edges="E215 E21"/>
+  <route id="backroad7_spawn" edges="E215"/>
+  <route id="backroad8" edges="E196 E197 E198 E239"/>
+  <route id="backroad8_spawn" edges="E196"/>
 
-  <flow id="KalawAve_EW_flow" type="car" route="KalawAve_EW" begin="0" vehsPerHour="900"/>
-  <flow id="KalawAve_WE_flow" type="car" route="KalawAve_WE" begin="0" vehsPerHour="900"/>
+<flow id="backroad1_flow" route="backroad1" begin="0" end="1080" vehsPerHour="500"/>
+<flow id="backroad2_flow" route="backroad2" begin="0" end="1080" vehsPerHour="500"/>
+<flow id="backroad3_flow" route="backroad3" begin="0" end="1080" vehsPerHour="500"/>
+<flow id="backroad4_flow" route="backroad4" begin="0" end="1080" vehsPerHour="500"/>
+<flow id="backroad5_flow" route="backroad5" begin="0" end="1080" vehsPerHour="500"/>
+<flow id="backroad6_flow" route="backroad6" begin="0" end="1080" vehsPerHour="500"/>
+<flow id="backroad7_flow" route="backroad7" begin="0" end="1080" vehsPerHour="500"/>
+<flow id="backroad8_flow" route="backroad8" begin="0" end="1080" vehsPerHour="500"/>
+<flow id="RoxasBlvd_NS_0" route="RoxasBlvd_NS" begin="0" end="60" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_0" route="RoxasBlvd_SN" begin="0" end="60" vehsPerHour="1000"/>
+<flow id="TaftAve_NS_0" route="TaftAve_NS" begin="0" end="60" vehsPerHour="1000"/>
+<flow id="TaftAve_SN_0" route="TaftAve_SN" begin="0" end="60" vehsPerHour="1000"/>
+<flow id="KalawAve_EW_0" route="KalawAve_EW" begin="0" end="60" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_0" route="KalawAve_WE" begin="0" end="60" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_0" route="PedroGil_WE" begin="0" end="60" vehsPerHour="1000"/>
+<flow id="UNAve_EW_0" route="UNAve_EW" begin="0" end="60" vehsPerHour="1350"/>
+<flow id="UNAve_WE_0" route="UNAve_WE" begin="0" end="60" vehsPerHour="1000"/>
+<flow id="PadreFaura_EW_0" route="PadreFaura_EW" begin="0" end="60" vehsPerHour="1000"/>
+<flow id="Mabini_Kalaw_Orosa_SN_0" route="Mabini_Kalaw_Orosa_SN" begin="0" end="60" vehsPerHour="1000"/>
+<flow id="DelPilar_NS_0" route="DelPilar_NS" begin="0" end="60" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_0" route="Faura_Orosa_SN" begin="0" end="60" vehsPerHour="1000"/>
+<flow id="Taft_Faura_0" route="Taft_Faura" begin="0" end="60" vehsPerHour="1350"/>
+<flow id="Bocobo_Arquiza_Roxas_0" route="Bocobo_Arquiza_Roxas" begin="0" end="60" vehsPerHour="1350"/>
+<flow id="RoxasBlvd_NS_60" route="RoxasBlvd_NS" begin="60" end="120" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_60" route="RoxasBlvd_SN" begin="60" end="120" vehsPerHour="1000"/>
+<flow id="TaftAve_NS_60" route="TaftAve_NS" begin="60" end="120" vehsPerHour="1350"/>
+<flow id="TaftAve_SN_60" route="TaftAve_SN" begin="60" end="120" vehsPerHour="1350"/>
+<flow id="KalawAve_EW_60" route="KalawAve_EW" begin="60" end="120" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_60" route="KalawAve_WE" begin="60" end="120" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_60" route="PedroGil_WE" begin="60" end="120" vehsPerHour="1350"/>
+<flow id="UNAve_EW_60" route="UNAve_EW" begin="60" end="120" vehsPerHour="1000"/>
+<flow id="UNAve_WE_60" route="UNAve_WE" begin="60" end="120" vehsPerHour="1000"/>
+<flow id="PadreFaura_EW_60" route="PadreFaura_EW" begin="60" end="120" vehsPerHour="1350"/>
+<flow id="Mabini_Kalaw_Orosa_SN_60" route="Mabini_Kalaw_Orosa_SN" begin="60" end="120" vehsPerHour="1350"/>
+<flow id="DelPilar_NS_60" route="DelPilar_NS" begin="60" end="120" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_60" route="Faura_Orosa_SN" begin="60" end="120" vehsPerHour="1350"/>
+<flow id="Taft_Faura_60" route="Taft_Faura" begin="60" end="120" vehsPerHour="1350"/>
+<flow id="Bocobo_Arquiza_Roxas_60" route="Bocobo_Arquiza_Roxas" begin="60" end="120" vehsPerHour="1350"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_60" route="Orosa_Kalaw_Bocobo_UN" begin="60" end="120" vehsPerHour="500"/>
+<flow id="RoxasBlvd_NS_120" route="RoxasBlvd_NS" begin="120" end="180" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_120" route="RoxasBlvd_SN" begin="120" end="180" vehsPerHour="1350"/>
+<flow id="TaftAve_NS_120" route="TaftAve_NS" begin="120" end="180" vehsPerHour="1000"/>
+<flow id="TaftAve_SN_120" route="TaftAve_SN" begin="120" end="180" vehsPerHour="1000"/>
+<flow id="KalawAve_EW_120" route="KalawAve_EW" begin="120" end="180" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_120" route="KalawAve_WE" begin="120" end="180" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_120" route="PedroGil_WE" begin="120" end="180" vehsPerHour="1000"/>
+<flow id="UNAve_EW_120" route="UNAve_EW" begin="120" end="180" vehsPerHour="1350"/>
+<flow id="UNAve_WE_120" route="UNAve_WE" begin="120" end="180" vehsPerHour="1350"/>
+<flow id="PadreFaura_EW_120" route="PadreFaura_EW" begin="120" end="180" vehsPerHour="1350"/>
+<flow id="Mabini_Kalaw_Orosa_SN_120" route="Mabini_Kalaw_Orosa_SN" begin="120" end="180" vehsPerHour="1350"/>
+<flow id="DelPilar_NS_120" route="DelPilar_NS" begin="120" end="180" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_120" route="Faura_Orosa_SN" begin="120" end="180" vehsPerHour="1000"/>
+<flow id="Taft_Faura_120" route="Taft_Faura" begin="120" end="180" vehsPerHour="600"/>
+<flow id="Bocobo_Arquiza_Roxas_120" route="Bocobo_Arquiza_Roxas" begin="120" end="180" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_120" route="Orosa_Kalaw_Bocobo_UN" begin="120" end="180" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_180" route="RoxasBlvd_NS" begin="180" end="240" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_180" route="RoxasBlvd_SN" begin="180" end="240" vehsPerHour="1350"/>
+<flow id="TaftAve_NS_180" route="TaftAve_NS" begin="180" end="240" vehsPerHour="1350"/>
+<flow id="TaftAve_SN_180" route="TaftAve_SN" begin="180" end="240" vehsPerHour="1500"/>
+<flow id="KalawAve_EW_180" route="KalawAve_EW" begin="180" end="240" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_180" route="KalawAve_WE" begin="180" end="240" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_180" route="PedroGil_WE" begin="180" end="240" vehsPerHour="1350"/>
+<flow id="UNAve_EW_180" route="UNAve_EW" begin="180" end="240" vehsPerHour="1350"/>
+<flow id="UNAve_WE_180" route="UNAve_WE" begin="180" end="240" vehsPerHour="1350"/>
+<flow id="PadreFaura_EW_180" route="PadreFaura_EW" begin="180" end="240" vehsPerHour="1350"/>
+<flow id="Mabini_Kalaw_Orosa_SN_180" route="Mabini_Kalaw_Orosa_SN" begin="180" end="240" vehsPerHour="1600"/>
+<flow id="DelPilar_NS_180" route="DelPilar_NS" begin="180" end="240" vehsPerHour="1350"/>
+<flow id="Faura_Orosa_SN_180" route="Faura_Orosa_SN" begin="180" end="240" vehsPerHour="1000"/>
+<flow id="Taft_Faura_180" route="Taft_Faura" begin="180" end="240" vehsPerHour="600"/>
+<flow id="Bocobo_Arquiza_Roxas_180" route="Bocobo_Arquiza_Roxas" begin="180" end="240" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_180" route="Orosa_Kalaw_Bocobo_UN" begin="180" end="240" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_240" route="RoxasBlvd_NS" begin="240" end="300" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_240" route="RoxasBlvd_SN" begin="240" end="300" vehsPerHour="1350"/>
+<flow id="TaftAve_NS_240" route="TaftAve_NS" begin="240" end="300" vehsPerHour="1350"/>
+<flow id="TaftAve_SN_240" route="TaftAve_SN" begin="240" end="300" vehsPerHour="1500"/>
+<flow id="KalawAve_EW_240" route="KalawAve_EW" begin="240" end="300" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_240" route="KalawAve_WE" begin="240" end="300" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_240" route="PedroGil_WE" begin="240" end="300" vehsPerHour="1350"/>
+<flow id="UNAve_EW_240" route="UNAve_EW" begin="240" end="300" vehsPerHour="1350"/>
+<flow id="UNAve_WE_240" route="UNAve_WE" begin="240" end="300" vehsPerHour="1350"/>
+<flow id="PadreFaura_EW_240" route="PadreFaura_EW" begin="240" end="300" vehsPerHour="1350"/>
+<flow id="Mabini_Kalaw_Orosa_SN_240" route="Mabini_Kalaw_Orosa_SN" begin="240" end="300" vehsPerHour="1350"/>
+<flow id="DelPilar_NS_240" route="DelPilar_NS" begin="240" end="300" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_240" route="Faura_Orosa_SN" begin="240" end="300" vehsPerHour="600"/>
+<flow id="Taft_Faura_240" route="Taft_Faura" begin="240" end="300" vehsPerHour="600"/>
+<flow id="Bocobo_Arquiza_Roxas_240" route="Bocobo_Arquiza_Roxas" begin="240" end="300" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_240" route="Orosa_Kalaw_Bocobo_UN" begin="240" end="300" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_300" route="RoxasBlvd_NS" begin="300" end="360" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_300" route="RoxasBlvd_SN" begin="300" end="360" vehsPerHour="1350"/>
+<flow id="TaftAve_NS_300" route="TaftAve_NS" begin="300" end="360" vehsPerHour="1350"/>
+<flow id="TaftAve_SN_300" route="TaftAve_SN" begin="300" end="360" vehsPerHour="1500"/>
+<flow id="KalawAve_EW_300" route="KalawAve_EW" begin="300" end="360" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_300" route="KalawAve_WE" begin="300" end="360" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_300" route="PedroGil_WE" begin="300" end="360" vehsPerHour="1350"/>
+<flow id="UNAve_EW_300" route="UNAve_EW" begin="300" end="360" vehsPerHour="1350"/>
+<flow id="UNAve_WE_300" route="UNAve_WE" begin="300" end="360" vehsPerHour="1350"/>
+<flow id="PadreFaura_EW_300" route="PadreFaura_EW" begin="300" end="360" vehsPerHour="1350"/>
+<flow id="Mabini_Kalaw_Orosa_SN_300" route="Mabini_Kalaw_Orosa_SN" begin="300" end="360" vehsPerHour="1350"/>
+<flow id="DelPilar_NS_300" route="DelPilar_NS" begin="300" end="360" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_300" route="Faura_Orosa_SN" begin="300" end="360" vehsPerHour="600"/>
+<flow id="Taft_Faura_300" route="Taft_Faura" begin="300" end="360" vehsPerHour="1350"/>
+<flow id="Bocobo_Arquiza_Roxas_300" route="Bocobo_Arquiza_Roxas" begin="300" end="360" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_300" route="Orosa_Kalaw_Bocobo_UN" begin="300" end="360" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_360" route="RoxasBlvd_NS" begin="360" end="420" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_360" route="RoxasBlvd_SN" begin="360" end="420" vehsPerHour="1350"/>
+<flow id="TaftAve_NS_360" route="TaftAve_NS" begin="360" end="420" vehsPerHour="1350"/>
+<flow id="TaftAve_SN_360" route="TaftAve_SN" begin="360" end="420" vehsPerHour="1500"/>
+<flow id="KalawAve_EW_360" route="KalawAve_EW" begin="360" end="420" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_360" route="KalawAve_WE" begin="360" end="420" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_360" route="PedroGil_WE" begin="360" end="420" vehsPerHour="1350"/>
+<flow id="UNAve_EW_360" route="UNAve_EW" begin="360" end="420" vehsPerHour="1350"/>
+<flow id="UNAve_WE_360" route="UNAve_WE" begin="360" end="420" vehsPerHour="1350"/>
+<flow id="PadreFaura_EW_360" route="PadreFaura_EW" begin="360" end="420" vehsPerHour="1500"/>
+<flow id="Mabini_Kalaw_Orosa_SN_360" route="Mabini_Kalaw_Orosa_SN" begin="360" end="420" vehsPerHour="1350"/>
+<flow id="DelPilar_NS_360" route="DelPilar_NS" begin="360" end="420" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_360" route="Faura_Orosa_SN" begin="360" end="420" vehsPerHour="600"/>
+<flow id="Taft_Faura_360" route="Taft_Faura" begin="360" end="420" vehsPerHour="1350"/>
+<flow id="Bocobo_Arquiza_Roxas_360" route="Bocobo_Arquiza_Roxas" begin="360" end="420" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_360" route="Orosa_Kalaw_Bocobo_UN" begin="360" end="420" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_420" route="RoxasBlvd_NS" begin="420" end="480" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_420" route="RoxasBlvd_SN" begin="420" end="480" vehsPerHour="1350"/>
+<flow id="TaftAve_NS_420" route="TaftAve_NS" begin="420" end="480" vehsPerHour="1350"/>
+<flow id="TaftAve_SN_420" route="TaftAve_SN" begin="420" end="480" vehsPerHour="1500"/>
+<flow id="KalawAve_EW_420" route="KalawAve_EW" begin="420" end="480" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_420" route="KalawAve_WE" begin="420" end="480" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_420" route="PedroGil_WE" begin="420" end="480" vehsPerHour="1350"/>
+<flow id="UNAve_EW_420" route="UNAve_EW" begin="420" end="480" vehsPerHour="1350"/>
+<flow id="UNAve_WE_420" route="UNAve_WE" begin="420" end="480" vehsPerHour="1600"/>
+<flow id="PadreFaura_EW_420" route="PadreFaura_EW" begin="420" end="480" vehsPerHour="1500"/>
+<flow id="Mabini_Kalaw_Orosa_SN_420" route="Mabini_Kalaw_Orosa_SN" begin="420" end="480" vehsPerHour="1600"/>
+<flow id="DelPilar_NS_420" route="DelPilar_NS" begin="420" end="480" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_420" route="Faura_Orosa_SN" begin="420" end="480" vehsPerHour="900"/>
+<flow id="Taft_Faura_420" route="Taft_Faura" begin="420" end="480" vehsPerHour="1350"/>
+<flow id="Bocobo_Arquiza_Roxas_420" route="Bocobo_Arquiza_Roxas" begin="420" end="480" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_420" route="Orosa_Kalaw_Bocobo_UN" begin="420" end="480" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_480" route="RoxasBlvd_NS" begin="480" end="540" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_480" route="RoxasBlvd_SN" begin="480" end="540" vehsPerHour="1350"/>
+<flow id="TaftAve_NS_480" route="TaftAve_NS" begin="480" end="540" vehsPerHour="1350"/>
+<flow id="TaftAve_SN_480" route="TaftAve_SN" begin="480" end="540" vehsPerHour="1500"/>
+<flow id="KalawAve_EW_480" route="KalawAve_EW" begin="480" end="540" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_480" route="KalawAve_WE" begin="480" end="540" vehsPerHour="1350"/>
+<flow id="PedroGil_WE_480" route="PedroGil_WE" begin="480" end="540" vehsPerHour="1350"/>
+<flow id="UNAve_EW_480" route="UNAve_EW" begin="480" end="540" vehsPerHour="1350"/>
+<flow id="UNAve_WE_480" route="UNAve_WE" begin="480" end="540" vehsPerHour="1600"/>
+<flow id="PadreFaura_EW_480" route="PadreFaura_EW" begin="480" end="540" vehsPerHour="1500"/>
+<flow id="Mabini_Kalaw_Orosa_SN_480" route="Mabini_Kalaw_Orosa_SN" begin="480" end="540" vehsPerHour="1800"/>
+<flow id="DelPilar_NS_480" route="DelPilar_NS" begin="480" end="540" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_480" route="Faura_Orosa_SN" begin="480" end="540" vehsPerHour="900"/>
+<flow id="Taft_Faura_480" route="Taft_Faura" begin="480" end="540" vehsPerHour="1350"/>
+<flow id="Bocobo_Arquiza_Roxas_480" route="Bocobo_Arquiza_Roxas" begin="480" end="540" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_480" route="Orosa_Kalaw_Bocobo_UN" begin="480" end="540" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_540" route="RoxasBlvd_NS" begin="540" end="600" vehsPerHour="1350"/>
+<flow id="RoxasBlvd_SN_540" route="RoxasBlvd_SN" begin="540" end="600" vehsPerHour="1350"/>
+<flow id="TaftAve_NS_540" route="TaftAve_NS" begin="540" end="600" vehsPerHour="1350"/>
+<flow id="TaftAve_SN_540" route="TaftAve_SN" begin="540" end="600" vehsPerHour="1500"/>
+<flow id="KalawAve_EW_540" route="KalawAve_EW" begin="540" end="600" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_540" route="KalawAve_WE" begin="540" end="600" vehsPerHour="1350"/>
+<flow id="PedroGil_WE_540" route="PedroGil_WE" begin="540" end="600" vehsPerHour="1350"/>
+<flow id="UNAve_EW_540" route="UNAve_EW" begin="540" end="600" vehsPerHour="1350"/>
+<flow id="UNAve_WE_540" route="UNAve_WE" begin="540" end="600" vehsPerHour="1800"/>
+<flow id="PadreFaura_EW_540" route="PadreFaura_EW" begin="540" end="600" vehsPerHour="1500"/>
+<flow id="Mabini_Kalaw_Orosa_SN_540" route="Mabini_Kalaw_Orosa_SN" begin="540" end="600" vehsPerHour="1800"/>
+<flow id="DelPilar_NS_540" route="DelPilar_NS" begin="540" end="600" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_540" route="Faura_Orosa_SN" begin="540" end="600" vehsPerHour="900"/>
+<flow id="Taft_Faura_540" route="Taft_Faura" begin="540" end="600" vehsPerHour="1350"/>
+<flow id="Bocobo_Arquiza_Roxas_540" route="Bocobo_Arquiza_Roxas" begin="540" end="600" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_540" route="Orosa_Kalaw_Bocobo_UN" begin="540" end="600" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_600" route="RoxasBlvd_NS" begin="600" end="660" vehsPerHour="1400"/>
+<flow id="RoxasBlvd_SN_600" route="RoxasBlvd_SN" begin="600" end="660" vehsPerHour="1350"/>
+<flow id="TaftAve_NS_600" route="TaftAve_NS" begin="600" end="660" vehsPerHour="1350"/>
+<flow id="TaftAve_SN_600" route="TaftAve_SN" begin="600" end="660" vehsPerHour="1500"/>
+<flow id="KalawAve_EW_600" route="KalawAve_EW" begin="600" end="660" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_600" route="KalawAve_WE" begin="600" end="660" vehsPerHour="1350"/>
+<flow id="PedroGil_WE_600" route="PedroGil_WE" begin="600" end="660" vehsPerHour="1350"/>
+<flow id="UNAve_EW_600" route="UNAve_EW" begin="600" end="660" vehsPerHour="1350"/>
+<flow id="UNAve_WE_600" route="UNAve_WE" begin="600" end="660" vehsPerHour="1600"/>
+<flow id="PadreFaura_EW_600" route="PadreFaura_EW" begin="600" end="660" vehsPerHour="1500"/>
+<flow id="Mabini_Kalaw_Orosa_SN_600" route="Mabini_Kalaw_Orosa_SN" begin="600" end="660" vehsPerHour="1600"/>
+<flow id="DelPilar_NS_600" route="DelPilar_NS" begin="600" end="660" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_600" route="Faura_Orosa_SN" begin="600" end="660" vehsPerHour="900"/>
+<flow id="Taft_Faura_600" route="Taft_Faura" begin="600" end="660" vehsPerHour="1350"/>
+<flow id="Bocobo_Arquiza_Roxas_600" route="Bocobo_Arquiza_Roxas" begin="600" end="660" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_600" route="Orosa_Kalaw_Bocobo_UN" begin="600" end="660" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_660" route="RoxasBlvd_NS" begin="660" end="720" vehsPerHour="1400"/>
+<flow id="RoxasBlvd_SN_660" route="RoxasBlvd_SN" begin="660" end="720" vehsPerHour="1350"/>
+<flow id="TaftAve_NS_660" route="TaftAve_NS" begin="660" end="720" vehsPerHour="1350"/>
+<flow id="TaftAve_SN_660" route="TaftAve_SN" begin="660" end="720" vehsPerHour="1800"/>
+<flow id="KalawAve_EW_660" route="KalawAve_EW" begin="660" end="720" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_660" route="KalawAve_WE" begin="660" end="720" vehsPerHour="1350"/>
+<flow id="PedroGil_WE_660" route="PedroGil_WE" begin="660" end="720" vehsPerHour="1350"/>
+<flow id="UNAve_EW_660" route="UNAve_EW" begin="660" end="720" vehsPerHour="1350"/>
+<flow id="UNAve_WE_660" route="UNAve_WE" begin="660" end="720" vehsPerHour="1600"/>
+<flow id="PadreFaura_EW_660" route="PadreFaura_EW" begin="660" end="720" vehsPerHour="1350"/>
+<flow id="Mabini_Kalaw_Orosa_SN_660" route="Mabini_Kalaw_Orosa_SN" begin="660" end="720" vehsPerHour="1350"/>
+<flow id="DelPilar_NS_660" route="DelPilar_NS" begin="660" end="720" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_660" route="Faura_Orosa_SN" begin="660" end="720" vehsPerHour="600"/>
+<flow id="Taft_Faura_660" route="Taft_Faura" begin="660" end="720" vehsPerHour="600"/>
+<flow id="Bocobo_Arquiza_Roxas_660" route="Bocobo_Arquiza_Roxas" begin="660" end="720" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_660" route="Orosa_Kalaw_Bocobo_UN" begin="660" end="720" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_720" route="RoxasBlvd_NS" begin="720" end="780" vehsPerHour="1800"/>
+<flow id="RoxasBlvd_SN_720" route="RoxasBlvd_SN" begin="720" end="780" vehsPerHour="1350"/>
+<flow id="TaftAve_NS_720" route="TaftAve_NS" begin="720" end="780" vehsPerHour="1000"/>
+<flow id="TaftAve_SN_720" route="TaftAve_SN" begin="720" end="780" vehsPerHour="1300"/>
+<flow id="KalawAve_EW_720" route="KalawAve_EW" begin="720" end="780" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_720" route="KalawAve_WE" begin="720" end="780" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_720" route="PedroGil_WE" begin="720" end="780" vehsPerHour="1350"/>
+<flow id="UNAve_EW_720" route="UNAve_EW" begin="720" end="780" vehsPerHour="1350"/>
+<flow id="UNAve_WE_720" route="UNAve_WE" begin="720" end="780" vehsPerHour="1000"/>
+<flow id="PadreFaura_EW_720" route="PadreFaura_EW" begin="720" end="780" vehsPerHour="1350"/>
+<flow id="Mabini_Kalaw_Orosa_SN_720" route="Mabini_Kalaw_Orosa_SN" begin="720" end="780" vehsPerHour="1350"/>
+<flow id="DelPilar_NS_720" route="DelPilar_NS" begin="720" end="780" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_720" route="Faura_Orosa_SN" begin="720" end="780" vehsPerHour="600"/>
+<flow id="Taft_Faura_720" route="Taft_Faura" begin="720" end="780" vehsPerHour="600"/>
+<flow id="Bocobo_Arquiza_Roxas_720" route="Bocobo_Arquiza_Roxas" begin="720" end="780" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_720" route="Orosa_Kalaw_Bocobo_UN" begin="720" end="780" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_780" route="RoxasBlvd_NS" begin="780" end="840" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_780" route="RoxasBlvd_SN" begin="780" end="840" vehsPerHour="1000"/>
+<flow id="TaftAve_NS_780" route="TaftAve_NS" begin="780" end="840" vehsPerHour="1000"/>
+<flow id="TaftAve_SN_780" route="TaftAve_SN" begin="780" end="840" vehsPerHour="1000"/>
+<flow id="KalawAve_EW_780" route="KalawAve_EW" begin="780" end="840" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_780" route="KalawAve_WE" begin="780" end="840" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_780" route="PedroGil_WE" begin="780" end="840" vehsPerHour="1000"/>
+<flow id="UNAve_EW_780" route="UNAve_EW" begin="780" end="840" vehsPerHour="1350"/>
+<flow id="UNAve_WE_780" route="UNAve_WE" begin="780" end="840" vehsPerHour="1350"/>
+<flow id="PadreFaura_EW_780" route="PadreFaura_EW" begin="780" end="840" vehsPerHour="1350"/>
+<flow id="Mabini_Kalaw_Orosa_SN_780" route="Mabini_Kalaw_Orosa_SN" begin="780" end="840" vehsPerHour="1350"/>
+<flow id="DelPilar_NS_780" route="DelPilar_NS" begin="780" end="840" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_780" route="Faura_Orosa_SN" begin="780" end="840" vehsPerHour="1000"/>
+<flow id="Taft_Faura_780" route="Taft_Faura" begin="780" end="840" vehsPerHour="600"/>
+<flow id="Bocobo_Arquiza_Roxas_780" route="Bocobo_Arquiza_Roxas" begin="780" end="840" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_780" route="Orosa_Kalaw_Bocobo_UN" begin="780" end="840" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_840" route="RoxasBlvd_NS" begin="840" end="900" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_840" route="RoxasBlvd_SN" begin="840" end="900" vehsPerHour="1000"/>
+<flow id="TaftAve_NS_840" route="TaftAve_NS" begin="840" end="900" vehsPerHour="1000"/>
+<flow id="TaftAve_SN_840" route="TaftAve_SN" begin="840" end="900" vehsPerHour="1000"/>
+<flow id="KalawAve_EW_840" route="KalawAve_EW" begin="840" end="900" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_840" route="KalawAve_WE" begin="840" end="900" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_840" route="PedroGil_WE" begin="840" end="900" vehsPerHour="1000"/>
+<flow id="UNAve_EW_840" route="UNAve_EW" begin="840" end="900" vehsPerHour="1350"/>
+<flow id="UNAve_WE_840" route="UNAve_WE" begin="840" end="900" vehsPerHour="1350"/>
+<flow id="PadreFaura_EW_840" route="PadreFaura_EW" begin="840" end="900" vehsPerHour="1350"/>
+<flow id="Mabini_Kalaw_Orosa_SN_840" route="Mabini_Kalaw_Orosa_SN" begin="840" end="900" vehsPerHour="1350"/>
+<flow id="DelPilar_NS_840" route="DelPilar_NS" begin="840" end="900" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_840" route="Faura_Orosa_SN" begin="840" end="900" vehsPerHour="1000"/>
+<flow id="Taft_Faura_840" route="Taft_Faura" begin="840" end="900" vehsPerHour="600"/>
+<flow id="Bocobo_Arquiza_Roxas_840" route="Bocobo_Arquiza_Roxas" begin="840" end="900" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_840" route="Orosa_Kalaw_Bocobo_UN" begin="840" end="900" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_900" route="RoxasBlvd_NS" begin="900" end="960" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_900" route="RoxasBlvd_SN" begin="900" end="960" vehsPerHour="1000"/>
+<flow id="TaftAve_NS_900" route="TaftAve_NS" begin="900" end="960" vehsPerHour="1000"/>
+<flow id="TaftAve_SN_900" route="TaftAve_SN" begin="900" end="960" vehsPerHour="1000"/>
+<flow id="KalawAve_EW_900" route="KalawAve_EW" begin="900" end="960" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_900" route="KalawAve_WE" begin="900" end="960" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_900" route="PedroGil_WE" begin="900" end="960" vehsPerHour="1000"/>
+<flow id="UNAve_EW_900" route="UNAve_EW" begin="900" end="960" vehsPerHour="1350"/>
+<flow id="UNAve_WE_900" route="UNAve_WE" begin="900" end="960" vehsPerHour="1350"/>
+<flow id="PadreFaura_EW_900" route="PadreFaura_EW" begin="900" end="960" vehsPerHour="1350"/>
+<flow id="Mabini_Kalaw_Orosa_SN_900" route="Mabini_Kalaw_Orosa_SN" begin="900" end="960" vehsPerHour="1350"/>
+<flow id="DelPilar_NS_900" route="DelPilar_NS" begin="900" end="960" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_900" route="Faura_Orosa_SN" begin="900" end="960" vehsPerHour="1000"/>
+<flow id="Taft_Faura_900" route="Taft_Faura" begin="900" end="960" vehsPerHour="600"/>
+<flow id="Bocobo_Arquiza_Roxas_900" route="Bocobo_Arquiza_Roxas" begin="900" end="960" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_900" route="Orosa_Kalaw_Bocobo_UN" begin="900" end="960" vehsPerHour="850"/>
+<flow id="RoxasBlvd_NS_960" route="RoxasBlvd_NS" begin="960" end="1020" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_960" route="RoxasBlvd_SN" begin="960" end="1020" vehsPerHour="800"/>
+<flow id="TaftAve_NS_960" route="TaftAve_NS" begin="960" end="1020" vehsPerHour="1000"/>
+<flow id="TaftAve_SN_960" route="TaftAve_SN" begin="960" end="1020" vehsPerHour="1000"/>
+<flow id="KalawAve_EW_960" route="KalawAve_EW" begin="960" end="1020" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_960" route="KalawAve_WE" begin="960" end="1020" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_960" route="PedroGil_WE" begin="960" end="1020" vehsPerHour="1000"/>
+<flow id="UNAve_EW_960" route="UNAve_EW" begin="960" end="1020" vehsPerHour="1000"/>
+<flow id="UNAve_WE_960" route="UNAve_WE" begin="960" end="1020" vehsPerHour="1000"/>
+<flow id="PadreFaura_EW_960" route="PadreFaura_EW" begin="960" end="1020" vehsPerHour="1000"/>
+<flow id="Mabini_Kalaw_Orosa_SN_960" route="Mabini_Kalaw_Orosa_SN" begin="960" end="1020" vehsPerHour="1000"/>
+<flow id="DelPilar_NS_960" route="DelPilar_NS" begin="960" end="1020" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_960" route="Faura_Orosa_SN" begin="960" end="1020" vehsPerHour="600"/>
+<flow id="Taft_Faura_960" route="Taft_Faura" begin="960" end="1020" vehsPerHour="600"/>
+<flow id="Bocobo_Arquiza_Roxas_960" route="Bocobo_Arquiza_Roxas" begin="960" end="1020" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_960" route="Orosa_Kalaw_Bocobo_UN" begin="960" end="1020" vehsPerHour="500"/>
+<flow id="RoxasBlvd_NS_1020" route="RoxasBlvd_NS" begin="1020" end="1080" vehsPerHour="1000"/>
+<flow id="RoxasBlvd_SN_1020" route="RoxasBlvd_SN" begin="1020" end="1080" vehsPerHour="800"/>
+<flow id="TaftAve_NS_1020" route="TaftAve_NS" begin="1020" end="1080" vehsPerHour="1000"/>
+<flow id="TaftAve_SN_1020" route="TaftAve_SN" begin="1020" end="1080" vehsPerHour="1000"/>
+<flow id="KalawAve_EW_1020" route="KalawAve_EW" begin="1020" end="1080" vehsPerHour="1000"/>
+<flow id="KalawAve_WE_1020" route="KalawAve_WE" begin="1020" end="1080" vehsPerHour="1000"/>
+<flow id="PedroGil_WE_1020" route="PedroGil_WE" begin="1020" end="1080" vehsPerHour="1000"/>
+<flow id="UNAve_EW_1020" route="UNAve_EW" begin="1020" end="1080" vehsPerHour="1000"/>
+<flow id="UNAve_WE_1020" route="UNAve_WE" begin="1020" end="1080" vehsPerHour="1000"/>
+<flow id="PadreFaura_EW_1020" route="PadreFaura_EW" begin="1020" end="1080" vehsPerHour="1000"/>
+<flow id="Mabini_Kalaw_Orosa_SN_1020" route="Mabini_Kalaw_Orosa_SN" begin="1020" end="1080" vehsPerHour="1000"/>
+<flow id="DelPilar_NS_1020" route="DelPilar_NS" begin="1020" end="1080" vehsPerHour="1000"/>
+<flow id="Faura_Orosa_SN_1020" route="Faura_Orosa_SN" begin="1020" end="1080" vehsPerHour="600"/>
+<flow id="Taft_Faura_1020" route="Taft_Faura" begin="1020" end="1080" vehsPerHour="600"/>
+<flow id="Bocobo_Arquiza_Roxas_1020" route="Bocobo_Arquiza_Roxas" begin="1020" end="1080" vehsPerHour="1000"/>
+<flow id="Orosa_Kalaw_Bocobo_UN_1020" route="Orosa_Kalaw_Bocobo_UN" begin="1020" end="1080" vehsPerHour="500"/>
+ 
 
-  <flow id="PedroGil_WE_flow" type="car" route="PedroGil_WE" begin="0" vehsPerHour="1200"/>
-
-  <flow id="UNAve_EW_flow" type="car" route="UNAve_EW" begin="0" vehsPerHour="1100"/>
-  <flow id="UNAve_WE_flow" type="car" route="UNAve_WE" begin="0" vehsPerHour="1100"/>
-
-  <flow id="PadreFaura_EW_flow" type="car" route="PadreFaura_EW" begin="0" vehsPerHour="800"/>
-
-  <flow id="AMabini_SN_flow" type="car" route="AMabini_SN" begin="0" vehsPerHour="1100"/>
-
-  <flow id="DelPilar_NS_flow" type="car" route="DelPilar_NS" begin="0" vehsPerHour="1400"/>
-
-  <flow id="mostRoads_NS_flow" type="car" route="mostRoads" begin="0" vehsPerHour="100"/>
 
 </routes>

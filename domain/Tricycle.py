@@ -1,9 +1,10 @@
 import traci
 from domain.TricycleState import TricycleState
 from domain.Location import Location
+from collections import namedtuple
 
 class Tricycle:
-    def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float) -> None:
+    def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float, usualGasPayment: float, getsAFullTank: bool, farthestDistance: float, dailyExpense: float) -> None:
         self.name = name
         self.hub = hub
         self.startTime = start_time
@@ -15,9 +16,19 @@ class Tricycle:
         self.currentGas = max_gas
         self.gasConsumptionRate = gas_consumption_rate
         self.gasThreshold = gas_threshold
+        self.money = 0
+        self.usualGasPayment = usualGasPayment
+        self.getsAFullTank = getsAFullTank
+        self.dailyExpense = dailyExpense
+        self.farthestDistance = farthestDistance
+        self.log = namedtuple("log", ["run_id","trike_id","origin_edge", "dest_edge", "distance", "price","tick"])
+        self.currentLog = None
 
     def __str__(self) -> str:
         return f"Tricycle(name={self.name}, hub={self.hub}, start_time={self.startTime}, end_time={self.endTime})"
+    
+    def recordLog(self, run_id:str, trike_id: str, origin_edge: str, dest_edge:str, distance:str, price:str, tick:str) -> None:
+        self.currentLog = self.log(run_id, trike_id, origin_edge, dest_edge, distance, price, tick)
     
     def activate(self) -> None:
         self.state = TricycleState.FREE
@@ -30,16 +41,17 @@ class Tricycle:
             raise Exception(f"destination given to {self.name} was None")
         self.state = TricycleState.HAS_PASSENGER
         self.destination = destination
-    
+
     def hasArrived(self, current_location: Location) -> bool:
-        # current_edge = traci.vehicle.getRoadID(self.name)
-        # current_position = traci.vehicle.getLanePosition(self.name)
-        # current_location = Location(current_edge, current_position)
         return current_location.isNear(self.destination)
     
     def dropOff(self):
         self.destination = None
         self.state = TricycleState.DROPPING_OFF
+
+    def goingToRefuel(self):
+        self.state = TricycleState.GOING_TO_REFUEL
+        return 
 
     def returnToToda(self):
         self.destination = None
@@ -49,16 +61,7 @@ class Tricycle:
         return self.state not in [TricycleState.DEAD, TricycleState.TO_SPAWN]
     
     def hasRunOutOfGas(self, distance_travelled: float) -> bool:
-        # print(self.name, distance_travelled, self.gasConsumptionRate, self.currentGas, distance_travelled / self.gasConsumptionRate)
-        # print(self.currentGas < (distance_travelled / self.gasConsumptionRate))
         return self.currentGas < (distance_travelled / self.gasConsumptionRate)
-    
-    def consumeGas(self, current_location: Location) -> bool:
-        distance_travelled = current_location.distanceTo(self.lastLocation)
-        if self.hasRunOutOfGas(distance_travelled):
-            return False
-        self.currentGas -= distance_travelled / self.gasConsumptionRate
-        return True
     
     def isFree(self) -> bool:
         return self.state == TricycleState.FREE or self.state == TricycleState.PARKED
@@ -114,3 +117,17 @@ class Tricycle:
 
     def setLastLocation(self, last_location: Location) -> None:
         self.lastLocation = last_location
+
+    #METHOD FOR GAS CONSUMPTION
+    def consumeGas(self, current_location: Location) -> bool:
+        distance_travelled = current_location.distanceTo(self.lastLocation)
+
+        answer = distance_travelled / 1000.0
+
+        if self.hasRunOutOfGas(answer):
+            return False
+        self.currentGas -= answer / self.gasConsumptionRate
+        return True
+    
+    def payForGas(self) -> None:
+        self.money -= self.usualGasPayment

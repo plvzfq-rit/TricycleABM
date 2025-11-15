@@ -208,3 +208,8 @@ __marimo__/
 
 # Assets
 assets/
+
+# Logs
+logs/
+
+test.ipynb
