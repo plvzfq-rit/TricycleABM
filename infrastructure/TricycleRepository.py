@@ -21,6 +21,12 @@ class TricycleRepository:
         self.sumoService = sumo_service or SumoService()
         self.simulationConfig = simulation_config or SimulationConfig()
 
+    def hasActiveTricycles(self) -> bool:
+        for tricycle in self.tricycles.values():
+            if tricycle.isActive():
+                return True
+        return False
+
     def createTricycles(self, number_of_tricycles: int, simulation_duration: int, hub_distribution: dict) -> None:
         # create list of hub tags; each would be assigned to a new tricycle
         hubs = []

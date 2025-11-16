@@ -9,8 +9,9 @@ class PassengerFactory:
     def __init__(self, sumo_service: SumoService | None = None, traci_service: TraciService | None = None):
         self.sumoService = sumo_service or SumoService()
         self.traciService = traci_service or TraciService()
+        self.index = 0
 
-    def createRandomPassenger(self, next_index: int, possible_sources) -> tuple[str, Passenger]:
+    def createRandomPassenger(self, possible_sources) -> tuple[str, Passenger]:
         edges = self.sumoService.getNetworkPedestrianEdges()
 
         # pick start and destination
@@ -22,7 +23,8 @@ class PassengerFactory:
         # start position
         # TODO: Have this actually be a random destination and not just the start smh
         starting_position = 0.0
-        name = f"ped{next_index}"
+        name = f"ped{self.index}"
+        self.index += 1
 
         # add the person
         self.traciService.addPassenger(name, starting_edge, starting_position)

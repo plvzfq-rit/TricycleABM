@@ -22,14 +22,18 @@ file_system_descriptor = FileSystemDescriptor(temp_directory)
 parking_area_parser = ParkingAreaParser()
 file_sync_service = FileSynchronizer()
 
+# PHASE 2: INITIALIZING SERVICES
+traci_service = TraciService()
+sumo_service = SumoService(simulation_config.getNetworkFilePath())
+
 map_builder = SpecificMapBuilder(simulation_config, file_system_descriptor, parking_area_parser, file_sync_service)
+# map_builder = RandomMapBuilder(simulation_config, ParkingFileGenerator(sumo_service), MapGenerator())
+
 map_descriptor = map_builder.build()
 
 duration = 1080
 
-# PHASE 2: INITIALIZING SERVICES
-traci_service = TraciService()
-sumo_service = SumoService(simulation_config.getNetworkFilePath())
+
 
 # PHASE 3: INITIALIZING TRICYCLE REPOSITORY
 lower_gas_bound = 50.0
@@ -42,14 +46,14 @@ passenger_factory = PassengerFactory(sumo_service, traci_service)
 passenger_repository = PassengerRepository(simulation_config, sumo_service, traci_service, passenger_factory)
 
 # PHASE 5: INITIALIZING OTHER SERVICES
-tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_repository)
+tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_repository, passenger_factory)
 passenger_synchronizer = PassengerSynchronizer(passenger_repository, traci_service)
 tricycle_synchronizer = TricycleSynchronizer(tricycle_repository, traci_service)
 tricycle_state_manager = TricycleStateManager(tricycle_repository, traci_service, logger)
 
 # PHASE 6: RUNNING SIMULATION LOOP
 simulation_loop = SimulationEngine(map_descriptor, simulation_config, tricycle_dispatcher, passenger_repository, tricycle_repository, passenger_synchronizer, tricycle_synchronizer, tricycle_state_manager, logger, duration)
-simulation_loop.setPassengerBoundaries(1, 1)
+simulation_loop.setPassengerBoundaries(10, 10)
 simulation_loop.doMainLoop(duration)
 simulation_loop.close()
 

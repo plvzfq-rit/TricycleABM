@@ -25,7 +25,7 @@ class Tricycle:
         self.currentLog = None
 
     def __str__(self) -> str:
-        return f"Tricycle(name={self.name}, hub={self.hub}, start_time={self.startTime}, end_time={self.endTime})"
+        return f"Tricycle(name={self.name}, state={self.state})"
     
     def recordLog(self, run_id:str, trike_id: str, origin_edge: str, dest_edge:str, distance:str, price:str, tick:str) -> None:
         self.currentLog = self.log(run_id, trike_id, origin_edge, dest_edge, distance, price, tick)
@@ -64,7 +64,7 @@ class Tricycle:
         return self.currentGas < (distance_travelled / self.gasConsumptionRate)
     
     def isFree(self) -> bool:
-        return self.state == TricycleState.FREE or self.state == TricycleState.PARKED
+        return self.state == TricycleState.FREE
     
     def hasPassenger(self) -> bool:
         return self.state == TricycleState.HAS_PASSENGER
@@ -120,7 +120,10 @@ class Tricycle:
 
     #METHOD FOR GAS CONSUMPTION
     def consumeGas(self, current_location: Location) -> bool:
-        distance_travelled = current_location.distanceTo(self.lastLocation)
+        try:
+            distance_travelled = current_location.distanceTo(self.lastLocation)
+        except:
+            distance_travelled = 0
 
         answer = distance_travelled / 1000.0
         if self.hasRunOutOfGas(answer):
