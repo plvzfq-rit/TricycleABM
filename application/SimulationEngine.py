@@ -30,9 +30,9 @@ class SimulationEngine:
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()},{self.simulationConfig.getDecalFilePath()}"
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()}"
         traci.start([
-            "sumo-gui",
+            "sumo-gui", "--verbose",
             "-n", self.simulationConfig.getNetworkFilePath(),
-            # "-r", self.simulationConfig.getRoutesFilePath(),
+            "-r", self.simulationConfig.getRoutesFilePath(),
             "-a", additionalFiles,
             "--lateral-resolution", "2.0"
         ])

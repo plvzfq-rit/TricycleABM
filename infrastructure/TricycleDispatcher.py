@@ -23,11 +23,9 @@ class TricycleDispatcher:
             if self.tricycleRepository.getTricycle(tricycle_id).state != TricycleState.FREE:
                 continue
             tricycle = self.tricycleRepository.getTricycle(tricycle_id)
-            print(str(tricycle))
             tricycle_location = self.tricycleRepository.getTricycleLocation(tricycle_id)
             _, passenger = self.passengerFactory.createRandomPassenger([traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]])
             # print("made")
-            print(tricycle.farthestDistance)
             if self.canDispatch(tricycle_id, "", tricycle_location, passenger.destination, tricycle.farthestDistance):
                 # print("trying to dispatch...")
                 success = self.tricycleRepository.dispatchTricycle(tricycle_id, passenger, simulationLogger, tick)
@@ -44,7 +42,8 @@ class TricycleDispatcher:
     def canDispatch(self, tricycle_id: str, passenger_id: str, tricycle_location: Location, passenger_location: Location, tricycle_farthest_distance: float):
         try:
             estimated_distance = traci.simulation.getDistanceRoad(tricycle_location.location, tricycle_location.position, passenger_location.location, passenger_location.position)
-        except:
-            print("cant estimate")
+        except Exception as e:
+            print(e)
+            print(str(tricycle_location), str(passenger_location))
             estimated_distance = float("inf")
         return self.tricycleRepository.isTricycleFree(tricycle_id) and estimated_distance <= tricycle_farthest_distance

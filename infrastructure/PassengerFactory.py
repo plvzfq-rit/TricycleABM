@@ -27,13 +27,13 @@ class PassengerFactory:
         self.index += 1
 
         # add the person
-        self.traciService.addPassenger(name, starting_edge, starting_position)
+        # self.traciService.addPassenger(name, starting_edge, starting_position)
 
         # destination position
         # TODO: Have this actually be a random destination and not just the start smh
         destination_position = 0.0
 
         # let SUMO compute walking route
-        self.traciService.setPassengerDestination(name, destination_edge, destination_position)
+        # self.traciService.setPassengerDestination(name, destination_edge, destination_position)
         
         return (name, Passenger(name, starting_edge, destination_edge.getID()))
