@@ -146,9 +146,13 @@ class TricycleRepository:
     #FUNCTIONS FOR GAS CONSUMPTION AND GAS REFUELLING
     def simulateGasConsumption(self, tricycle_id: str) -> None:
         tricycle = self.getTricycle(tricycle_id)
+        print(tricycle_id, 1/tricycle.gasConsumptionRate)
+        print("Max Gas:", tricycle.maxGas)
+        print("Current gas: ", tricycle.currentGas)
         current_location = self.traciService.getTricycleLocation(tricycle_id)
         tricycle.consumeGas(current_location)
-        return
+        print("Final gas: ", tricycle.currentGas)
+        print("Max Gas:", tricycle.maxGas)
     
     def rerouteToGasStation(self,tricycle_id: str) -> None:
 
@@ -198,14 +202,29 @@ class TricycleRepository:
         traci.vehicle.setSpeed(tricycle_id, -1)
         return gasPrice
     
-    def startRefuelTricycle(self, tricycle_id: str) -> None:
-        tricycle = self.getTricycle(tricycle_id)
-        if tricycle.getsAFullTank():
-            amount = tricycle.maxGas - tricycle.currentGas
-            payment = amount * self.simulationConfig.gasPricePerLiter
-        else:
-            amount = tricycle.usualGasPayment / self.simulationConfig.gasPricePerLiter
-            payment = tricycle.usualGasPayment
-        tricycle.money -=payment
-        tricycle.currentGas += amount
+    def startRefuelAllTricycles(self) -> None:
+        for tricycle_id in self.tricycles.keys():
+            tricycle = self.getTricycle(tricycle_id)
+            print(tricycle.currentGas, tricycle.maxGas)
+            if tricycle.getsAFullTank:
+                amount = tricycle.maxGas - tricycle.currentGas
+                payment = amount * self.simulationConfig.gasPricePerLiter
+            else:
+                amount = tricycle.usualGasPayment / self.simulationConfig.gasPricePerLiter
+                payment = tricycle.usualGasPayment
+                if amount + tricycle.currentGas > tricycle.maxGas:
+                    amount = tricycle.maxGas - tricycle.currentGas
+                    payment = amount * self.simulationConfig.gasPricePerLiter
+            tricycle.money -= payment
+            tricycle.currentGas += amount
+            self.simulationLogger.addExpenseToLog(tricycle_id, "end_gas", payment, 1080)
+
+    def startExpenseAllTricycles(self) -> None:
+        for tricycle_id in self.tricycles.keys():
+            tricycle = self.getTricycle(tricycle_id)
+            tricycle.money -= tricycle.dailyExpense
+            self.simulationLogger.addExpenseToLog(tricycle_id, "daily_expense", tricycle.dailyExpense, 1080)
+
+    def changeLogger(self, simulationLogger) -> None:
+        self.simulationLogger = simulationLogger
 

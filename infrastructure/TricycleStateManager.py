@@ -24,7 +24,10 @@ class TricycleStateManager:
             elif not tricycle.hasSpawned():
                 continue
 
-            if tricycle.hasSpawned() and not (tricycle.isFree() or tricycle.isRefuelling() or tricycle.isDead() or tricycle.isParked() or tricycle.isGoingToRefuel()):
+            # if tricycle.hasSpawned() and not (tricycle.isFree() or tricycle.isRefuelling() or tricycle.isDead() or tricycle.isParked() or tricycle.isGoingToRefuel()):
+            #     self.tricycleRepository.simulateGasConsumption(tricycle_id)
+
+            if not (tricycle.isFree() or tricycle.isRefuelling() or tricycle.isDead() or tricycle.isParked() or tricycle.isGoingToRefuel()):
                 self.tricycleRepository.simulateGasConsumption(tricycle_id)
 
             current_location = self.traciService.getTricycleLocation(tricycle_id)
@@ -57,12 +60,13 @@ class TricycleStateManager:
                 self.traciService.removeTricycle(tricycle_id)
                 tricycle.kill()
                 continue
+
             if tricycle.isGoingToRefuel() and not traci.vehicle.isStoppedParking(tricycle_id):
                 self.tricycleRepository.rerouteToGasStation(tricycle_id)
                 continue
             if tricycle.isGoingToRefuel() and traci.vehicle.isStoppedParking(tricycle_id):
                 gas_amt = self.tricycleRepository.refuelTricycle(tricycle_id)
-                self.simulationLogger.addExpenseToLog(tricycle_id, "gas", gas_amt, current_tick)
+                self.simulationLogger.addExpenseToLog(tricycle_id, "midday_gas", gas_amt, current_tick)
                 tricycle.returnToToda()
                 continue
             if tricycle.currentGas <= 0:

@@ -30,7 +30,7 @@ class SimulationEngine:
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()},{self.simulationConfig.getDecalFilePath()}"
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()}"
         traci.start([
-            "sumo-gui", "--verbose",
+            "sumo",
             "-n", self.simulationConfig.getNetworkFilePath(),
             "-r", self.simulationConfig.getRoutesFilePath(),
             "-a", additionalFiles,
@@ -52,11 +52,10 @@ class SimulationEngine:
         #TODO: 
         while self.tick < simulation_duration:
             self.passengerSynchronizer.sync()
-            # self.generateRandomNumberOfPassengers()
-            #self.tricycleSynchronizer.sync()
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick)
             self.tick += 1
+            print(f"\rCurrent tick: {self.tick}/{simulation_duration}                 ")
             traci.simulationStep()
 
     def setPassengerBoundaries(self, lower_bound: int, upper_bound: int) -> None:
