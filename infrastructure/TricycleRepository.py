@@ -146,13 +146,8 @@ class TricycleRepository:
     #FUNCTIONS FOR GAS CONSUMPTION AND GAS REFUELLING
     def simulateGasConsumption(self, tricycle_id: str) -> None:
         tricycle = self.getTricycle(tricycle_id)
-        print(tricycle_id, 1/tricycle.gasConsumptionRate)
-        print("Max Gas:", tricycle.maxGas)
-        print("Current gas: ", tricycle.currentGas)
         current_location = self.traciService.getTricycleLocation(tricycle_id)
         tricycle.consumeGas(current_location)
-        print("Final gas: ", tricycle.currentGas)
-        print("Max Gas:", tricycle.maxGas)
     
     def rerouteToGasStation(self,tricycle_id: str) -> None:
 
@@ -205,7 +200,6 @@ class TricycleRepository:
     def startRefuelAllTricycles(self) -> None:
         for tricycle_id in self.tricycles.keys():
             tricycle = self.getTricycle(tricycle_id)
-            print(tricycle.currentGas, tricycle.maxGas)
             if tricycle.getsAFullTank:
                 amount = tricycle.maxGas - tricycle.currentGas
                 payment = amount * self.simulationConfig.gasPricePerLiter

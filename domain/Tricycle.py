@@ -124,8 +124,7 @@ class Tricycle:
             distance_travelled = current_location.distanceTo(self.lastLocation)
         except:
             distance_travelled = 0
-        print(distance_travelled)
-
+            
         answer = distance_travelled / 1000.0
         # print(answer)
         if self.hasRunOutOfGas(answer):

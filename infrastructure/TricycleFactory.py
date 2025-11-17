@@ -22,18 +22,18 @@ class TricycleFactory:
 
         unique_max_gas = [ 8.        ,  8.6       ,  9.5       ,  9.64      ,  9.70294118,10.        , 10.2       , 10.5       , 10.75      , 12.        ]
         prob_max_gas = [0.05405405, 0.21621622, 0.05405405, 0.27027027, 0.08108108, 0.08108108, 0.02702703, 0.02702703, 0.10810811, 0.08108108]
-        max_gas = np.random.choice(unique_max_gas, size=1, p=prob_max_gas) + np.random.normal(0, 0.1, size=1)
+        max_gas = (np.random.choice(unique_max_gas, size=1, p=prob_max_gas) + np.random.normal(0, 0.1, size=1)).item()
 
         # in km/L
         unique_gas_consumption = [33.        , 40.        , 40.25      , 46.21764706, 48.        , 61.4       , 62.5       ]
         prob_gas_consumption = [0.02702703, 0.48648649, 0.10810811, 0.08108108, 0.05405405, 0.02702703, 0.21621622]
-        gas_consumption = np.random.choice(unique_gas_consumption, size=1, p=prob_gas_consumption) + np.random.normal(0, 0.1, size=1)
+        gas_consumption = (np.random.choice(unique_gas_consumption, size=1, p=prob_gas_consumption) + np.random.normal(0, 0.1, size=1)).item()
 
         gas_threshold = 0
 
         unique_gas_payment = [ 50., 100., 110., 120., 125., 150., 200., 300.]
         prob_gas_payment = [0.02702703, 0.21621622, 0.02702703, 0.05405405, 0.02702703, 0.32432432, 0.2972973 , 0.02702703]
-        usual_gas_payment = np.random.choice(unique_gas_payment, size=1, p=prob_gas_payment)
+        usual_gas_payment = (np.random.choice(unique_gas_payment, size=1, p=prob_gas_payment)).item()
 
         w_af = [27/37, 1 - 27/37]
         index = np.random.choice(list(range(2)), p=w_af)
