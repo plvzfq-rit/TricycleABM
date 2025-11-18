@@ -6,7 +6,7 @@ class SimulationConfig:
     DEFAULT_PARKING_FILE_NAME = "parking.add.xml"
     DEFAULT_DECAL_FILE_NAME = "map.xml"
     DEFAULT_ROUTE_FILE_NAME = "routes.xml"
-    DEFAULT_GAS_PRICE_PER_LITER = 50.00
+    DEFAULT_GAS_PRICE_PER_LITER = 58.9
 
     def __init__(self, assetDirectoryName: str=DEFAULT_ASSET_DIRECTORY_NAME, 
                 networkFileName: str=DEFAULT_NETWORK_FILE_NAME, 

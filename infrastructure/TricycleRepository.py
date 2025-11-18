@@ -12,6 +12,28 @@ from infrastructure.SimulationLogger import SimulationLogger
 
 import math
 
+def driver_matrix(given):
+    # Starting point
+    limit = 1000
+    value = 50
+    
+    # Alternating increments: +20, +30, +20, +30, ...
+    increments = [20, 30]
+    inc_index = 0  # which increment to use
+    
+    # Expand ranges until we cover the given input
+    while given > limit:
+        # Move to next bracket
+        value += increments[inc_index]
+        limit += 500
+        
+        # Alternate increment index: 0 -> 1 -> 0 -> 1 ...
+        inc_index = 1 - inc_index
+
+    return value
+
+def manila_matrix(given):
+    return 16 if given < 1000 else 16 + 5 * math.ceil((given - 1000) / 500)
 
 class TricycleRepository:
     def __init__(self, tricycle_factory: TricycleFactory | None = None, traci_service: TraciService | None = None, sumo_service: SumoService | None = None, simulation_config: SimulationConfig | None = None):
@@ -105,11 +127,8 @@ class TricycleRepository:
 
         distance = traci.simulation.getDistanceRoad(current_edge, 0, dest_edge, 0, isDriving=True)
 
-        #TODO
-        # if : # something something bargain
-            # do bargaining
-        # else:
-        default_fare = 16 if distance < 1000 else 16 + 5 * math.ceil((distance - 1000) / 500)
+        # SCENARIO TESTING
+        default_fare = manila_matrix(distance)
         if passenger.willingness_to_pay >= default_fare:
             tricycle.money += default_fare
         else:
