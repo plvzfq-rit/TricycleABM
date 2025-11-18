@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 import os
 import re # For cleaning expense amount
 import numpy as np
@@ -9,10 +10,12 @@ import scipy.stats as stats
 # Set page config for a wider layout
 st.set_page_config(layout="wide")
 
-## --- Helper Function ---
+# Use a nice seaborn theme
+sns.set_theme(style="whitegrid")
+
+## --- Helper Functions ---
 
 # Regex to find numbers in the amount column (handles floats, ints)
-# It will find '310.96864488' in '[310.96864488]'
 AMOUNT_REGEX = re.compile(r"[-+]?\d*\.\d+|\d+")
 
 def extract_amount(amount_str):
@@ -29,6 +32,63 @@ def extract_amount(amount_str):
     if match:
         return float(match.group(0))
     return pd.NA
+
+def plot_distribution_with_stats(data, x_col, title, xlabel, ylabel="Count", color="skyblue", bins=30):
+    """
+    Plots a distribution using Seaborn and adds a text box with Mean, Median, Mode, and Std Dev.
+    """
+    if data.empty:
+        st.write(f"No data to plot for {title}")
+        return
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    
+    # Plot histogram with KDE
+    sns.histplot(data=data, x=x_col, bins=bins, color=color, kde=True, ax=ax, edgecolor="black")
+    
+    # Calculate stats
+    mean_val = data[x_col].mean()
+    median_val = data[x_col].median()
+    std_val = data[x_col].std()
+    
+    # Mode calculation (approximate for continuous data)
+    try:
+        # Rounding to 2 decimals to find a meaningful mode in float data
+        mode_series = data[x_col].round(2).mode()
+        if len(mode_series) > 0:
+            mode_val = mode_series[0] # Take the first mode if multiple
+            mode_str = f"{mode_val:,.2f}"
+        else:
+            mode_str = "N/A"
+    except:
+        mode_str = "N/A"
+
+    # Create stats text block
+    stats_text = (
+        f"Mean: {mean_val:,.2f}\n"
+        f"Median: {median_val:,.2f}\n"
+        f"Mode: {mode_str}\n"
+        f"Std Dev: {std_val:,.2f}"
+    )
+    
+    # Add text box to the plot (top right corner usually works well)
+    # transform=ax.transAxes uses relative coordinates (0 to 1)
+    ax.text(
+        0.95, 0.95, 
+        stats_text, 
+        transform=ax.transAxes, 
+        fontsize=10, 
+        verticalalignment='top', 
+        horizontalalignment='right',
+        bbox=dict(boxstyle='round', facecolor='white', alpha=0.8)
+    )
+
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    
+    st.pyplot(fig)
+
 
 ## --- NEW: Sidebar Configuration ---
 st.sidebar.header("Analysis Configuration")
@@ -200,8 +260,6 @@ filtered_run_profits_series = pd.Series(filtered_run_profits)
 df_all_expenses.dropna(subset=['amount'], inplace=True)
 
 ## --- NEW DRIVER-CENTRIC ANALYSIS ---
-# This section remains the same, based on the filtered data
-# ... (rest of driver_stats calculations) ...
 
 # 1. Total Income per driver (grouped by trike_id)
 income_by_driver = df_all.groupby('trike_id')['price'].sum().reset_index().rename(columns={'price': 'total_income'})
@@ -209,9 +267,12 @@ income_by_driver = df_all.groupby('trike_id')['price'].sum().reset_index().renam
 # 2. Total Expenses per driver (grouped by trike_id)
 expenses_by_driver = df_all_expenses.groupby('trike_id')['amount'].sum().reset_index().rename(columns={'amount': 'total_expenses'})
 
-# 3. Income Variance per driver (grouped by trike_id)
-# .var() returns NaN for a single trip; we fillna(0) for cleaner tables.
-variance_by_driver = df_all.groupby('trike_id')['price'].var().reset_index().rename(columns={'price': 'income_variance'}).fillna(0)
+# 3. Daily Income Variance per driver (Corrected)
+# Calculate daily income for each driver in each run first
+daily_income_per_run = df_all.groupby(['trike_id', 'run_id'])['price'].sum().reset_index()
+
+# Now calculate the variance of these daily totals for each driver
+variance_by_driver = daily_income_per_run.groupby('trike_id')['price'].var().reset_index().rename(columns={'price': 'income_variance'}).fillna(0)
 
 # 4. Trip Count per driver (grouped by trike_id)
 trip_count_by_driver = df_all.groupby('trike_id').size().reset_index(name='total_trip_count')
@@ -270,24 +331,23 @@ st.divider()
 # --- Global Metrics ---
 st.header("Overall Simulation Metrics (Based on Analyzed Runs)")
 col1, col2, col3 = st.columns(3)
-# ... (rest of global metrics) ...
 col1.metric("Total Trips", f"{len(df_all):,}")
 col2.metric("Total Distance", f"{df_all['distance'].sum():,.0f} m")
-col3.metric("Total Income", f"{df_all['price'].sum():,.2f}")
-col1.metric("Total Expenses", f"{df_all_expenses['amount'].sum():,.2f}")
-col2.metric("Total Profit", f"{(df_all['price'].sum() - df_all_expenses['amount'].sum()):,.2f}")
+col3.metric("Total Income", f"PHP {df_all['price'].sum():,.2f}")
+col1.metric("Total Expenses", f"PHP {df_all_expenses['amount'].sum():,.2f}")
+col2.metric("Total Profit", f"PHP {(df_all['price'].sum() - df_all_expenses['amount'].sum()):,.2f}")
 st.divider()
 
 # --- NEW: Simulation Stability Analysis (Based on TricycleABM_Paper.pdf) ---
 st.header("Simulation Stability & Run Analysis")
 
-st.write("This analysis estimates the stability of your simulation's **Mean Trike Profit**.")
+st.write("This analysis estimates the stability of the simulation's **Mean Trike Profit**.")
 
 # --- Part 1: Required Runs Recommendation (based on ALL runs) ---
 st.subheader(f"Part 1: Required Runs Recommendation (Based on ALL {len(all_run_profits_series)} Runs)")
 
 if len(all_run_profits_series) < 3:
-    st.warning(f"Found only {len(all_run_profits_series)} total run(s). Please run at least 3 simulations to generate a recommendation.", icon="⚠️")
+    st.warning(f"Found only {len(all_run_profits_series)} total run(s). At least 3 simulations are required to generate a recommendation.", icon="⚠️")
 else:
     # --- 1. Calculate Stats from ALL runs ---
     n_total = len(all_run_profits_series)
@@ -297,63 +357,106 @@ else:
     
     col_s1, col_s2, col_s3, col_s4 = st.columns(4)
     col_s1.metric("Total Runs Found (n)", f"{n_total}")
-    col_s2.metric("Overall Mean Profit (x̄)", f"{mean_total:,.2f}")
-    col_s3.metric("Overall Std. Dev (s)", f"{std_total:,.2f}")
+    col_s2.metric("Overall Mean Profit (x̄)", f"PHP {mean_total:,.2f}")
+    col_s3.metric("Overall Std. Dev (s)", f"PHP {std_total:,.2f}")
     col_s4.metric("Overall CV", f"{cv_total:,.3f}")
 
-    # --- 2. User Inputs for Desired Precision ---
-    st.write("How precise do you want your final result to be?")
-    
-    col_i1, col_i2 = st.columns(2)
-    with col_i1:
-        confidence = st.select_slider(
-            "Desired Confidence Level",
-            options=[0.90, 0.95, 0.99],
-            value=0.95,
-            format_func=lambda x: f"{int(x*100)}%"
-        )
-    with col_i2:
-        precision = st.select_slider(
-            "Desired Precision (w) (as % of mean)",
-            options=[0.01, 0.02, 0.05, 0.10, 0.15],
-            value=0.05,
-            format_func=lambda x: f"±{x*100:.0f}%"
-        )
+    # --- 2. Check Normality (Shapiro-Wilk Test) ---
+    if n_total >= 3:
+        stat_val, p_val = stats.shapiro(all_run_profits_series)
+        is_normal = p_val > 0.05
+        
+        if not is_normal:
+            st.warning("Data may NOT be Normal (p < 0.05). The standard formula assumes normality. A safety buffer (e.g., +20% more simulations) is suggested.")
 
-    # --- 3. Calculations for Required Runs ---
+    # --- 3. User Inputs for Desired Precision ---
+    st.write("---")
+    st.write("Required runs calculation based on standard parameters:")
+    
+    # Fixed Confidence at 95% and Precision at 5%
+    confidence = 0.95
+    precision = 0.05
+    
+    c1, c2 = st.columns(2)
+    c1.write(f"**Confidence Level:** {confidence*100:.0f}% (Standard)")
+    c2.write(f"**Desired Precision:** ±{precision*100:.0f}% (Standard)")
+    
+    # --- 4. Calculations for Required Runs ---
     alpha = 1 - confidence
     w = precision # Desired precision (width)
     
-    t_z_cutoff = 100 # From the paper
-    z_val = stats.norm.ppf(1 - alpha/2)
-    n_z = (z_val * cv_total / w)**2
-
-    if n_z >= t_z_cutoff:
-        n_required = np.ceil(n_z)
-    else:
-        # Iterative solution using t-distribution
-        n_new = n_z
-        if n_new <= 1: n_new = 2 
-        for _ in range(10):
-            df = n_new - 1
-            if df < 1: df = 1 
-            t_val = stats.t.ppf(1 - alpha/2, df)
-            n_new = (t_val * cv_total / w)**2
-        n_required = np.ceil(n_new)
+    # Calculation of n using Byrne's equation (approximate iterative method)
     
-    st.success(f"**Recommendation:** To achieve **±{w*100:.0f}%** precision, you should aim to run approximately **{int(n_required)}** total simulations.")
+    # First calculate critical z value (normal approx for large n)
+    z_val = stats.norm.ppf(1 - alpha/2)
+    
+    # Initial guess using Normal distribution (Z)
+    n_initial = (z_val * cv_total / w)**2
+
+    # Iterative refinement using t-distribution (correct for n < 100)
+    n_final = n_initial
+    t_val_final = z_val # Initialize with z
+    
+    if n_final <= 1: n_final = 2 
+    
+    # Perform a few iterations to converge on t-value for small n
+    iterations_data = [] # Store for display
+    for i in range(5):
+        df = n_final - 1
+        if df < 1: df = 1 
+        t_val_current = stats.t.ppf(1 - alpha/2, df)
+        n_prev = n_final
+        n_final = (t_val_current * cv_total / w)**2
+        iterations_data.append((i+1, df, t_val_current, n_final))
+        
+    n_required = np.ceil(n_final)
+    
+    # --- SHOW CALCULATIONS VISUALLY ---
+    st.markdown("### Calculation Steps (Byrne, 2013)")
+    
+    st.markdown(r"""
+    The number of runs ($n$) is calculated using the formula derived from the confidence interval width:
+    
+    $$ n = \left( \frac{t_{\alpha/2, n-1} \cdot CV}{w} \right)^2 $$
+    
+    Where:
+    * $CV$ = Coefficient of Variation (calculated from current runs)
+    * $w$ = Desired Precision (fraction of mean, e.g., 0.05 for 5%)
+    * $t_{\alpha/2, n-1}$ = Critical t-value for confidence level $1-\alpha$ with $n-1$ degrees of freedom.
+    * *Note: Byrne (2013) recommends using the t-statistic instead of z when n < 100 to account for sample size uncertainty.*
+    """)
+
+    st.markdown("**Step 1: Gather Parameters**")
+    st.latex(f"CV = {cv_total:.4f}")
+    st.latex(f"w = {w}")
+    st.latex(f"Confidence = {confidence*100:.0f}\\% \\rightarrow \\alpha = {alpha:.2f}")
+
+    st.markdown("**Step 2: Initial Estimate (using Z-score)**")
+    st.markdown(f"Using Normal distribution ($z \\approx 1.96$ for 95% confidence):")
+    st.latex(f"n_{{initial}} = \\left( \\frac{{{z_val:.3f} \\cdot {cv_total:.4f}}}{{{w}}} \\right)^2 = {n_initial:.2f}")
+
+    st.markdown("**Step 3: Iterative Refinement (using t-distribution)**")
+    st.markdown("Because $n$ is unknown, we iterate to find the correct t-value:")
+    
+    # Display iterations in a clean table
+    iter_df = pd.DataFrame(iterations_data, columns=["Iteration", "Degrees of Freedom", "t-value", "Calculated n"])
+    st.table(iter_df.style.format({"t-value": "{:.4f}", "Calculated n": "{:.2f}"}))
+
+    st.markdown("**Final Result:**")
+    st.success(f"$$ n_{{required}} = \\lceil {n_final:.2f} \\rceil = {int(n_required)} $$")
+
+    st.info(f"**Methodology Note:** This calculation uses the available **{n_total} runs** as the initial 'pilot' sample to estimate the population variance (Coefficient of Variation).")
     
     if n_required > n_total:
-        st.warning(f"Based on your current {n_total} runs, you may need **{int(n_required - n_total)}** more simulations to meet your goal.")
+        st.warning(f"Based on the current {n_total} runs, approximately **{int(n_required - n_total)}** additional simulations are needed to meet the goal.")
     else:
-        st.balloons()
-        st.success("Congratulations! You have already run enough simulations to meet your desired precision level.")
+        st.success("The current number of simulations meets the desired precision level.")
 
 # --- Part 2: Current Precision (based on FILTERED runs) ---
 st.subheader(f"Part 2: Current Analysis Precision (Based on {sim_count} Analyzed Runs)")
 
 if sim_count < 3:
-     st.warning(f"You have analyzed {sim_count} simulation(s). Please analyze at least 3 simulations (by reducing 'runs to skip') to calculate your current precision.", icon="⚠️")
+     st.warning(f"Analysis includes {sim_count} simulation(s). At least 3 simulations are required to calculate current precision (adjust 'runs to skip').", icon="⚠️")
 else:
     # --- Calculate Stats from FILTERED runs ---
     n_current = len(filtered_run_profits_series)
@@ -363,8 +466,8 @@ else:
 
     col_c1, col_c2, col_c3, col_c4 = st.columns(4)
     col_c1.metric("Analyzed Runs (n)", f"{n_current}")
-    col_c2.metric("Analyzed Mean Profit (x̄)", f"{mean_current:,.2f}")
-    col_c3.metric("Analyzed Std. Dev (s)", f"{std_current:,.2f}")
+    col_c2.metric("Analyzed Mean Profit (x̄)", f"PHP {mean_current:,.2f}")
+    col_c3.metric("Analyzed Std. Dev (s)", f"PHP {std_current:,.2f}")
     col_c4.metric("Analyzed CV", f"{cv_current:,.3f}")
 
     # --- Calculate CURRENT precision (w_current) ---
@@ -372,7 +475,7 @@ else:
     t_val_current = stats.t.ppf(1 - (1 - confidence)/2, df_current)
     w_current = (t_val_current * cv_current) / np.sqrt(n_current)
 
-    st.info(f"**Your Current Precision:** With the **{n_current} runs** you are analyzing, your result is precise to **±{w_current*100:,.1f}%** (at {confidence*100:.0f}% confidence).")
+    st.info(f"**Current Precision:** With the **{n_current} analyzed runs**, the result is precise to **±{w_current*100:,.1f}%** (at {confidence*100:.0f}% confidence).")
 
 st.divider()
 
@@ -380,32 +483,32 @@ st.divider()
 # --- Driver Analytics (New Section) ---
 st.header("Driver-Level Analytics (Based on Analyzed Runs)")
 st.write(f"Summary of driver performance, averaged over **{sim_count}** simulation run(s). 'Trike ID' is the consistent identifier across all runs.")
-# ... (rest of app) ...
 st.dataframe(driver_stats.sort_values(by='avg_daily_profit', ascending=False))
 
 st.subheader("Driver Average Daily Profit Distribution")
-fig, ax = plt.subplots()
-ax.hist(driver_stats['avg_daily_profit'], bins=50, color='#2a9d8f', edgecolor='black')
-ax.set_xlabel("Average Daily Profit (currency units)")
-ax.set_ylabel("Number of Drivers")
-ax.set_title("Distribution of Driver Average Daily Profits")
-st.pyplot(fig)
+plot_distribution_with_stats(
+    driver_stats, 
+    'avg_daily_profit', 
+    "Distribution of Driver Average Daily Profits",
+    "Average Daily Profit (PHP)",
+    color="#2a9d8f"
+)
 
-st.subheader("Driver Income Variance Distribution")
-st.write("Variance measures the consistency of a driver's income per trip. High variance means unpredictable income (e.g., many low-fare trips and a few high-fare ones). Low variance means most trips earn a similar amount.")
-fig, ax = plt.subplots()
-# Filter out extreme outliers for a better plot, e.g., > 99th percentile
+st.subheader("Driver Daily Income Variance Distribution")
+# Filter out extreme outliers for a better plot
 q99 = driver_stats['income_variance'].quantile(0.99)
 if q99 > 0:
-    plot_data = driver_stats[driver_stats['income_variance'] < q99]['income_variance']
+    plot_data = driver_stats[driver_stats['income_variance'] < q99]
 else:
-    plot_data = driver_stats['income_variance'] # Show all if q99 is 0
-    
-ax.hist(plot_data, bins=50, color='#e76f51', edgecolor='black')
-ax.set_xlabel("Income Variance")
-ax.set_ylabel("Number of Drivers")
-ax.set_title("Distribution of Driver Income Variance (capped at 99th percentile for readability)")
-st.pyplot(fig)
+    plot_data = driver_stats # Show all if q99 is 0
+
+plot_distribution_with_stats(
+    plot_data, 
+    'income_variance', 
+    "Distribution of Driver Income Variance (Daily Totals, capped at 99th percentile)",
+    "Daily Income Variance",
+    color="#e76f51"
+)
 
 st.divider()
 
@@ -422,36 +525,49 @@ col_a, col_b = st.columns(2)
 with col_a:
     # Show histogram of trip distances
     st.subheader("Trip Distance Distribution")
-    fig, ax = plt.subplots()
-    ax.hist(df_all['distance'], bins=30, color='skyblue', edgecolor='black')
-    ax.set_xlabel("Distance (meters)")
-    ax.set_ylabel("Number of Trips")
-    st.pyplot(fig)
+    plot_distribution_with_stats(
+        df_all, 
+        'distance', 
+        "Trip Distance Distribution",
+        "Distance (meters)",
+        color="skyblue"
+    )
 
     # Show scatter plot of distance vs price
     st.subheader("Distance vs Price")
-    fig, ax = plt.subplots()
-    ax.scatter(df_all['distance'], df_all['price'], alpha=0.5)
+    fig, ax = plt.subplots(figsize=(8, 5))
+    sns.scatterplot(data=df_all, x='distance', y='price', alpha=0.5, ax=ax)
     ax.set_xlabel("Distance (meters)")
-    ax.set_ylabel("Price (currency units)")
+    ax.set_ylabel("Price (PHP)")
+    ax.set_title("Distance vs Price Scatter Plot")
     st.pyplot(fig)
+    
+    # Optional: Add correlation
+    if len(df_all) > 1:
+        corr = df_all['distance'].corr(df_all['price'])
+        st.metric("Correlation (Distance vs Price)", f"{corr:.3f}")
+
 
 with col_b:
     # Show histogram of trip prices
     st.subheader("Trip Price Distribution")
-    fig, ax = plt.subplots()
-    ax.hist(df_all['price'], bins=30, color='lightgreen', edgecolor='black')
-    ax.set_xlabel("Price (currency units)")
-    ax.set_ylabel("Number of Trips")
-    st.pyplot(fig)
+    plot_distribution_with_stats(
+        df_all, 
+        'price', 
+        "Trip Price Distribution",
+        "Price (PHP)",
+        color="lightgreen"
+    )
     
     # histogram of tick
     st.subheader("Trips Over Time (by Tick)")
-    fig, ax = plt.subplots()
-    ax.hist(df_all['tick'], bins=50, color='violet', edgecolor='black')
-    ax.set_xlabel("Tick")
-    ax.set_ylabel("Number of Trips")
-    st.pyplot(fig)
+    plot_distribution_with_stats(
+        df_all, 
+        'tick', 
+        "Trips Over Time",
+        "Tick",
+        color="violet"
+    )
 
 # Show average price per distance bucket
 st.subheader("Average Price per Distance Bucket")
@@ -469,12 +585,17 @@ if not df_all.empty:
         df_all['distance_bucket'] = pd.cut(df_all['distance'], bins=bins)
         avg_price_per_bucket = df_all.groupby('distance_bucket', observed=True)['price'].mean().reset_index()
         
-        fig, ax = plt.subplots()
-        ax.bar(avg_price_per_bucket['distance_bucket'].astype(str), avg_price_per_bucket['price'], color='salmon', edgecolor='black')
+        fig, ax = plt.subplots(figsize=(8, 5))
+        sns.barplot(data=avg_price_per_bucket, x='distance_bucket', y='price', color='salmon', edgecolor='black', ax=ax)
         ax.set_xlabel("Distance Bucket (meters)")
-        ax.set_ylabel("Average Price (currency units)")
+        ax.set_ylabel("Average Price (PHP)")
+        ax.set_title("Average Price per Distance Bucket")
         plt.xticks(rotation=45, ha='right')
         st.pyplot(fig)
+        
+        # Stats for buckets
+        st.metric("Mean Bucket Price:", f"PHP {avg_price_per_bucket['price'].mean():,.2f}")
+
     except Exception as e:
         st.write(f"Could not plot distance buckets: {e}")
 else:
