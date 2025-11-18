@@ -15,8 +15,8 @@ class TricycleFactory:
     def createRandomTricycle(self, assigned_id: int, simulation_duration: int, assigned_hub: str) -> tuple[str, Tricycle]:
         trike_name = "trike" + str(assigned_id)
 
-        # start_time = max(0,math.floor(60 * stats.lognorm.rvs(0.19840374997921292, loc=0, scale=6.520004321549422, size=1)))
-        start_time = 0
+        start_time = max(0,math.floor(60 * stats.lognorm.rvs(0.19840374997921292, loc=0, scale=6.520004321549422, size=1)))
+        # start_time = 0
 
         end_time = min(1080, math.floor(60 * (24 - stats.lognorm.rvs(0.46084412009093767, loc=0, scale=4.207763166353462, size=1))))
 
@@ -36,7 +36,7 @@ class TricycleFactory:
         usual_gas_payment = (np.random.choice(unique_gas_payment, size=1, p=prob_gas_payment)).item()
 
         w_af = [27/37, 1 - 27/37]
-        index = np.random.choice(list(range(2)), p=w_af)
+        index = np.random.choice(list(range(2)), p=w_af).item()
         gets_full_tank = False
         if index == 1:
             gets_full_tank = True

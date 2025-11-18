@@ -110,8 +110,10 @@ class TricycleRepository:
             # do bargaining
         # else:
         default_fare = 16 if distance < 1000 else 16 + 5 * math.ceil((distance - 1000) / 500)
-
-        tricycle.money += default_fare
+        if passenger.willingness_to_pay >= default_fare:
+            tricycle.money += default_fare
+        else:
+            tricycle.money += passenger.willingness_to_pay
 
         tricycle.recordLog("run002", str(tricycle_id), str(hub_edge), str(dest_edge), str(distance), str(default_fare), str(tick))
 
