@@ -128,7 +128,8 @@ class TricycleRepository:
         distance = traci.simulation.getDistanceRoad(current_edge, 0, dest_edge, 0, isDriving=True)
 
         # SCENARIO TESTING
-        default_fare = manila_matrix(distance)
+        default_fare = driver_matrix(distance)
+
         if passenger.willingness_to_pay >= default_fare:
             tricycle.money += default_fare
         else:

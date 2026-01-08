@@ -30,9 +30,7 @@ map_builder = SpecificMapBuilder(simulation_config, file_system_descriptor, park
 
 map_descriptor = map_builder.build()
 
-duration = 1080
-
-
+duration = 64800
 
 # PHASE 3: INITIALIZING TRICYCLE REPOSITORY
 lower_gas_bound = 50.0

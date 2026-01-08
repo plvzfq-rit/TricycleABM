@@ -6,6 +6,7 @@ from domain.MapDescriptor import MapDescriptor
 from infrastructure.MapGenerator import MapGenerator
 from infrastructure.ParkingFileGenerator import ParkingFileGenerator
 
+@DeprecationWarning
 class RandomMapBuilder:
     def __init__(self, simulation_config: SimulationConfig | None = None, 
                 parking_file_generator: ParkingFileGenerator | None = None,

@@ -19,7 +19,7 @@
     <parkingArea id="hub8" lane="E23_1" startPos="47.71" endPos="67.71" friendlyPos="1" roadsideCapacity="10" onRoad="1"/>
 
     <!-- <vType id="fatPed" vClass="pedestrian" color="yellow" width="1" length="1"/> -->
-    <vType id="trike" vClass="motorcycle" color="blue" width="1.5" length="2.5" maxSpeed="500"  laneChangeModel="SL2015"
+    <vType id="trike" vClass="motorcycle" color="blue" width="1.5" length="2.5" maxSpeed="16.67"  laneChangeModel="SL2015"
        maxSpeedLat="0.8"
        minGapLat="0.2"
        latAlignment="right"

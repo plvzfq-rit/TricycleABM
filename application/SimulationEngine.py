@@ -55,7 +55,7 @@ class SimulationEngine:
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick)
             self.tick += 1
-            print(f"\rCurrent tick: {self.tick}/{simulation_duration}                 ")
+            print(f"\rCurrent tick: {self.tick}/{simulation_duration}                 ", end="")
             traci.simulationStep()
 
     def setPassengerBoundaries(self, lower_bound: int, upper_bound: int) -> None:
