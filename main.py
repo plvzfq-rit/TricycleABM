@@ -47,7 +47,7 @@ tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_reposito
 passenger_synchronizer = PassengerSynchronizer(passenger_repository, traci_service)
 tricycle_synchronizer = TricycleSynchronizer(tricycle_repository, traci_service)
 
-for i in range(30):
+for i in range(1):
     print(f"running run# {i}...")
     logger = SimulationLogger(i)
     tricycle_repository.changeLogger(logger)

@@ -1,4 +1,6 @@
 import traci
+import math
+import random
 from domain.TricycleState import TricycleState
 from domain.Location import Location
 from collections import namedtuple
@@ -23,6 +25,7 @@ class Tricycle:
         self.farthestDistance = farthestDistance
         self.log = namedtuple("log", ["run_id","trike_id","origin_edge", "dest_edge", "distance", "price","tick"])
         self.currentLog = None
+        self.cooldownTime = 0
 
     def __str__(self) -> str:
         return f"Tricycle(name={self.name}, state={self.state})"
@@ -43,7 +46,14 @@ class Tricycle:
         self.destination = destination
 
     def hasArrived(self, current_location: Location) -> bool:
+        self.cooldownTime = math.ceil(-600 * math.log(random.random()))
         return current_location.isNear(self.destination)
+    
+    def isInCooldown(self):
+        return self.cooldownTime == 0
+    
+    def decrementCooldown(self):
+        self.cooldownTime = max(self.cooldownTime - 1, 0)
     
     def dropOff(self):
         self.destination = None

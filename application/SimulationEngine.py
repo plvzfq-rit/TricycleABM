@@ -1,5 +1,6 @@
 import traci
 import random
+import math
 from infrastructure.PassengerRepository import PassengerRepository
 from infrastructure.TricycleRepository import TricycleRepository
 from domain.MapDescriptor import MapDescriptor
@@ -55,7 +56,7 @@ class SimulationEngine:
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick)
             self.tick += 1
-            print(f"\rCurrent tick: {self.tick}/{simulation_duration}                 ", end="")
+            print(f"\rCurrent time: {math.floor(self.tick / 3600) + 6:02d}:{math.floor((self.tick % 3600) / 60):02d}:{self.tick % 60:02d}                 ", end="")
             traci.simulationStep()
 
     def setPassengerBoundaries(self, lower_bound: int, upper_bound: int) -> None:

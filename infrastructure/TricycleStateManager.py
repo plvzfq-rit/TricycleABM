@@ -27,6 +27,8 @@ class TricycleStateManager:
             # if tricycle.hasSpawned() and not (tricycle.isFree() or tricycle.isRefuelling() or tricycle.isDead() or tricycle.isParked() or tricycle.isGoingToRefuel()):
             #     self.tricycleRepository.simulateGasConsumption(tricycle_id)
 
+            tricycle.decrementCooldown()
+
             if not (tricycle.isFree() or tricycle.isRefuelling() or tricycle.isDead() or tricycle.isParked() or tricycle.isGoingToRefuel()):
                 self.tricycleRepository.simulateGasConsumption(tricycle_id)
 

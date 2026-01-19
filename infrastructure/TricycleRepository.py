@@ -75,7 +75,7 @@ class TricycleRepository:
         return set([tricycle for tricycle in self.tricycles.values() if tricycle.isActive()])
     
     def getActiveFreeTricycleIds(self) -> set[Tricycle]:
-        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive()])
+        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() and not self.getTricycle(tricycle_id).isInCooldown()])
     
     def getActiveTricycleIds(self) -> set[Tricycle]:
         return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() or self.getTricycle(tricycle_id).isFree()])
