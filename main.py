@@ -22,11 +22,9 @@ tricycle_repository = TricycleRepository(tricycle_factory, traci_service, sumo_s
 
 # PHASE 4: INITIALIZING PASSENGER REPOSITORY
 passenger_factory = PassengerFactory(sumo_service, traci_service)
-passenger_repository = PassengerRepository(simulation_config, sumo_service, traci_service, passenger_factory)
 
 # PHASE 5: INITIALIZING OTHER SERVICES
-tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_repository, passenger_factory)
-passenger_synchronizer = PassengerSynchronizer(passenger_repository, traci_service)
+tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_factory)
 tricycle_synchronizer = TricycleSynchronizer(tricycle_repository, traci_service)
 
 for i in range(1):
@@ -34,7 +32,7 @@ for i in range(1):
     logger = SimulationLogger(i)
     tricycle_repository.changeLogger(logger)
     tricycle_state_manager = TricycleStateManager(tricycle_repository, traci_service, logger)
-    simulation_loop = SimulationEngine(map_descriptor, simulation_config, tricycle_dispatcher, passenger_repository, tricycle_repository, passenger_synchronizer, tricycle_synchronizer, tricycle_state_manager, logger, duration)
+    simulation_loop = SimulationEngine(map_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_synchronizer, tricycle_state_manager, logger, duration)
     simulation_loop.doMainLoop(duration)
     simulation_loop.close()
     tricycle_repository.startRefuelAllTricycles()

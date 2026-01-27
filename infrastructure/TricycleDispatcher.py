@@ -1,7 +1,6 @@
 from domain.Location import Location
 
 from infrastructure.TricycleRepository import TricycleRepository
-from infrastructure.PassengerRepository import PassengerRepository
 from infrastructure.PassengerFactory import PassengerFactory
 from domain.TricycleState import TricycleState
 
@@ -11,9 +10,8 @@ import random
 
 class TricycleDispatcher:
 
-    def __init__(self, tricycle_repository: TricycleRepository, passenger_repository: PassengerRepository, passenger_factory: PassengerFactory):
+    def __init__(self, tricycle_repository: TricycleRepository, passenger_factory: PassengerFactory):
         self.tricycleRepository = tricycle_repository
-        self.passengerRepository = passenger_repository
         self.passengerFactory = passenger_factory
 
     def dispatchTricycles(self, simulationLogger, tick) -> None:
@@ -35,11 +33,11 @@ class TricycleDispatcher:
             tricycle_location = self.tricycleRepository.getTricycleLocation(tricycle_id)
             _, passenger = self.passengerFactory.createRandomPassenger([traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]])
             # print("made")
-            if self.canDispatch(tricycle_id, "", tricycle_location, passenger.destination, tricycle.farthestDistance):
+            if self.canDispatch(tricycle_id, tricycle_location, passenger.destination, tricycle.farthestDistance):
                 # print("trying to dispatch...")
                 success = self.tricycleRepository.dispatchTricycle(tricycle_id, passenger, simulationLogger, tick)
 
-    def canDispatch(self, tricycle_id: str, passenger_id: str, tricycle_location: Location, passenger_location: Location, tricycle_farthest_distance: float):
+    def canDispatch(self, tricycle_id: str, tricycle_location: Location, passenger_location: Location, tricycle_farthest_distance: float):
         try:
             estimated_distance = traci.simulation.getDistanceRoad(tricycle_location.location, tricycle_location.position, passenger_location.location, passenger_location.position)
         except Exception as e:
