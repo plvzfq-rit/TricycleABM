@@ -5,14 +5,11 @@ from application import *
 # PHASE 1: INITIALIZING THE MAP ENVIRONMENT
 
 simulation_config = SimulationConfig()
-file_system_descriptor = FileSystemDescriptor("")
 parking_area_parser = ParkingAreaParser()
-file_sync_service = FileSynchronizer()
 
 # PHASE 2: INITIALIZING SERVICES
 traci_service = TraciService()
 sumo_service = SumoService(simulation_config.getNetworkFilePath())
-
 map_descriptor = ParkingAreaParser.parse(simulation_config.getParkingFilePath())
 
 duration = 64800
@@ -42,6 +39,3 @@ for i in range(1):
     simulation_loop.close()
     tricycle_repository.startRefuelAllTricycles()
     tricycle_repository.startExpenseAllTricycles()
-
-# Delete temp files after sim
-# file_sync_service.removeDirectory(file_system_descriptor.getOutputDirectory())
