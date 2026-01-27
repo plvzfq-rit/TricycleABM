@@ -26,6 +26,13 @@ class Tricycle:
         self.log = namedtuple("log", ["run_id","trike_id","origin_edge", "dest_edge", "distance", "price","tick"])
         self.currentLog = None
         self.cooldownTime = 0
+        # Track actual time spent in simulation
+        self.actualStartTick = None
+        self.actualEndTick = None
+        # Per-day statistics
+        self.dailyTrips = 0
+        self.dailyIncome = 0.0
+        self.dailyDistance = 0.0
 
     def __str__(self) -> str:
         return f"Tricycle(name={self.name}, state={self.state})"
@@ -145,3 +152,32 @@ class Tricycle:
     def payForGas(self) -> float:
         self.money -= self.usualGasPayment
         return self.usualGasPayment
+
+    def recordActualStart(self, tick: int) -> None:
+        """Record when the tricycle actually spawned into the simulation"""
+        self.actualStartTick = tick
+
+    def recordActualEnd(self, tick: int) -> None:
+        """Record when the tricycle actually left the simulation"""
+        self.actualEndTick = tick
+
+    def getActualDuration(self) -> int:
+        """Get the actual time spent in the simulation (in ticks/seconds)"""
+        if self.actualStartTick is None or self.actualEndTick is None:
+            return 0
+        return self.actualEndTick - self.actualStartTick
+
+    def recordTrip(self, distance, price) -> None:
+        """Record a completed trip for daily statistics"""
+        self.dailyTrips += 1
+        self.dailyIncome += float(price)
+        self.dailyDistance += float(distance)
+
+    def getDailyStats(self) -> dict:
+        """Get the daily statistics for this tricycle"""
+        return {
+            'trips': self.dailyTrips,
+            'income': self.dailyIncome,
+            'distance': self.dailyDistance,
+            'actual_duration': self.getActualDuration()
+        }

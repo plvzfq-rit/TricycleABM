@@ -15,10 +15,12 @@ class TricycleFactory:
     def createRandomTricycle(self, assigned_id: int, simulation_duration: int, assigned_hub: str) -> tuple[str, Tricycle]:
         trike_name = "trike" + str(assigned_id)
 
-        start_time = max(0,math.floor(60 * 60 * stats.lognorm.rvs(0.19840374997921292, loc=0, scale=6.520004321549422, size=1)) - 60 * 60 * 6)
+        start_time = max(0, math.floor(60 * 60 * stats.lognorm.rvs(0.19840374997921292, loc=0, scale=6.520004321549422)) - 60 * 60 * 6)
         # start_time = 0
 
-        end_time = min(64800, math.floor(60 * 60 * (24 - stats.lognorm.rvs(0.46084412009093767, loc=0, scale=4.207763166353462, size=1))) - 60 * 60 * 6)
+        # Operating duration: 8-12 hours (in seconds)
+        operating_hours = random.uniform(8, 12)
+        end_time = min(64800, start_time + math.floor(60 * 60 * operating_hours))
 
         unique_max_gas = [ 8.        ,  8.6       ,  9.5       ,  9.64      ,  9.70294118,10.        , 10.2       , 10.5       , 10.75      , 12.        ]
         prob_max_gas = [0.05405405, 0.21621622, 0.05405405, 0.27027027, 0.08108108, 0.08108108, 0.02702703, 0.02702703, 0.10810811, 0.08108108]
@@ -41,8 +43,8 @@ class TricycleFactory:
         if index == 1:
             gets_full_tank = True
 
-        daily_expense = stats.lognorm.rvs(0.5551170551235295, loc=0, scale=375.96181139256873, size=1)
+        daily_expense = stats.lognorm.rvs(0.5551170551235295, loc=0, scale=375.96181139256873)
 
-        farthest_distance = stats.lognorm.rvs(0.4562970511172417, loc=0, scale=4.119316604349962, size=1) * 1000
+        farthest_distance = stats.lognorm.rvs(0.4562970511172417, loc=0, scale=4.119316604349962) * 1000
 
         return (trike_name, Tricycle(trike_name, assigned_hub, start_time, end_time, max_gas, gas_consumption, gas_threshold, usual_gas_payment, gets_full_tank, farthest_distance, daily_expense))

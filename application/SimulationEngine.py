@@ -38,8 +38,6 @@ class SimulationEngine:
             "--lateral-resolution", "2.0"
         ])
         self.passengerRepository.discoverPossibleSources()
-        ## log tricycle info
-        self.simulationLogger.addDriverInfo(self.tricycleRepository.getTricycles())
 
     def generateRandomNumberOfPassengers(self) -> None:
         LOWER_BOUND = self.LEAST_NUMBER_OF_PASSENGERS
@@ -50,7 +48,7 @@ class SimulationEngine:
 
     def doMainLoop(self, simulation_duration: int) -> None:
         self.startTraci()
-        #TODO: 
+        #TODO:
         while self.tick < simulation_duration:
             self.passengerSynchronizer.sync()
             self.tricycleStateManager.updateTricycleStates(self.tick)
@@ -58,6 +56,17 @@ class SimulationEngine:
             self.tick += 1
             print(f"\rCurrent time: {math.floor(self.tick / 3600) + 6:02d}:{math.floor((self.tick % 3600) / 60):02d}:{self.tick % 60:02d}                 ", end="")
             traci.simulationStep()
+
+        # Finalize any tricycles still active and log driver info with actual durations
+        self._finalizeSimulation(simulation_duration)
+
+    def _finalizeSimulation(self, final_tick: int) -> None:
+        """Record final actual end times for any tricycles still active and log all driver info"""
+        for tricycle in self.tricycleRepository.getTricycles():
+            if tricycle.actualEndTick is None and tricycle.actualStartTick is not None:
+                tricycle.recordActualEnd(final_tick)
+        # Log driver info with actual durations at the end of simulation
+        self.simulationLogger.addDriverInfo(self.tricycleRepository.getTricycles())
 
     def setPassengerBoundaries(self, lower_bound: int, upper_bound: int) -> None:
         self.LEAST_NUMBER_OF_PASSENGERS = lower_bound

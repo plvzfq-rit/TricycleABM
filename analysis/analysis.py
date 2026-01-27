@@ -4,8 +4,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import re # For cleaning expense amount
-import numpy as np
-import scipy.stats as stats
 
 # Set page config for a wider layout
 st.set_page_config(layout="wide")
@@ -41,7 +39,7 @@ def plot_distribution_with_stats(data, x_col, title, xlabel, ylabel="Count", col
         st.write(f"No data to plot for {title}")
         return
 
-    fig, ax = plt.subplots(figsize=(8, 5))
+    fig, ax = plt.subplots(figsize=(6, 4))
     
     # Plot histogram with KDE
     sns.histplot(data=data, x=x_col, bins=bins, color=color, kde=True, ax=ax, edgecolor="black")
@@ -87,7 +85,9 @@ def plot_distribution_with_stats(data, x_col, title, xlabel, ylabel="Count", col
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     
-    st.pyplot(fig)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.pyplot(fig, use_container_width=False)
 
 
 ## --- NEW: Sidebar Configuration ---
@@ -122,70 +122,16 @@ else:
     st.error(f"Selected log directory '{LOG_DIRECTORY}' does not exist or is not a directory.")
     st.stop()
 
-total_runs_found = len(all_folders)
-
-# We need at least 1 run for analysis, so max_skip is total - 1
-# But if we have 0 or 1 run, max_skip should be 0.
-max_skip = max(0, total_runs_found - 1) 
-
-runs_to_skip = st.sidebar.number_input(
-    "Number of runs to skip (from end)", 
-    min_value=0, 
-    max_value=max_skip, 
-    value=0, 
-    step=1,
-    help=f"Skips the last N simulation folders. {total_runs_found} runs found in '{LOG_DIRECTORY}'. You can skip up to {max_skip}."
-)
-
-# Get the final list of folders to process for the main analysis
-end_index = total_runs_found - runs_to_skip
-folders_to_process = all_folders[:end_index]
-
-
-## --- DATA LOADING (PASS 1: Pre-analysis for ALL runs) ---
-# This pass calculates the run profit for ALL folders, ignoring the skip,
-# to provide a stable "Required Runs" recommendation.
-
-all_run_profits = []
-for folder in all_folders: # Note: Looping over 'all_folders'
-    folder_path = os.path.join(LOG_DIRECTORY, folder)
-    transactions_file = os.path.join(folder_path, "transactions.csv")
-    expenses_file = os.path.join(folder_path, "expenses.csv")
-
-    if not (os.path.exists(transactions_file) and os.path.exists(expenses_file)):
-        continue # Skip if essential files are missing
-
-    try:
-        transaction_df = pd.read_csv(transactions_file)
-        expenses_df = pd.read_csv(expenses_file)
-        
-        expenses_df["amount"] = expenses_df["amount"].apply(extract_amount)
-        expenses_df.dropna(subset=['amount'], inplace=True) 
-
-        run_income_by_trike = transaction_df.groupby('trike_id')['price'].sum()
-        run_expense_by_trike = expenses_df.groupby('trike_id')['amount'].sum()
-        run_profit_by_trike = run_income_by_trike.sub(run_expense_by_trike, fill_value=0)
-        
-        run_mean_profit = run_profit_by_trike.mean()
-        if not pd.isna(run_mean_profit):
-            all_run_profits.append(run_mean_profit)
-            
-    except Exception as e:
-        st.warning(f"Pre-analysis error in folder {folder}: {e}. Skipping for recommendation.")
-
-all_run_profits_series = pd.Series(all_run_profits)
-
-
-## --- DATA LOADING (PASS 2: Main Analysis for Filtered Runs) ---
+## --- DATA LOADING ---
 
 df_all_list = []
 df_expenses_list = []
-filtered_run_profits = [] # Stores profit for *analyzed* runs
+df_drivers_list = []  # Store driver info for per-day stats
 
 sim_count = 0
 
 # USES THE FILTERED LIST 'folders_to_process'
-for folder in folders_to_process:
+for folder in all_folders:
     folder_path = os.path.join(LOG_DIRECTORY, folder)
     
     # Use folder name as the run_id for consistency
@@ -212,12 +158,16 @@ for folder in folders_to_process:
         transaction_df = pd.read_csv(transactions_file)
         expenses_df = pd.read_csv(expenses_file)
 
+        # Add run_id to driver_df for per-day tracking
+        driver_df["run_id"] = run_id
+        df_drivers_list.append(driver_df)
+
         # --- Process Transactions & Drivers (Income) ---
         # Merge transactions and driver info
         merged_df = pd.merge(transaction_df, driver_df, on="trike_id", how="left")
-        
+
         # Assign the run_id from the folder
-        merged_df["run_id"] = run_id 
+        merged_df["run_id"] = run_id
         df_all_list.append(merged_df)
 
         # --- Process Expenses ---
@@ -228,17 +178,7 @@ for folder in folders_to_process:
         # Clean expenses *before* calculating run-level profit
         expenses_df.dropna(subset=['amount'], inplace=True) 
         df_expenses_list.append(expenses_df)
-        
-        # --- Calculate Run-Level Profit (for Stability Analysis) ---
-        run_income_by_trike = transaction_df.groupby('trike_id')['price'].sum()
-        run_expense_by_trike = expenses_df.groupby('trike_id')['amount'].sum()
-        run_profit_by_trike = run_income_by_trike.sub(run_expense_by_trike, fill_value=0)
-        
-        # Get the mean profit per trike *for this single run*
-        run_mean_profit = run_profit_by_trike.mean()
-        if not pd.isna(run_mean_profit):
-            filtered_run_profits.append(run_mean_profit)
-        
+
         sim_count += 1
         
     except Exception as e:
@@ -252,9 +192,7 @@ if sim_count == 0:
 # Concatenate all data from all runs
 df_all = pd.concat(df_all_list, ignore_index=True)
 df_all_expenses = pd.concat(df_expenses_list, ignore_index=True)
-
-# Create a series of the mean profits from the *filtered* runs
-filtered_run_profits_series = pd.Series(filtered_run_profits)
+df_all_drivers = pd.concat(df_drivers_list, ignore_index=True) if df_drivers_list else pd.DataFrame()
 
 # Drop any rows where expense amount could not be parsed
 df_all_expenses.dropna(subset=['amount'], inplace=True)
@@ -324,8 +262,6 @@ driver_stats = driver_stats[[
 ## --- STREAMLIT APP LAYOUT ---
 
 st.title(f"Tricycle Simulation Analysis: {LOG_DIRECTORY}")
-st.write(f"Analyzed **{sim_count}** simulation run(s) from `{LOG_DIRECTORY}` (skipped last {runs_to_skip}).")
-st.write(f"Found **{total_runs_found}** total runs. 'Required Runs' recommendation is based on all runs.")
 st.divider()
 
 # --- Global Metrics ---
@@ -337,148 +273,6 @@ col3.metric("Total Income", f"PHP {df_all['price'].sum():,.2f}")
 col1.metric("Total Expenses", f"PHP {df_all_expenses['amount'].sum():,.2f}")
 col2.metric("Total Profit", f"PHP {(df_all['price'].sum() - df_all_expenses['amount'].sum()):,.2f}")
 st.divider()
-
-# --- NEW: Simulation Stability Analysis (Based on TricycleABM_Paper.pdf) ---
-st.header("Simulation Stability & Run Analysis")
-
-st.write("This analysis estimates the stability of the simulation's **Mean Trike Profit**.")
-
-# --- Part 1: Required Runs Recommendation (based on ALL runs) ---
-st.subheader(f"Part 1: Required Runs Recommendation (Based on ALL {len(all_run_profits_series)} Runs)")
-
-if len(all_run_profits_series) < 3:
-    st.warning(f"Found only {len(all_run_profits_series)} total run(s). At least 3 simulations are required to generate a recommendation.", icon="⚠️")
-else:
-    # --- 1. Calculate Stats from ALL runs ---
-    n_total = len(all_run_profits_series)
-    mean_total = all_run_profits_series.mean()
-    std_total = all_run_profits_series.std()
-    cv_total = std_total / abs(mean_total) if mean_total != 0 else 0 
-    
-    col_s1, col_s2, col_s3, col_s4 = st.columns(4)
-    col_s1.metric("Total Runs Found (n)", f"{n_total}")
-    col_s2.metric("Overall Mean Profit (x̄)", f"PHP {mean_total:,.2f}")
-    col_s3.metric("Overall Std. Dev (s)", f"PHP {std_total:,.2f}")
-    col_s4.metric("Overall CV", f"{cv_total:,.3f}")
-
-    # --- 2. Check Normality (Shapiro-Wilk Test) ---
-    if n_total >= 3:
-        stat_val, p_val = stats.shapiro(all_run_profits_series)
-        is_normal = p_val > 0.05
-        
-        if not is_normal:
-            st.warning("Data may NOT be Normal (p < 0.05). The standard formula assumes normality. A safety buffer (e.g., +20% more simulations) is suggested.")
-
-    # --- 3. User Inputs for Desired Precision ---
-    st.write("---")
-    st.write("Required runs calculation based on standard parameters:")
-    
-    # Fixed Confidence at 95% and Precision at 5%
-    confidence = 0.95
-    precision = 0.05
-    
-    c1, c2 = st.columns(2)
-    c1.write(f"**Confidence Level:** {confidence*100:.0f}% (Standard)")
-    c2.write(f"**Desired Precision:** ±{precision*100:.0f}% (Standard)")
-    
-    # --- 4. Calculations for Required Runs ---
-    alpha = 1 - confidence
-    w = precision # Desired precision (width)
-    
-    # Calculation of n using Byrne's equation (approximate iterative method)
-    
-    # First calculate critical z value (normal approx for large n)
-    z_val = stats.norm.ppf(1 - alpha/2)
-    
-    # Initial guess using Normal distribution (Z)
-    n_initial = (z_val * cv_total / w)**2
-
-    # Iterative refinement using t-distribution (correct for n < 100)
-    n_final = n_initial
-    t_val_final = z_val # Initialize with z
-    
-    if n_final <= 1: n_final = 2 
-    
-    # Perform a few iterations to converge on t-value for small n
-    iterations_data = [] # Store for display
-    for i in range(5):
-        df = n_final - 1
-        if df < 1: df = 1 
-        t_val_current = stats.t.ppf(1 - alpha/2, df)
-        n_prev = n_final
-        n_final = (t_val_current * cv_total / w)**2
-        iterations_data.append((i+1, df, t_val_current, n_final))
-        
-    n_required = np.ceil(n_final)
-    
-    # --- SHOW CALCULATIONS VISUALLY ---
-    st.markdown("### Calculation Steps (Byrne, 2013)")
-    
-    st.markdown(r"""
-    The number of runs ($n$) is calculated using the formula derived from the confidence interval width:
-    
-    $$ n = \left( \frac{t_{\alpha/2, n-1} \cdot CV}{w} \right)^2 $$
-    
-    Where:
-    * $CV$ = Coefficient of Variation (calculated from current runs)
-    * $w$ = Desired Precision (fraction of mean, e.g., 0.05 for 5%)
-    * $t_{\alpha/2, n-1}$ = Critical t-value for confidence level $1-\alpha$ with $n-1$ degrees of freedom.
-    * *Note: Byrne (2013) recommends using the t-statistic instead of z when n < 100 to account for sample size uncertainty.*
-    """)
-
-    st.markdown("**Step 1: Gather Parameters**")
-    st.latex(f"CV = {cv_total:.4f}")
-    st.latex(f"w = {w}")
-    st.latex(f"Confidence = {confidence*100:.0f}\\% \\rightarrow \\alpha = {alpha:.2f}")
-
-    st.markdown("**Step 2: Initial Estimate (using Z-score)**")
-    st.markdown(f"Using Normal distribution ($z \\approx 1.96$ for 95% confidence):")
-    st.latex(f"n_{{initial}} = \\left( \\frac{{{z_val:.3f} \\cdot {cv_total:.4f}}}{{{w}}} \\right)^2 = {n_initial:.2f}")
-
-    st.markdown("**Step 3: Iterative Refinement (using t-distribution)**")
-    st.markdown("Because $n$ is unknown, we iterate to find the correct t-value:")
-    
-    # Display iterations in a clean table
-    iter_df = pd.DataFrame(iterations_data, columns=["Iteration", "Degrees of Freedom", "t-value", "Calculated n"])
-    st.table(iter_df.style.format({"t-value": "{:.4f}", "Calculated n": "{:.2f}"}))
-
-    st.markdown("**Final Result:**")
-    st.success(f"$$ n_{{required}} = \\lceil {n_final:.2f} \\rceil = {int(n_required)} $$")
-
-    st.info(f"**Methodology Note:** This calculation uses the available **{n_total} runs** as the initial 'pilot' sample to estimate the population variance (Coefficient of Variation).")
-    
-    if n_required > n_total:
-        st.warning(f"Based on the current {n_total} runs, approximately **{int(n_required - n_total)}** additional simulations are needed to meet the goal.")
-    else:
-        st.success("The current number of simulations meets the desired precision level.")
-
-# --- Part 2: Current Precision (based on FILTERED runs) ---
-st.subheader(f"Part 2: Current Analysis Precision (Based on {sim_count} Analyzed Runs)")
-
-if sim_count < 3:
-     st.warning(f"Analysis includes {sim_count} simulation(s). At least 3 simulations are required to calculate current precision (adjust 'runs to skip').", icon="⚠️")
-else:
-    # --- Calculate Stats from FILTERED runs ---
-    n_current = len(filtered_run_profits_series)
-    mean_current = filtered_run_profits_series.mean()
-    std_current = filtered_run_profits_series.std()
-    cv_current = std_current / abs(mean_current) if mean_current != 0 else 0 
-
-    col_c1, col_c2, col_c3, col_c4 = st.columns(4)
-    col_c1.metric("Analyzed Runs (n)", f"{n_current}")
-    col_c2.metric("Analyzed Mean Profit (x̄)", f"PHP {mean_current:,.2f}")
-    col_c3.metric("Analyzed Std. Dev (s)", f"PHP {std_current:,.2f}")
-    col_c4.metric("Analyzed CV", f"{cv_current:,.3f}")
-
-    # --- Calculate CURRENT precision (w_current) ---
-    df_current = n_current - 1
-    t_val_current = stats.t.ppf(1 - (1 - confidence)/2, df_current)
-    w_current = (t_val_current * cv_current) / np.sqrt(n_current)
-
-    st.info(f"**Current Precision:** With the **{n_current} analyzed runs**, the result is precise to **±{w_current*100:,.1f}%** (at {confidence*100:.0f}% confidence).")
-
-st.divider()
-
 
 # --- Driver Analytics (New Section) ---
 st.header("Driver-Level Analytics (Based on Analyzed Runs)")
@@ -512,15 +306,208 @@ plot_distribution_with_stats(
 
 st.divider()
 
+# --- Per-Day Driver Statistics (New Section) ---
+st.header("Per-Day Driver Statistics")
+
+# Helper function to convert ticks to HH:MM:SS format
+def ticks_to_time(ticks):
+    """Convert simulation ticks to time format (starting at 06:00)"""
+    if pd.isna(ticks) or ticks is None:
+        return "N/A"
+    ticks = int(ticks)
+    hours = (ticks // 3600) + 6  # Simulation starts at 6 AM
+    minutes = (ticks % 3600) // 60
+    seconds = ticks % 60
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+def ticks_to_hours(ticks):
+    """Convert ticks to hours (for duration display)"""
+    if pd.isna(ticks) or ticks is None:
+        return 0
+    return ticks / 3600
+
+# Check if new columns exist in the driver data
+has_duration_data = not df_all_drivers.empty and 'actual_duration' in df_all_drivers.columns
+
+if has_duration_data:
+    st.write("This section shows per-day (per-run) statistics for each driver, including actual time spent in the simulation.")
+
+    # Create a summary with formatted times
+    per_day_stats = df_all_drivers.copy()
+
+    # Format time columns if they exist
+    if 'actual_start_tick' in per_day_stats.columns:
+        per_day_stats['start_time'] = per_day_stats['actual_start_tick'].apply(ticks_to_time)
+    if 'actual_end_tick' in per_day_stats.columns:
+        per_day_stats['end_time'] = per_day_stats['actual_end_tick'].apply(ticks_to_time)
+    if 'actual_duration' in per_day_stats.columns:
+        per_day_stats['duration_hours'] = per_day_stats['actual_duration'].apply(ticks_to_hours)
+
+    # Select columns to display
+    display_cols = ['trike_id', 'run_id', 'hub_id']
+    if 'start_time' in per_day_stats.columns:
+        display_cols.append('start_time')
+    if 'end_time' in per_day_stats.columns:
+        display_cols.append('end_time')
+    if 'duration_hours' in per_day_stats.columns:
+        display_cols.append('duration_hours')
+    if 'daily_trips' in per_day_stats.columns:
+        display_cols.append('daily_trips')
+    if 'daily_income' in per_day_stats.columns:
+        display_cols.append('daily_income')
+    if 'daily_distance' in per_day_stats.columns:
+        display_cols.append('daily_distance')
+
+    # Filter available columns
+    display_cols = [c for c in display_cols if c in per_day_stats.columns]
+
+    st.subheader("Per-Day Driver Details")
+
+    # --- Filters ---
+    filter_col1, filter_col2, filter_col3 = st.columns(3)
+
+    with filter_col1:
+        all_drivers = sorted(per_day_stats['trike_id'].unique())
+        selected_drivers = st.multiselect("Filter by Driver", options=all_drivers, default=[], placeholder="All drivers")
+
+    with filter_col2:
+        all_runs = sorted(per_day_stats['run_id'].unique())
+        selected_runs = st.multiselect("Filter by Day/Run", options=all_runs, default=[], placeholder="All days")
+
+    with filter_col3:
+        all_hubs = sorted(per_day_stats['hub_id'].unique())
+        selected_hubs = st.multiselect("Filter by Hub", options=all_hubs, default=[], placeholder="All hubs")
+
+    # Apply filters
+    filtered_stats = per_day_stats.copy()
+    if selected_drivers:
+        filtered_stats = filtered_stats[filtered_stats['trike_id'].isin(selected_drivers)]
+    if selected_runs:
+        filtered_stats = filtered_stats[filtered_stats['run_id'].isin(selected_runs)]
+    if selected_hubs:
+        filtered_stats = filtered_stats[filtered_stats['hub_id'].isin(selected_hubs)]
+
+    st.caption(f"Showing {len(filtered_stats)} of {len(per_day_stats)} records")
+    st.dataframe(filtered_stats[display_cols].sort_values(by=['run_id', 'trike_id']))
+
+    # Summary statistics for duration (uses filtered data)
+    if 'actual_duration' in filtered_stats.columns and len(filtered_stats) > 0:
+        st.subheader("Driver Duration Statistics (Filtered)")
+        col_d1, col_d2, col_d3, col_d4 = st.columns(4)
+
+        avg_duration_hours = filtered_stats['actual_duration'].mean() / 3600
+        min_duration_hours = filtered_stats['actual_duration'].min() / 3600
+        max_duration_hours = filtered_stats['actual_duration'].max() / 3600
+        std_duration_hours = filtered_stats['actual_duration'].std() / 3600
+
+        col_d1.metric("Avg Duration", f"{avg_duration_hours:.2f} hrs")
+        col_d2.metric("Min Duration", f"{min_duration_hours:.2f} hrs")
+        col_d3.metric("Max Duration", f"{max_duration_hours:.2f} hrs")
+        col_d4.metric("Std Dev", f"{std_duration_hours:.2f} hrs")
+
+        # Distribution of driver durations
+        st.subheader("Driver Duration Distribution")
+        filtered_stats['duration_hours_plot'] = filtered_stats['actual_duration'] / 3600
+        plot_distribution_with_stats(
+            filtered_stats,
+            'duration_hours_plot',
+            "Distribution of Driver Time in Simulation",
+            "Duration (hours)",
+            color="#264653"
+        )
+
+    # Per-day income and trips if available (uses filtered data)
+    if 'daily_income' in filtered_stats.columns and 'daily_trips' in filtered_stats.columns and len(filtered_stats) > 0:
+        st.subheader("Per-Day Performance Summary (Filtered)")
+        col_p1, col_p2, col_p3 = st.columns(3)
+
+        avg_daily_trips = filtered_stats['daily_trips'].mean()
+        avg_daily_income = filtered_stats['daily_income'].mean()
+        avg_daily_distance = filtered_stats['daily_distance'].mean() if 'daily_distance' in filtered_stats.columns else 0
+
+        col_p1.metric("Avg Trips per Driver/Day", f"{avg_daily_trips:.1f}")
+        col_p2.metric("Avg Income per Driver/Day", f"PHP {avg_daily_income:,.2f}")
+        col_p3.metric("Avg Distance per Driver/Day", f"{avg_daily_distance:,.0f} m")
+
+        # Income per hour analysis
+        if 'actual_duration' in filtered_stats.columns:
+            filtered_stats['income_per_hour'] = filtered_stats.apply(
+                lambda x: x['daily_income'] / (x['actual_duration'] / 3600) if x['actual_duration'] > 0 else 0,
+                axis=1
+            )
+            st.subheader("Income per Hour Distribution")
+            plot_distribution_with_stats(
+                filtered_stats[filtered_stats['income_per_hour'] > 0],
+                'income_per_hour',
+                "Distribution of Driver Income per Hour",
+                "Income per Hour (PHP)",
+                color="#e9c46a"
+            )
+
+            avg_income_per_hour = filtered_stats['income_per_hour'].mean()
+            st.metric("Average Income per Hour", f"PHP {avg_income_per_hour:,.2f}")
+
+else:
+    st.info("Per-day driver statistics (duration, daily trips, daily income) are not available in the current data. "
+            "Run the simulation again to generate this data.")
+
+st.divider()
+
 # --- Trip-Level Analytics (Original Section) ---
 st.header("Trip-Level Analytics (Based on Analyzed Runs)")
 
-# Show first few rows of the dataframe
-st.subheader("Sample Trip Data (Merged)")
-st.dataframe(df_all.head(20))
+# --- Clean up columns ---
+# Select and reorder relevant columns for display
+trip_display_cols = ['run_id', 'trike_id', 'hub_id', 'origin_edge', 'dest_edge', 'distance', 'price', 'tick']
+# Handle potential duplicate columns from merge (run_id_x, run_id_y)
+if 'run_id_x' in df_all.columns:
+    df_all['run_id'] = df_all['run_id_x']
+if 'run_id_y' in df_all.columns and 'run_id' not in df_all.columns:
+    df_all['run_id'] = df_all['run_id_y']
+# Filter to only existing columns
+trip_display_cols = [c for c in trip_display_cols if c in df_all.columns]
+
+# --- Filters ---
+trip_filter_col1, trip_filter_col2, trip_filter_col3, trip_filter_col4 = st.columns(4)
+
+with trip_filter_col1:
+    trip_all_drivers = sorted(df_all['trike_id'].unique())
+    trip_selected_drivers = st.multiselect("Filter by Driver", options=trip_all_drivers, default=[], placeholder="All drivers", key="trip_driver_filter")
+
+with trip_filter_col2:
+    trip_all_runs = sorted(df_all['run_id'].unique()) if 'run_id' in df_all.columns else []
+    trip_selected_runs = st.multiselect("Filter by Day/Run", options=trip_all_runs, default=[], placeholder="All days", key="trip_run_filter")
+
+with trip_filter_col3:
+    if 'hub_id' in df_all.columns:
+        trip_all_hubs = sorted(df_all['hub_id'].dropna().unique())
+        trip_selected_hubs = st.multiselect("Filter by Hub", options=trip_all_hubs, default=[], placeholder="All hubs", key="trip_hub_filter")
+    else:
+        trip_selected_hubs = []
+
+with trip_filter_col4:
+    row_limit = st.selectbox("Rows to display", options=[20, 50, 100, 250, 500, "All"], index=0, key="trip_row_limit")
+
+# Apply filters
+filtered_trips = df_all.copy()
+if trip_selected_drivers:
+    filtered_trips = filtered_trips[filtered_trips['trike_id'].isin(trip_selected_drivers)]
+if trip_selected_runs and 'run_id' in filtered_trips.columns:
+    filtered_trips = filtered_trips[filtered_trips['run_id'].isin(trip_selected_runs)]
+if trip_selected_hubs and 'hub_id' in filtered_trips.columns:
+    filtered_trips = filtered_trips[filtered_trips['hub_id'].isin(trip_selected_hubs)]
+
+# Apply row limit
+if row_limit == "All":
+    display_trips = filtered_trips[trip_display_cols].sort_values(by=['run_id', 'tick'] if 'run_id' in trip_display_cols else ['tick'])
+else:
+    display_trips = filtered_trips[trip_display_cols].sort_values(by=['run_id', 'tick'] if 'run_id' in trip_display_cols else ['tick']).head(row_limit)
+
+st.caption(f"Showing {len(display_trips)} of {len(filtered_trips)} filtered trips ({len(df_all)} total)")
+st.dataframe(display_trips)
 
 # Create columns for the plots
-col_a, col_b = st.columns(2)
+col_a = st.columns(1)[0]
 
 with col_a:
     # Show histogram of trip distances
@@ -531,25 +518,10 @@ with col_a:
         "Trip Distance Distribution",
         "Distance (meters)",
         color="skyblue"
+    
     )
 
-    # Show scatter plot of distance vs price
-    st.subheader("Distance vs Price")
-    fig, ax = plt.subplots(figsize=(8, 5))
-    sns.scatterplot(data=df_all, x='distance', y='price', alpha=0.5, ax=ax)
-    ax.set_xlabel("Distance (meters)")
-    ax.set_ylabel("Price (PHP)")
-    ax.set_title("Distance vs Price Scatter Plot")
-    st.pyplot(fig)
-    
-    # Optional: Add correlation
-    if len(df_all) > 1:
-        corr = df_all['distance'].corr(df_all['price'])
-        st.metric("Correlation (Distance vs Price)", f"{corr:.3f}")
-
-
-with col_b:
-    # Show histogram of trip prices
+     # Show histogram of trip prices
     st.subheader("Trip Price Distribution")
     plot_distribution_with_stats(
         df_all, 
@@ -568,35 +540,5 @@ with col_b:
         "Tick",
         color="violet"
     )
+   
 
-# Show average price per distance bucket
-st.subheader("Average Price per Distance Bucket")
-if not df_all.empty:
-    max_dist = df_all['distance'].max()
-    if pd.isna(max_dist) or max_dist == 0:
-        max_dist = 500 # Default value if no data
-        
-    try:
-        # Ensure at least one bin
-        bins = range(0, max(501, int(max_dist) + 500), 500)
-        if len(bins) < 2:
-             bins = [0, 500]
-             
-        df_all['distance_bucket'] = pd.cut(df_all['distance'], bins=bins)
-        avg_price_per_bucket = df_all.groupby('distance_bucket', observed=True)['price'].mean().reset_index()
-        
-        fig, ax = plt.subplots(figsize=(8, 5))
-        sns.barplot(data=avg_price_per_bucket, x='distance_bucket', y='price', color='salmon', edgecolor='black', ax=ax)
-        ax.set_xlabel("Distance Bucket (meters)")
-        ax.set_ylabel("Average Price (PHP)")
-        ax.set_title("Average Price per Distance Bucket")
-        plt.xticks(rotation=45, ha='right')
-        st.pyplot(fig)
-        
-        # Stats for buckets
-        st.metric("Mean Bucket Price:", f"PHP {avg_price_per_bucket['price'].mean():,.2f}")
-
-    except Exception as e:
-        st.write(f"Could not plot distance buckets: {e}")
-else:
-    st.write("No trip data to plot for distance buckets.")

@@ -20,6 +20,7 @@ class TricycleStateManager:
             if tricycle.shouldSpawn(current_tick):
                 self.traciService.initializeTricycle(tricycle_id, tricycle_hub)
                 tricycle.activate()
+                tricycle.recordActualStart(current_tick)
                 continue
             elif not tricycle.hasSpawned():
                 continue
@@ -41,6 +42,8 @@ class TricycleStateManager:
             if tricycle.hasArrived(current_location):
                 tricycle.dropOff()
                 self.simulationLogger.add(*tricycle.currentLog)
+                # Record trip stats for per-day tracking
+                tricycle.recordTrip(tricycle.currentLog.distance, tricycle.currentLog.price)
                 continue
 
             if tricycle.isDroppingOff():
@@ -60,6 +63,7 @@ class TricycleStateManager:
 
             if tricycle.shouldDie(current_tick) and not tricycle.hasPassenger():
                 self.traciService.removeTricycle(tricycle_id)
+                tricycle.recordActualEnd(current_tick)
                 tricycle.kill()
                 continue
 
