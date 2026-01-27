@@ -120,7 +120,7 @@ class TricycleRepository:
 
         traci.vehicle.setRoute(tricycle_id, full_route)
 
-        traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=1, pos=destination.position, duration=1)
+        traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=0, pos=destination.position, duration=60)
 
         self.getTricycle(tricycle_id).acceptPassenger(destination)
         self.setTricycleDestination(tricycle_id, destination)
