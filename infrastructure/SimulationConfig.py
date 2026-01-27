@@ -55,28 +55,3 @@ class SimulationConfig:
     
     def getGasPricePerLiter(self) -> float:
         return float(self.gasPricePerLiter)
-    
-    def setAssetDirectoryName(self, assetDirectoryName: str) -> None:
-        if not assetDirectoryName.strip():
-            raise Exception("Invalid asset directory name. Was empty.")
-        self.directoryName = assetDirectoryName.strip()
-
-    def setNetworkFileName(self, networkFileName: str) -> None:
-        if not networkFileName.strip():
-            raise Exception("Invalid network file name. Was empty.")
-        self.networkFileName = networkFileName.strip()
-
-    def setParkingFileName(self, parkingFileName: str) -> None:
-        if not parkingFileName.strip():
-            raise Exception("Invalid parking file name. Was empty.")
-        self.parkingFileName = parkingFileName.strip()
-
-    def setDecalFileName(self, decalFileName: str) -> None:
-        if not decalFileName.strip():
-            raise Exception("Invalid Decal file name. Was empty.")
-        self.decalFileName = decalFileName.strip()
-
-    def setRoutesFileName(self, routesFileName: str) -> None:
-        if not routesFileName.strip():
-            raise Exception("Invalid routes file name. Was empty.")
-        self.routesFileName = routesFileName.strip()
