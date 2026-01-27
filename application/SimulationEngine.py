@@ -18,7 +18,7 @@ class SimulationEngine:
         self.simulationConfig = simulation_config
         self.tricycleSynchronizer = tricycle_synchronizer
         self.tricycleStateManager = tricycle_state_manager
-        self.tricycleRepository.createTricycles(map_descriptor.getNumberOfTricycles(), duration, map_descriptor.getHubDistribution())
+        self.tricycleRepository.createTricycles(map_descriptor.getNumberOfTricycles(), map_descriptor.getHubDistribution())
         self.simulationLogger = logger
 
     def startTraci(self) -> None:

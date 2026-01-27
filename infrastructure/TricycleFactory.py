@@ -5,14 +5,8 @@ import scipy.stats as stats
 from domain.Tricycle import Tricycle
 
 class TricycleFactory:
-    lowerGasBound = 50.0
-    upperGasBound = 52.0
-
-    def __init__(self, lower_gas_bound: float = 50.0, upper_gas_bound: float = 52.0):
-        self.lowerGasBound = lower_gas_bound
-        self.upperGasBound = upper_gas_bound
-
-    def createRandomTricycle(self, assigned_id: int, simulation_duration: int, assigned_hub: str) -> tuple[str, Tricycle]:
+    @staticmethod
+    def createRandomTricycle(assigned_id: int, assigned_hub: str) -> tuple[str, Tricycle]:
         trike_name = "trike" + str(assigned_id)
 
         start_time = max(0, math.floor(60 * 60 * stats.lognorm.rvs(0.19840374997921292, loc=0, scale=6.520004321549422)) - 60 * 60 * 6)

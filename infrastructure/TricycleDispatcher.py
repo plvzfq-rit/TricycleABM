@@ -31,7 +31,7 @@ class TricycleDispatcher:
 
             tricycle = self.tricycleRepository.getTricycle(tricycle_id)
             tricycle_location = self.tricycleRepository.getTricycleLocation(tricycle_id)
-            _, passenger = self.passengerFactory.createRandomPassenger([traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]])
+            passenger = self.passengerFactory.createRandomPassenger(traci.parkingarea.getLaneID(tricycle.hub).split("_")[0])
             # print("made")
             if self.canDispatch(tricycle_id, tricycle_location, passenger.destination, tricycle.farthestDistance):
                 # print("trying to dispatch...")

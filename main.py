@@ -15,10 +15,7 @@ map_descriptor = ParkingAreaParser.parse(simulation_config.getParkingFilePath())
 duration = 64800
 
 # PHASE 3: INITIALIZING TRICYCLE REPOSITORY
-lower_gas_bound = 50.0
-upper_gas_bound = 52.0
-tricycle_factory = TricycleFactory(lower_gas_bound, upper_gas_bound)
-tricycle_repository = TricycleRepository(tricycle_factory, traci_service, sumo_service, simulation_config)
+tricycle_repository = TricycleRepository(traci_service, sumo_service, simulation_config)
 
 # PHASE 4: INITIALIZING PASSENGER REPOSITORY
 passenger_factory = PassengerFactory(sumo_service, traci_service)
