@@ -20,6 +20,7 @@ class FileSynchronizer:
     # Copies files from one directory to another.
     def copyFilesFromDirectory(self, source_directory: str, destination_directory: str) -> None:
         for file in os.listdir(source_directory):
+            print(file)
             source_file_path = os.path.join(source_directory, file)
             destination_file_path = os.path.join(destination_directory, file)
             shutil.copyfile(source_file_path, destination_file_path)

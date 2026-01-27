@@ -2,18 +2,6 @@ from domain import *
 from infrastructure import *
 from application import *
 
-import argparse
-
-# hotfix
-# Initialize logger
-#parser = argparse.ArgumentParser()
-#parser.add_argument("--sim_count", type=int, required=True)
-#args = parser.parse_args()
-#args.sim_count
-
-## place temp (for multithreading, each thread gets a separate temp/assets dir)
-# temp_directory = logger.getDirectory()
-
 # PHASE 1: INITIALIZING THE MAP ENVIRONMENT
 
 simulation_config = SimulationConfig()
@@ -30,7 +18,7 @@ map_builder = SpecificMapBuilder(simulation_config, file_system_descriptor, park
 
 map_descriptor = map_builder.build()
 
-duration = 12000
+duration = 64800
 
 # PHASE 3: INITIALIZING TRICYCLE REPOSITORY
 lower_gas_bound = 50.0
