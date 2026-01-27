@@ -2,7 +2,7 @@
 
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
 
-  <vType id="car" vClass="passenger" color="red"/>
+  <vType id="car" vClass="passenger" color="red" maxSpeed="33"/>
   
   <!-- Routes -->
    <route id="RoxasBlvd_NS" edges="E70 E73 E93 -E235"/>
