@@ -13,10 +13,7 @@ file_sync_service = FileSynchronizer()
 traci_service = TraciService()
 sumo_service = SumoService(simulation_config.getNetworkFilePath())
 
-map_builder = SpecificMapBuilder(simulation_config, file_system_descriptor, parking_area_parser, file_sync_service)
-# map_builder = RandomMapBuilder(simulation_config, ParkingFileGenerator(sumo_service), MapGenerator())
-
-map_descriptor = map_builder.build()
+map_descriptor = ParkingAreaParser.parse(simulation_config.getParkingFilePath())
 
 duration = 64800
 

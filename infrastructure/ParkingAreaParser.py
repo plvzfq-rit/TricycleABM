@@ -1,10 +1,8 @@
 import xml.etree.ElementTree as ET
 from domain.MapDescriptor import MapDescriptor
 class ParkingAreaParser:
-    def __init__(self):
-        pass
-
-    def parse(self, parking_file_path: str) -> MapDescriptor:
+    @staticmethod
+    def parse(parking_file_path: str) -> MapDescriptor:
         tree = ET.parse(parking_file_path)
         root = tree.getroot()
         map_descriptor = MapDescriptor()
