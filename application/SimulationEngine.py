@@ -8,6 +8,7 @@ from infrastructure.TricycleDispatcher import TricycleDispatcher
 from infrastructure.TricycleSynchronizer import TricycleSynchronizer
 from infrastructure.TricycleStateManager import TricycleStateManager
 from infrastructure.SimulationLogger import SimulationLogger
+from infrastructure.TodaRepository import TodaRepository
 
 class SimulationEngine:
     def __init__(self, map_descriptor: MapDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, tricycle_repository: TricycleRepository, tricycle_synchronizer: TricycleSynchronizer, tricycle_state_manager: TricycleStateManager, logger: SimulationLogger) -> None:
@@ -20,6 +21,7 @@ class SimulationEngine:
         self.tricycleStateManager = tricycle_state_manager
         self.tricycleRepository.createTricycles(map_descriptor.getNumberOfTricycles(), map_descriptor.getHubDistribution())
         self.simulationLogger = logger
+        self.todaRepository = None
 
     def startTraci(self) -> None:
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()},{self.simulationConfig.getDecalFilePath()}"
@@ -34,10 +36,12 @@ class SimulationEngine:
 
     def doMainLoop(self, simulation_duration: int) -> None:
         self.startTraci()
+        self.todaRepository = TodaRepository()
         #TODO:
         while self.tick < simulation_duration:
             self.tricycleStateManager.updateTricycleStates(self.tick)
-            self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick)
+            self.todaRepository.manageTodaQueues()
+            self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick, self.todaRepository)
             self.tick += 1
             print(f"\rCurrent time: {math.floor(self.tick / 3600) + 6:02d}:{math.floor((self.tick % 3600) / 60):02d}:{self.tick % 60:02d}                 ", end="")
             traci.simulationStep()
