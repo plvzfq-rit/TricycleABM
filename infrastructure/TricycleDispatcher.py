@@ -22,9 +22,6 @@ class TricycleDispatcher:
         curr_prob = peak_hour_prob[math.floor(tick / 60 / 60)] / 60.0
 
         for tricycle_id in active_tricycles:
-            # just to be sure
-            if self.tricycleRepository.getTricycle(tricycle_id).state != TricycleState.FREE:
-                continue
 
             if random.random() >= curr_prob:
                 continue

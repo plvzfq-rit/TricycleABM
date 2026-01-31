@@ -4,7 +4,7 @@ import threading
 from datetime import datetime
 
 class SimulationLogger:
-    def __init__(self, sim_count: int, log_dir: str = "logs"):
+    def __init__(self, sim_count: int, log_dir: str = "analysis"):
         """
         Creates a CSV logger with filename:
         SIMCOUNT_TIMESTAMP/transactions.csv

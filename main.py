@@ -29,7 +29,7 @@ for i in range(1):
     logger = SimulationLogger(i)
     tricycle_repository.changeLogger(logger)
     tricycle_state_manager = TricycleStateManager(tricycle_repository, traci_service, logger)
-    simulation_loop = SimulationEngine(map_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_synchronizer, tricycle_state_manager, logger, duration)
+    simulation_loop = SimulationEngine(map_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_synchronizer, tricycle_state_manager, logger)
     simulation_loop.doMainLoop(duration)
     simulation_loop.close()
     tricycle_repository.startRefuelAllTricycles()

@@ -20,20 +20,17 @@ class PassengerFactory:
         while destination_edge.getID() == starting_edge:
             destination_edge = random.choice(edges)
 
-        # start position
-        # TODO: Have this actually be a random destination and not just the start smh
-        starting_position = 0.0
         name = f"ped{self.index}"
         self.index += 1
 
-        # add the person
-        # self.traciService.addPassenger(name, starting_edge, starting_position)
-
         # destination position
-        # TODO: Have this actually be a random destination and not just the start smh
-        destination_position = 0.0
+        lane_index = self.traciService.getNumberOfLanes(destination_edge.getID()) - 1 if random.random() >= 0.5 else 0
+        lane = destination_edge.getID() + "_" + str(lane_index)
+
+        lane_length = self.traciService.getLaneLength(lane)
+        dist = random.random() * lane_length
 
         # let SUMO compute walking route
         # self.traciService.setPassengerDestination(name, destination_edge, destination_position)
         
-        return Passenger(name, starting_edge, destination_edge.getID())
+        return Passenger(name, starting_edge, destination_edge.getID(), lane_index, dist)
