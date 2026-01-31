@@ -12,9 +12,7 @@ class TricycleFactory:
         start_time = max(0, math.floor(60 * 60 * stats.lognorm.rvs(0.19840374997921292, loc=0, scale=6.520004321549422)) - 60 * 60 * 6)
         # start_time = 0
 
-        # Operating duration: 8-12 hours (in seconds)
-        operating_hours = random.uniform(8, 12)
-        end_time = min(64800, start_time + math.floor(60 * 60 * operating_hours))
+        end_time = min(64800, math.floor(60 * 60 * (24 - stats.lognorm.rvs(0.46084412009093767, loc=0, scale=4.207763166353462, size=1))))
 
         unique_max_gas = [ 8.        ,  8.6       ,  9.5       ,  9.64      ,  9.70294118,10.        , 10.2       , 10.5       , 10.75      , 12.        ]
         prob_max_gas = [0.05405405, 0.21621622, 0.05405405, 0.27027027, 0.08108108, 0.08108108, 0.02702703, 0.02702703, 0.10810811, 0.08108108]
