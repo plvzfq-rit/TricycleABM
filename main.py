@@ -1,3 +1,6 @@
+import os
+os.dup2(os.open(os.devnull, os.O_WRONLY), 2)
+
 from domain import *
 from infrastructure import *
 from application import *
@@ -13,7 +16,8 @@ traci.start([
     "-n", simulation_config.getNetworkFilePath(),
     "-r", simulation_config.getRoutesFilePath(),
     "-a", simulation_config.getParkingFilePath(),
-    "--lateral-resolution", "2.0"
+    "--lateral-resolution", "2.0",
+    "--no-step-log"
 ])
 parking_area_parser = ParkingAreaParser()
 

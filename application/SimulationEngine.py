@@ -40,7 +40,8 @@ class SimulationEngine:
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick)
             self.tick += 1
-            print(f"\rCurrent time: {math.floor(self.tick / 3600) + 6:02d}:{math.floor((self.tick % 3600) / 60):02d}:{self.tick % 60:02d}                 ", end="")
+            if self.tick % 60 == 0:
+                print(f"\rCurrent time: {math.floor(self.tick / 3600) + 6:02d}:{math.floor((self.tick % 3600) / 60):02d}:{self.tick % 60:02d}                 ", end="")
             traci.simulationStep()
 
         # Finalize any tricycles still active and log driver info with actual durations
