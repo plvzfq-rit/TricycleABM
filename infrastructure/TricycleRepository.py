@@ -36,9 +36,8 @@ def manila_matrix(given):
     return 16 if given < 1000 else 16 + 5 * math.ceil((given - 1000) / 500)
 
 class TricycleRepository:
-    def __init__(self, tricycle_factory: TricycleFactory | None = None, traci_service: TraciService | None = None, sumo_service: SumoService | None = None, simulation_config: SimulationConfig | None = None):
+    def __init__(self, traci_service: TraciService | None = None, sumo_service: SumoService | None = None, simulation_config: SimulationConfig | None = None):
         self.tricycles = dict()
-        self.tricycleFactory = tricycle_factory or TricycleFactory()
         self.traciService = traci_service or TraciService()
         self.sumoService = sumo_service or SumoService()
         self.simulationConfig = simulation_config or SimulationConfig()
@@ -49,17 +48,18 @@ class TricycleRepository:
                 return True
         return False
 
-    def createTricycles(self, number_of_tricycles: int, simulation_duration: int, hub_distribution: dict) -> None:
+    def createTricycles(self, number_of_tricycles: int, hub_distribution: dict) -> None:
         # create list of hub tags; each would be assigned to a new tricycle
         hubs = []
         for hub, number_of_tricycles_in_hub in hub_distribution.items():
             for i in range(number_of_tricycles_in_hub):
                 hubs.append(hub)
 
+        print(number_of_tricycles)
         for i in range(number_of_tricycles):
             assigned_hub = hubs.pop()
             assigned_id = i
-            trike_name, tricycle = self.tricycleFactory.createRandomTricycle(assigned_id, simulation_duration, assigned_hub)
+            trike_name, tricycle = TricycleFactory.createRandomTricycle(assigned_id, assigned_hub)
             self.tricycles[trike_name] = tricycle
 
     def getTricycle(self, tricycle_id: str) -> Tricycle:
@@ -75,7 +75,7 @@ class TricycleRepository:
         return set([tricycle for tricycle in self.tricycles.values() if tricycle.isActive()])
     
     def getActiveFreeTricycleIds(self) -> set[Tricycle]:
-        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive()])
+        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() and not self.getTricycle(tricycle_id).isInCooldown()])
     
     def getActiveTricycleIds(self) -> set[Tricycle]:
         return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() or self.getTricycle(tricycle_id).isFree()])
@@ -120,7 +120,7 @@ class TricycleRepository:
 
         traci.vehicle.setRoute(tricycle_id, full_route)
 
-        traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=1, pos=destination.position, duration=1)
+        traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=0, pos=destination.position, duration=60)
 
         self.getTricycle(tricycle_id).acceptPassenger(destination)
         self.setTricycleDestination(tricycle_id, destination)
@@ -128,7 +128,8 @@ class TricycleRepository:
         distance = traci.simulation.getDistanceRoad(current_edge, 0, dest_edge, 0, isDriving=True)
 
         # SCENARIO TESTING
-        default_fare = manila_matrix(distance)
+        default_fare = driver_matrix(distance)
+
         if passenger.willingness_to_pay >= default_fare:
             tricycle.money += default_fare
         else:

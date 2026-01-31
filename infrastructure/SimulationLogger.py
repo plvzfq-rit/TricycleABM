@@ -47,14 +47,26 @@ class SimulationLogger:
     def addDriverInfo(self, tricycles: list):
         drivers_path = os.path.join(os.path.dirname(self.transactions_filename), "drivers.csv")
         drivers_path = os.path.normpath(drivers_path)
-        header = ["trike_id", "hub_id", "start_tick", "end_tick"]
+        header = ["trike_id", "hub_id", "start_tick", "end_tick", "actual_start_tick", "actual_end_tick", "actual_duration", "daily_trips", "daily_income", "daily_distance"]
 
         with self._lock:
             with open(drivers_path, mode="a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow(header)
                 for tricycle in tricycles:
-                    writer.writerow([tricycle.name, tricycle.hub, tricycle.startTime, tricycle.endTime])
+                    daily_stats = tricycle.getDailyStats()
+                    writer.writerow([
+                        tricycle.name,
+                        tricycle.hub,
+                        tricycle.startTime,
+                        tricycle.endTime,
+                        tricycle.actualStartTick,
+                        tricycle.actualEndTick,
+                        daily_stats['actual_duration'],
+                        daily_stats['trips'],
+                        daily_stats['income'],
+                        daily_stats['distance']
+                    ])
 
     def addExpenseToLog(self, tricycleId: str, expensetype: str, amount: float, tick: int) -> None:
         with self._lock:
