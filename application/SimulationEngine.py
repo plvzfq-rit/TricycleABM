@@ -10,7 +10,7 @@ from infrastructure.TricycleStateManager import TricycleStateManager
 from infrastructure.SimulationLogger import SimulationLogger
 
 class SimulationEngine:
-    def __init__(self, map_descriptor: MapDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, tricycle_repository: TricycleRepository, tricycle_synchronizer: TricycleSynchronizer, tricycle_state_manager: TricycleStateManager, logger: SimulationLogger) -> None:
+    def __init__(self, map_descriptor: MapDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, tricycle_repository: TricycleRepository, tricycle_synchronizer: TricycleSynchronizer, tricycle_state_manager: TricycleStateManager, logger: SimulationLogger, duration: int, first_run: bool = True) -> None:
         self.tick = 0
         self.tricycleRepository = tricycle_repository
         self.tricycleDispatcher = tricycle_dispatcher
@@ -18,14 +18,17 @@ class SimulationEngine:
         self.simulationConfig = simulation_config
         self.tricycleSynchronizer = tricycle_synchronizer
         self.tricycleStateManager = tricycle_state_manager
-        self.tricycleRepository.createTricycles(map_descriptor.getNumberOfTricycles(), map_descriptor.getHubDistribution())
         self.simulationLogger = logger
+        self.duration = duration
+        self.first_run = first_run
+        if first_run:
+            self.tricycleRepository.createTricycles(map_descriptor.getNumberOfTricycles(), map_descriptor.getHubDistribution())
 
     def startTraci(self) -> None:
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()},{self.simulationConfig.getDecalFilePath()}"
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()}"
         traci.start([
-            "sumo-gui",
+            "sumo",
             "-n", self.simulationConfig.getNetworkFilePath(),
             "-r", self.simulationConfig.getRoutesFilePath(),
             "-a", additionalFiles,
@@ -33,8 +36,6 @@ class SimulationEngine:
         ])
 
     def doMainLoop(self, simulation_duration: int) -> None:
-        self.startTraci()
-        #TODO:
         while self.tick < simulation_duration:
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick)
@@ -58,4 +59,4 @@ class SimulationEngine:
         self.MOST_NUMBER_OF_PASSENGERS = upper_bound
 
     def close(self) -> None:
-        traci.close()
+        self.tick = 0
