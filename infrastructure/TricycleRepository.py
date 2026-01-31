@@ -75,7 +75,7 @@ class TricycleRepository:
         return set([tricycle for tricycle in self.tricycles.values() if tricycle.isActive()])
     
     def getActiveFreeTricycleIds(self) -> set[Tricycle]:
-        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() and not self.getTricycle(tricycle_id).isInCooldown()])
+        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() and not self.getTricycle(tricycle_id).isInCooldown() and self.getTricycle(tricycle_id).isFree()])
     
     def getActiveTricycleIds(self) -> set[Tricycle]:
         return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() or self.getTricycle(tricycle_id).isFree()])
@@ -120,7 +120,7 @@ class TricycleRepository:
 
         traci.vehicle.setRoute(tricycle_id, full_route)
 
-        traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=0, pos=destination.position, duration=60)
+        traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=passenger.lane, pos=destination.position, duration=60)
 
         self.getTricycle(tricycle_id).acceptPassenger(destination)
         self.setTricycleDestination(tricycle_id, destination)

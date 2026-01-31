@@ -78,3 +78,9 @@ class TraciService:
             return tricycle_id in traci.parkingarea.getVehicleIDs(tricycle_hub)
         except traci.TraCIException:
             return False
+        
+    def getNumberOfLanes(self, edge:str)->int:
+        return traci.edge.getLaneNumber(edge)
+    
+    def getLaneLength(self, lane_id:str)->float:
+        return traci.lane.getLength(lane_id)
