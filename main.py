@@ -1,5 +1,6 @@
 
 import os
+
 os.dup2(os.open(os.devnull, os.O_WRONLY), 2)
 from infrastructure import *
 from application import *
@@ -18,11 +19,10 @@ traci.start([
     "--lateral-resolution", "2.0",
     "--no-step-log"
 ])
-parking_area_parser = ParkingAreaParser()
 
 # PHASE 2: INITIALIZING SERVICES
 sumo_service = SumoRepository(simulation_config.getNetworkFilePath())
-map_descriptor = ParkingAreaParser.parse(simulation_config.getParkingFilePath())
+map_descriptor = parseParkingAreaFile(simulation_config.getParkingFilePath())
 
 duration = 61200
 

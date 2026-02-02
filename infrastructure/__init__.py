@@ -1,4 +1,4 @@
-from .ParkingAreaParser import ParkingAreaParser
+from .ParkingAreaParser import parseParkingAreaFile
 from .PassengerFactory import PassengerFactory
 from .SimulationConfig import SimulationConfig
 from .SimulationLogger import SimulationLogger
@@ -12,7 +12,6 @@ from .TricycleSynchronizer import TricycleSynchronizer
 
 __all__ = [
     # Classes
-    "ParkingAreaParser",
     "PassengerFactory",
     "SimulationConfig",
     "SimulationLogger",
@@ -22,6 +21,9 @@ __all__ = [
     "TricycleRepository",
     "TricycleStateManager",
     "TricycleSynchronizer",
+
+    # Functions from ParkingAreaParser
+    "parseParkingAreaFile",
 
     # Functions from TraciUtils
     # "getListOfHubIds",
