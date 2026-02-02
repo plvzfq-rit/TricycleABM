@@ -22,7 +22,7 @@ traci.start([
 
 # PHASE 2: INITIALIZING SERVICES
 sumo_service = SumoRepository(simulation_config.getNetworkFilePath())
-map_descriptor = parseParkingAreaFile(simulation_config.getParkingFilePath())
+toda_hub_descriptor = parseParkingAreaFile(simulation_config.getParkingFilePath())
 
 duration = 61200
 
@@ -41,7 +41,7 @@ for i in range(2):
     logger = SimulationLogger(i)
     tricycle_repository.changeLogger(logger)
     tricycle_state_manager = TricycleStateManager(tricycle_repository, logger)
-    simulation_loop = SimulationEngine(map_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_synchronizer, tricycle_state_manager, logger, duration, first_run=(i == 0))
+    simulation_loop = SimulationEngine(toda_hub_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_synchronizer, tricycle_state_manager, logger, duration, first_run=(i == 0))
     simulation_loop.doMainLoop(duration)
     simulation_loop.close()
     tricycle_repository.startRefuelAllTricycles()

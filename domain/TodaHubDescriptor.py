@@ -1,4 +1,4 @@
-class MapDescriptor:
+class TodaHubDescriptor:
     hubDistribution = dict()
     numberOfTricycles = 0
 

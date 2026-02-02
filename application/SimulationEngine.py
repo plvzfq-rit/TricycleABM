@@ -2,7 +2,7 @@ import traci
 import random
 import math
 from infrastructure.TricycleRepository import TricycleRepository
-from domain.MapDescriptor import MapDescriptor
+from domain.TodaHubDescriptor import TodaHubDescriptor
 from infrastructure.SimulationConfig import SimulationConfig
 from infrastructure.TricycleDispatcher import TricycleDispatcher
 from infrastructure.TricycleSynchronizer import TricycleSynchronizer
@@ -10,11 +10,11 @@ from infrastructure.TricycleStateManager import TricycleStateManager
 from infrastructure.SimulationLogger import SimulationLogger
 
 class SimulationEngine:
-    def __init__(self, map_descriptor: MapDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, tricycle_repository: TricycleRepository, tricycle_synchronizer: TricycleSynchronizer, tricycle_state_manager: TricycleStateManager, logger: SimulationLogger, duration: int, first_run: bool = True) -> None:
+    def __init__(self, toda_hub_descriptor: TodaHubDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, tricycle_repository: TricycleRepository, tricycle_synchronizer: TricycleSynchronizer, tricycle_state_manager: TricycleStateManager, logger: SimulationLogger, duration: int, first_run: bool = True) -> None:
         self.tick = 0
         self.tricycleRepository = tricycle_repository
         self.tricycleDispatcher = tricycle_dispatcher
-        self.mapConfig = map_descriptor
+        self.todaHubDescriptor = toda_hub_descriptor
         self.simulationConfig = simulation_config
         self.tricycleSynchronizer = tricycle_synchronizer
         self.tricycleStateManager = tricycle_state_manager
@@ -22,7 +22,7 @@ class SimulationEngine:
         self.duration = duration
         self.first_run = first_run
         if first_run:
-            self.tricycleRepository.createTricycles(map_descriptor.getNumberOfTricycles(), map_descriptor.getHubDistribution())
+            self.tricycleRepository.createTricycles(toda_hub_descriptor.getNumberOfTricycles(), toda_hub_descriptor.getHubDistribution())
 
     def startTraci(self) -> None:
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()},{self.simulationConfig.getDecalFilePath()}"
