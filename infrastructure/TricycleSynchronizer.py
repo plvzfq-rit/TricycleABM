@@ -1,5 +1,5 @@
 from .TricycleRepository import TricycleRepository
-from .TraciManager import TraciManager
+from .TraciUtils import getTricycleIds
 
 class TricycleSynchronizer:
     """Synchronizer between Python/Traci program and Sumo simulation
@@ -23,7 +23,7 @@ class TricycleSynchronizer:
         """Synchronizes information between the Sumo simulation and the Python 
         program (via tricycleRepository).
         """
-        current_tricycles = set(TraciManager.getTricycleIds())
+        current_tricycles = set(getTricycleIds())
         tricycles_in_memory = set(self.tricycleRepository.getActiveTricycleIds())
         tricycles_to_kill = current_tricycles - tricycles_in_memory
         for tricycle_id in tricycles_to_kill:

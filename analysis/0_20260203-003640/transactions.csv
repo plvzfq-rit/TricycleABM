@@ -1,0 +1,5 @@
+run_id,trike_id,origin_edge,dest_edge,distance,price,tick
+run002,trike23,E41,E3,429.76,50,105
+run002,trike46,E154,E3,769.4499999999999,50,240
+run002,trike23,E41,E3,429.76,50,277
+run002,trike20,E41,E3,429.76,50,290

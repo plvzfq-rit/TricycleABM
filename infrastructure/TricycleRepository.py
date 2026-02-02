@@ -7,7 +7,7 @@ from domain.TricycleState import TricycleState
 
 from .TricycleFactory import TricycleFactory
 from .SumoRepository import SumoRepository
-from .TraciManager import TraciManager
+from .TraciUtils import getTricycleLocation, checkIfTricycleParked, getListofGasEdges, getListofGasIds
 from .SimulationConfig import SimulationConfig
 from .SimulationLogger import SimulationLogger
 
@@ -81,7 +81,7 @@ class TricycleRepository:
         return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() or self.getTricycle(tricycle_id).isFree()])
     
     def getTricycleLocation(self, tricycle_id: str) -> Location:
-        return TraciManager.getTricycleLocation(tricycle_id)
+        return getTricycleLocation(tricycle_id)
     
     #Any tricycle literally moving
     def getBusyTricycleIds(self) -> set[str]:
@@ -151,7 +151,7 @@ class TricycleRepository:
     
     def isTricycleParked(self, tricycle_id: str) -> bool:
         tricycle = self.tricycles[tricycle_id]
-        return TraciManager.checkIfTricycleParked(tricycle_id, tricycle.hub)
+        return checkIfTricycleParked(tricycle_id, tricycle.hub)
 
     def activateTricycle(self, tricycle_id: str):
         self.getTricycle(tricycle_id).activate()
@@ -168,7 +168,7 @@ class TricycleRepository:
     #FUNCTIONS FOR GAS CONSUMPTION AND GAS REFUELLING
     def simulateGasConsumption(self, tricycle_id: str) -> None:
         tricycle = self.getTricycle(tricycle_id)
-        current_location = TraciManager.getTricycleLocation(tricycle_id)
+        current_location = getTricycleLocation(tricycle_id)
         tricycle.consumeGas(current_location)
     
     def rerouteToGasStation(self,tricycle_id: str) -> None:
@@ -198,8 +198,8 @@ class TricycleRepository:
     
     def findClosestGasStation(self, tricycle_id: str) -> str:
         start_edge = traci.vehicle.getRoadID(tricycle_id)
-        gas_stations_edges = TraciManager.getListofGasEdges()
-        gas_stations = TraciManager.getListofGasIds()
+        gas_stations_edges = getListofGasEdges()
+        gas_stations = getListofGasIds()
         nearest_station_edge = min(
             gas_stations_edges,
             key=lambda edge_id: traci.simulation.findRoute(start_edge, edge_id).travelTime

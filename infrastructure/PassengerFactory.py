@@ -1,11 +1,9 @@
 import random
 
 from .SumoRepository import SumoRepository
-from .TraciManager import TraciManager
+from .TraciUtils import getNumberOfLanes, getLaneLength
 
 from domain.Passenger import Passenger
-
-
 
 class PassengerFactory:
     def __init__(self, sumo_service: SumoRepository):
@@ -25,10 +23,10 @@ class PassengerFactory:
         self.index += 1
 
         # destination position
-        lane_index = TraciManager.getNumberOfLanes(destination_edge.getID()) - 1 if random.random() >= 0.5 else 0
+        lane_index = getNumberOfLanes(destination_edge.getID()) - 1 if random.random() >= 0.5 else 0
         lane = destination_edge.getID() + "_" + str(lane_index)
 
-        lane_length = TraciManager.getLaneLength(lane)
+        lane_length = getLaneLength(lane)
         dist = random.random() * lane_length
         
         return Passenger(name, starting_edge, destination_edge.getID(), lane_index, dist)

@@ -1,5 +1,5 @@
 from .TricycleRepository import TricycleRepository
-from .TraciManager import TraciManager
+from .TraciUtils import initializeTricycle, getTricycleLocation, returnTricycleToHub, getTricycleHubEdge, removeTricycle 
 from .SimulationLogger import SimulationLogger
 import traci
 
@@ -17,7 +17,7 @@ class TricycleStateManager:
             tricycle_hub = tricycle.getHub()
 
             if tricycle.shouldSpawn(current_tick):
-                TraciManager.initializeTricycle(tricycle_id, tricycle_hub)
+                initializeTricycle(tricycle_id, tricycle_hub)
                 tricycle.activate()
                 tricycle.recordActualStart(current_tick)
                 continue
@@ -32,7 +32,7 @@ class TricycleStateManager:
             if not (tricycle.isFree() or tricycle.isRefuelling() or tricycle.isDead() or tricycle.isParked() or tricycle.isGoingToRefuel()):
                 self.tricycleRepository.simulateGasConsumption(tricycle_id)
 
-            current_location = TraciManager.getTricycleLocation(tricycle_id)
+            current_location = getTricycleLocation(tricycle_id)
             if not current_location or current_location.isInvalid():
                 continue
 
@@ -46,16 +46,16 @@ class TricycleStateManager:
                 continue
 
             if tricycle.isDroppingOff():
-                TraciManager.returnTricycleToHub(tricycle_id, tricycle_hub)
+                returnTricycleToHub(tricycle_id, tricycle_hub)
                 tricycle.returnToToda()
                 continue
 
-            if current_location.location == TraciManager.getTricycleHubEdge(tricycle_hub) and traci.vehicle.isStoppedParking(tricycle_id):
+            if current_location.location == getTricycleHubEdge(tricycle_hub) and traci.vehicle.isStoppedParking(tricycle_id):
                 tricycle.activate()
                 continue
             
             if tricycle.shouldDie(current_tick) and not tricycle.hasPassenger():
-                TraciManager.removeTricycle(tricycle_id)
+                removeTricycle(tricycle_id)
                 tricycle.recordActualEnd(current_tick)
                 tricycle.kill()
                 continue

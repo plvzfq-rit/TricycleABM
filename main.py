@@ -1,19 +1,11 @@
-print(1)
+
 import os
-print(1)
 os.dup2(os.open(os.devnull, os.O_WRONLY), 2)
-print(1)
-from domain import *
-print(1)
 from infrastructure import *
-print(1)
 from application import *
-print(1)
 import traci
-print(1)
 
 # PHASE 1: INITIALIZING THE MAP ENVIRONMENT
-print(1)
 
 simulation_config = SimulationConfig()
 
