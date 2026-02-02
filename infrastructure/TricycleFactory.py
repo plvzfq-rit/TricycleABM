@@ -9,10 +9,12 @@ class TricycleFactory:
     def createRandomTricycle(assigned_id: int, assigned_hub: str) -> tuple[str, Tricycle]:
         trike_name = "trike" + str(assigned_id)
 
-        start_time = max(0, math.floor(60 * 60 * stats.lognorm.rvs(0.19840374997921292, loc=0, scale=6.520004321549422)) - 60 * 60 * 6)
+        start_time = max(0, 60 * 60 * stats.lognorm.rvs(0.21442788235989804, loc=0, scale=6.471010297664735, size=1).item() - 6 * 60 * 60)
         # start_time = 0
 
-        end_time = min(64800, math.floor(60 * 60 * (24 - stats.lognorm.rvs(0.46084412009093767, loc=0, scale=4.207763166353462, size=1))))
+        end_time = 0
+        while end_time <= start_time:
+            end_time = min(64800 - 60 * 60 * stats.lognorm.rvs(0.4675881648065253, loc=0, scale=4.4056405084474735, size=1).item(), 61199)
 
         unique_max_gas = [ 8.        ,  8.6       ,  9.5       ,  9.64      ,  9.70294118,10.        , 10.2       , 10.5       , 10.75      , 12.        ]
         prob_max_gas = [0.05405405, 0.21621622, 0.05405405, 0.27027027, 0.08108108, 0.08108108, 0.02702703, 0.02702703, 0.10810811, 0.08108108]

@@ -130,10 +130,10 @@ class TricycleRepository:
         # SCENARIO TESTING
         default_fare = driver_matrix(distance)
 
-        if passenger.willingness_to_pay >= default_fare:
+        if passenger.willingness_to_pay * distance >= default_fare:
             tricycle.money += default_fare
         else:
-            tricycle.money += passenger.willingness_to_pay
+            tricycle.money += passenger.willingness_to_pay * distance
 
         tricycle.recordLog("run002", str(tricycle_id), str(hub_edge), str(dest_edge), str(distance), str(default_fare), str(tick))
 

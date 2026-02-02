@@ -12,7 +12,7 @@ traci_service = TraciService()
 sumo_service = SumoService(simulation_config.getNetworkFilePath())
 map_descriptor = ParkingAreaParser.parse(simulation_config.getParkingFilePath())
 
-duration = 64800
+duration = 61200
 
 # PHASE 3: INITIALIZING TRICYCLE REPOSITORY
 tricycle_repository = TricycleRepository(traci_service, sumo_service, simulation_config)
