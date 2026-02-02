@@ -274,6 +274,68 @@ col1.metric("Total Expenses", f"PHP {df_all_expenses['amount'].sum():,.2f}")
 col2.metric("Total Profit", f"PHP {(df_all['price'].sum() - df_all_expenses['amount'].sum()):,.2f}")
 st.divider()
 
+# --- Per-Day Summary (Overall Daily Stats) ---
+st.header("Per-Day Overall Summary")
+st.write("Aggregate statistics for each simulation day/run.")
+
+# Calculate per-day aggregates from transactions
+daily_trips = df_all.groupby('run_id').agg({
+    'price': ['sum', 'count'],
+    'distance': 'sum'
+}).reset_index()
+daily_trips.columns = ['run_id', 'total_income', 'total_trips', 'total_distance']
+
+# Calculate per-day expenses
+daily_expenses = df_all_expenses.groupby('run_id')['amount'].sum().reset_index()
+daily_expenses.columns = ['run_id', 'total_expenses']
+
+# Calculate per-day driver count
+daily_drivers = df_all_drivers.groupby('run_id')['trike_id'].nunique().reset_index()
+daily_drivers.columns = ['run_id', 'active_drivers']
+
+# Merge all daily stats
+daily_summary = pd.merge(daily_trips, daily_expenses, on='run_id', how='left')
+daily_summary = pd.merge(daily_summary, daily_drivers, on='run_id', how='left')
+daily_summary.fillna(0, inplace=True)
+
+# Calculate derived metrics
+daily_summary['total_profit'] = daily_summary['total_income'] - daily_summary['total_expenses']
+daily_summary['avg_income_per_driver'] = daily_summary['total_income'] / daily_summary['active_drivers']
+daily_summary['avg_trips_per_driver'] = daily_summary['total_trips'] / daily_summary['active_drivers']
+daily_summary['avg_distance_per_driver'] = daily_summary['total_distance'] / daily_summary['active_drivers']
+
+# Reorder columns
+daily_summary = daily_summary[[
+    'run_id',
+    'total_trips',
+    'total_income',
+    'total_expenses',
+    'total_profit',
+    'total_distance',
+    'active_drivers',
+    'avg_trips_per_driver',
+    'avg_income_per_driver',
+    'avg_distance_per_driver'
+]]
+
+st.dataframe(daily_summary.sort_values(by='run_id'))
+
+# Summary statistics across all days
+st.subheader("Cross-Day Statistics")
+col_s1, col_s2, col_s3, col_s4 = st.columns(4)
+col_s1.metric("Avg Daily Trips", f"{daily_summary['total_trips'].mean():,.1f}")
+col_s2.metric("Avg Daily Income", f"PHP {daily_summary['total_income'].mean():,.2f}")
+col_s3.metric("Avg Daily Expenses", f"PHP {daily_summary['total_expenses'].mean():,.2f}")
+col_s4.metric("Avg Daily Profit", f"PHP {daily_summary['total_profit'].mean():,.2f}")
+
+col_s5, col_s6, col_s7, col_s8 = st.columns(4)
+col_s5.metric("Std Dev Daily Profit", f"PHP {daily_summary['total_profit'].std():,.2f}")
+col_s6.metric("Min Daily Profit", f"PHP {daily_summary['total_profit'].min():,.2f}")
+col_s7.metric("Max Daily Profit", f"PHP {daily_summary['total_profit'].max():,.2f}")
+col_s8.metric("Avg Active Drivers", f"{daily_summary['active_drivers'].mean():,.1f}")
+
+st.divider()
+
 # --- Driver Analytics (New Section) ---
 st.header("Driver-Level Analytics (Based on Analyzed Runs)")
 st.write(f"Summary of driver performance, averaged over **{sim_count}** simulation run(s). 'Trike ID' is the consistent identifier across all runs.")
