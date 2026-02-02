@@ -10,7 +10,7 @@ from infrastructure.TricycleStateManager import TricycleStateManager
 from infrastructure.SimulationLogger import SimulationLogger
 
 class SimulationEngine:
-    def __init__(self, map_descriptor: MapDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, tricycle_repository: TricycleRepository, tricycle_synchronizer: TricycleSynchronizer, tricycle_state_manager: TricycleStateManager, logger: SimulationLogger) -> None:
+    def __init__(self, map_descriptor: MapDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, tricycle_repository: TricycleRepository, tricycle_synchronizer: TricycleSynchronizer, tricycle_state_manager: TricycleStateManager, logger: SimulationLogger, shouldHaveGui: bool) -> None:
         self.tick = 0
         self.tricycleRepository = tricycle_repository
         self.tricycleDispatcher = tricycle_dispatcher
@@ -20,16 +20,19 @@ class SimulationEngine:
         self.tricycleStateManager = tricycle_state_manager
         self.tricycleRepository.createTricycles(map_descriptor.getNumberOfTricycles(), map_descriptor.getHubDistribution())
         self.simulationLogger = logger
+        self.shouldHaveGui = shouldHaveGui
 
     def startTraci(self) -> None:
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()},{self.simulationConfig.getDecalFilePath()}"
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()}"
         traci.start([
-            "sumo-gui",
+            "sumo-gui" if self.shouldHaveGui else "sumo",
             "-n", self.simulationConfig.getNetworkFilePath(),
             "-r", self.simulationConfig.getRoutesFilePath(),
             "-a", additionalFiles,
-            "--lateral-resolution", "2.0"
+            "--lateral-resolution", "2.0",
+            "--no-warnings",
+            "--ignore-route-errors"
         ])
 
     def doMainLoop(self, simulation_duration: int) -> None:
