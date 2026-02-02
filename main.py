@@ -1,16 +1,19 @@
+print(1)
 import os
+print(1)
 os.dup2(os.open(os.devnull, os.O_WRONLY), 2)
-
+print(1)
 from domain import *
+print(1)
 from infrastructure import *
+print(1)
 from application import *
+print(1)
 import traci
-
-import argparse
-
-
+print(1)
 
 # PHASE 1: INITIALIZING THE MAP ENVIRONMENT
+print(1)
 
 simulation_config = SimulationConfig()
 
@@ -26,27 +29,26 @@ traci.start([
 parking_area_parser = ParkingAreaParser()
 
 # PHASE 2: INITIALIZING SERVICES
-traci_service = TraciService()
-sumo_service = SumoService(simulation_config.getNetworkFilePath())
+sumo_service = SumoRepository(simulation_config.getNetworkFilePath())
 map_descriptor = ParkingAreaParser.parse(simulation_config.getParkingFilePath())
 
 duration = 61200
 
 # PHASE 3: INITIALIZING TRICYCLE REPOSITORY
-tricycle_repository = TricycleRepository(traci_service, sumo_service, simulation_config)
+tricycle_repository = TricycleRepository(sumo_service, simulation_config)
 
 # PHASE 4: INITIALIZING PASSENGER REPOSITORY
-passenger_factory = PassengerFactory(sumo_service, traci_service)
+passenger_factory = PassengerFactory(sumo_service)
 
 # PHASE 5: INITIALIZING OTHER SERVICES
 tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_factory)
-tricycle_synchronizer = TricycleSynchronizer(tricycle_repository, traci_service)
+tricycle_synchronizer = TricycleSynchronizer(tricycle_repository)
 
 for i in range(2):
     print(f"running run# {i}...")
     logger = SimulationLogger(i)
     tricycle_repository.changeLogger(logger)
-    tricycle_state_manager = TricycleStateManager(tricycle_repository, traci_service, logger)
+    tricycle_state_manager = TricycleStateManager(tricycle_repository, logger)
     simulation_loop = SimulationEngine(map_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_synchronizer, tricycle_state_manager, logger, duration, first_run=(i == 0))
     simulation_loop.doMainLoop(duration)
     simulation_loop.close()

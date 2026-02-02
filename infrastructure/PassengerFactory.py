@@ -1,14 +1,15 @@
 import random
 
+from .SumoRepository import SumoRepository
+from .TraciManager import TraciManager
+
 from domain.Passenger import Passenger
 
-from infrastructure.SumoService import SumoService
-from infrastructure.TraciService import TraciService
+
 
 class PassengerFactory:
-    def __init__(self, sumo_service: SumoService | None = None, traci_service: TraciService | None = None):
-        self.sumoService = sumo_service or SumoService()
-        self.traciService = traci_service or TraciService()
+    def __init__(self, sumo_service: SumoRepository):
+        self.sumoService = sumo_service 
         self.index = 0
 
     def createRandomPassenger(self, possible_source) -> tuple[str, Passenger]:
@@ -24,13 +25,10 @@ class PassengerFactory:
         self.index += 1
 
         # destination position
-        lane_index = self.traciService.getNumberOfLanes(destination_edge.getID()) - 1 if random.random() >= 0.5 else 0
+        lane_index = TraciManager.getNumberOfLanes(destination_edge.getID()) - 1 if random.random() >= 0.5 else 0
         lane = destination_edge.getID() + "_" + str(lane_index)
 
-        lane_length = self.traciService.getLaneLength(lane)
+        lane_length = TraciManager.getLaneLength(lane)
         dist = random.random() * lane_length
-
-        # let SUMO compute walking route
-        # self.traciService.setPassengerDestination(name, destination_edge, destination_position)
         
         return Passenger(name, starting_edge, destination_edge.getID(), lane_index, dist)

@@ -1,12 +1,11 @@
-from infrastructure.TricycleRepository import TricycleRepository
-from infrastructure.TraciService import TraciService
-from infrastructure.SimulationLogger import SimulationLogger
+from .TricycleRepository import TricycleRepository
+from .TraciManager import TraciManager
+from .SimulationLogger import SimulationLogger
 import traci
 
 class TricycleStateManager:
-    def __init__(self, tricycle_repository: TricycleRepository, traci_service: TraciService, simulation_logger: SimulationLogger):
+    def __init__(self, tricycle_repository: TricycleRepository, simulation_logger: SimulationLogger):
         self.tricycleRepository = tricycle_repository
-        self.traciService = traci_service
         self.simulationLogger = simulation_logger
 
     def updateTricycleStates(self, current_tick: int):
@@ -18,7 +17,7 @@ class TricycleStateManager:
             tricycle_hub = tricycle.getHub()
 
             if tricycle.shouldSpawn(current_tick):
-                self.traciService.initializeTricycle(tricycle_id, tricycle_hub)
+                TraciManager.initializeTricycle(tricycle_id, tricycle_hub)
                 tricycle.activate()
                 tricycle.recordActualStart(current_tick)
                 continue
@@ -33,7 +32,7 @@ class TricycleStateManager:
             if not (tricycle.isFree() or tricycle.isRefuelling() or tricycle.isDead() or tricycle.isParked() or tricycle.isGoingToRefuel()):
                 self.tricycleRepository.simulateGasConsumption(tricycle_id)
 
-            current_location = self.traciService.getTricycleLocation(tricycle_id)
+            current_location = TraciManager.getTricycleLocation(tricycle_id)
             if not current_location or current_location.isInvalid():
                 continue
 
@@ -47,22 +46,16 @@ class TricycleStateManager:
                 continue
 
             if tricycle.isDroppingOff():
-                self.traciService.returnTricycleToHub(tricycle_id, tricycle_hub)
+                TraciManager.returnTricycleToHub(tricycle_id, tricycle_hub)
                 tricycle.returnToToda()
                 continue
 
-            if current_location.location == self.traciService.getTricycleHubEdge(tricycle_hub) and traci.vehicle.isStoppedParking(tricycle_id):
+            if current_location.location == TraciManager.getTricycleHubEdge(tricycle_hub) and traci.vehicle.isStoppedParking(tricycle_id):
                 tricycle.activate()
                 continue
             
-            # if tricycle.shouldReturnToToda(current_location):
-            #     self.tricycleRepository.simulateGasConsumption(tricycle_id)
-            #     self.traciService.returnTricycleToHub(tricycle_id, tricycle_hub)
-            #     tricycle.returnToToda()
-            #     continue
-
             if tricycle.shouldDie(current_tick) and not tricycle.hasPassenger():
-                self.traciService.removeTricycle(tricycle_id)
+                TraciManager.removeTricycle(tricycle_id)
                 tricycle.recordActualEnd(current_tick)
                 tricycle.kill()
                 continue

@@ -1,5 +1,5 @@
 import sumolib
-class SumoService:
+class SumoRepository:
     network = None
 
     def __init__(self, network_file_path: str):

@@ -1,13 +1,12 @@
-from infrastructure.TricycleRepository import TricycleRepository
-from infrastructure.TraciService import TraciService
+from .TricycleRepository import TricycleRepository
+from .TraciManager import TraciManager
 
 class TricycleSynchronizer:
-    def __init__(self, tricycle_repository: TricycleRepository | None = None, traci_service: TraciService | None = None):
+    def __init__(self, tricycle_repository: TricycleRepository):
         self.tricycleRepository = tricycle_repository
-        self.traciService = traci_service
 
     def sync(self) -> None:
-        current_tricycles = set(self.traciService.getTricycleIds())
+        current_tricycles = set(TraciManager.getTricycleIds())
         tricycles_in_memory = set(self.tricycleRepository.getActiveTricycleIds())
         tricycles_to_kill = current_tricycles - tricycles_in_memory
         for tricycle_id in tricycles_to_kill:
