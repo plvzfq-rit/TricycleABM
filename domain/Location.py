@@ -1,12 +1,26 @@
 import traci
-import re
 import difflib
 class Location:
+    """Data class that details a location within the simulation.
+
+    Attributes:
+        location: string containing the ID of a Traci edge.
+        position: float containing the position along the Traci edge.
+    """
+
     def __init__(self, location: str, position: float) -> None:
+        """Initializes an instance given a location and position.
+        
+        Args:
+            location: string containing the ID of a Traci edge.
+            position: float containing the position along the Traci edge.
+        """
+
+        # TODO: Should put in whether it goes in which lane.
         self.location = location
         self.position = position
 
-    def __eq__(self, value: any):
+    def __eq__(self, value: any) -> bool:
         if type(self) != type(value):
             return False
         return self.location == value.location and self.position == value.position
