@@ -28,8 +28,12 @@ class TodaRepository:
     def canTodaDispatch(self, queue) -> bool:
         return len(self.queues[queue]) > 0
 
+    def peekToda(self, queue) -> str:
+        """Look at first tricycle in queue without removing it"""
+        return self.queues[queue][0]
+
     def dequeToda(self, queue) -> str:
         return self.queues[queue].popleft()
-    
+
     def viewQueue(self, queue) -> str:
         return f"{queue}: {list(self.queues[queue])}"
