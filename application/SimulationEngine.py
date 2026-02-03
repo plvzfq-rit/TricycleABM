@@ -5,18 +5,16 @@ from infrastructure.TricycleRepository import TricycleRepository
 from domain.TodaHubDescriptor import TodaHubDescriptor
 from infrastructure.SimulationConfig import SimulationConfig
 from infrastructure.TricycleDispatcher import TricycleDispatcher
-from infrastructure.TricycleSynchronizer import TricycleSynchronizer
 from infrastructure.TricycleStateManager import TricycleStateManager
 from infrastructure.SimulationLogger import SimulationLogger
 
 class SimulationEngine:
-    def __init__(self, toda_hub_descriptor: TodaHubDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, tricycle_repository: TricycleRepository, tricycle_synchronizer: TricycleSynchronizer, tricycle_state_manager: TricycleStateManager, logger: SimulationLogger, duration: int, first_run: bool = True) -> None:
+    def __init__(self, toda_hub_descriptor: TodaHubDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, tricycle_repository: TricycleRepository, tricycle_state_manager: TricycleStateManager, logger: SimulationLogger, duration: int, first_run: bool = True) -> None:
         self.tick = 0
         self.tricycleRepository = tricycle_repository
         self.tricycleDispatcher = tricycle_dispatcher
         self.todaHubDescriptor = toda_hub_descriptor
         self.simulationConfig = simulation_config
-        self.tricycleSynchronizer = tricycle_synchronizer
         self.tricycleStateManager = tricycle_state_manager
         self.simulationLogger = logger
         self.duration = duration

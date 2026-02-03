@@ -6,7 +6,6 @@ from .TricycleDispatcher import TricycleDispatcher
 from .TricycleFactory import TricycleFactory
 from .TricycleRepository import TricycleRepository
 from .TricycleStateManager import TricycleStateManager
-from .TricycleSynchronizer import TricycleSynchronizer
 
 __all__ = [
     # Classes
@@ -18,8 +17,7 @@ __all__ = [
     "TricycleFactory",
     "TricycleRepository",
     "TricycleStateManager",
-    "TricycleSynchronizer",
-    
+
     # Functions from TraciUtils
     # "getListOfHubIds",
     # "getListOfGasEdges",
