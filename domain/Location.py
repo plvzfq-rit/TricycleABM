@@ -138,8 +138,7 @@ def get2DCoordinates(location: Location) -> tuple:
         """
         edge = location.getEdge()
         position = location.getPosition()
-        lane = location.getLane()
-        return traci.simulation.convert2D(edge, position, lane)
+        return traci.simulation.convert2D(edge, position)
 
     try:
         # if, the location is a junction...
