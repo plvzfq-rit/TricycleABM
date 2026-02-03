@@ -55,7 +55,6 @@ class TricycleRepository:
             for i in range(number_of_tricycles_in_hub):
                 hubs.append(hub)
 
-        print(number_of_tricycles)
         for i in range(number_of_tricycles):
             assigned_hub = hubs.pop()
             assigned_id = i
