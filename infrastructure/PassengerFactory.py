@@ -1,23 +1,33 @@
 import random
+from scipy.stats import lognorm
 
 from .SumoRepository import SumoRepository
-from .TraciUtils import getNumberOfLanes, getLaneLength
+from utils.TraciUtils import getNumberOfLanes, getLaneLength
 
 from domain.Passenger import Passenger
+from domain.Location import Location
 
 class PassengerFactory:
-    def __init__(self, sumo_service: SumoRepository):
-        self.sumoService = sumo_service 
+    """Generates Passenger objects with a random destination in the
+    simulation.
+
+    Attributes:
+        sumoService: 
+    """
+    def __init__(self, sumo_repository: SumoRepository):
+        """Initializes object with access to a SumoRepository and a count.
+        
+        SumoRepository serves as a source of """
+        self.sumoRepository = sumo_repository 
         self.index = 0
 
-    def createRandomPassenger(self, possible_source) -> tuple[str, Passenger]:
-        edges = self.sumoService.getNetworkPedestrianEdges()
+    def createRandomPassenger(self, starting_edge: str) -> tuple[str, Passenger]:
+        pedestrian_edges = self.sumoRepository.getNetworkPedestrianEdges()
 
         # pick start and destination
-        starting_edge = possible_source
-        destination_edge = random.choice(edges)
+        destination_edge = random.choice(pedestrian_edges)
         while destination_edge.getID() == starting_edge:
-            destination_edge = random.choice(edges)
+            destination_edge = random.choice(pedestrian_edges)
 
         name = f"ped{self.index}"
         self.index += 1
@@ -28,5 +38,9 @@ class PassengerFactory:
 
         lane_length = getLaneLength(lane)
         dist = random.random() * lane_length
+
+        willingness_to_pay = lognorm.rvs(0.7134231299166108, loc=0, scale=38.38513260285555, size=1)
+
+        destination = Location(destination_edge.getID(), dist, lane_index)
         
-        return Passenger(name, starting_edge, destination_edge.getID(), lane_index, dist)
+        return Passenger(name, willingness_to_pay, destination)

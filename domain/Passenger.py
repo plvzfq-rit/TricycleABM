@@ -1,19 +1,23 @@
 from domain.Location import Location
-import scipy.stats as stats
-
-import random
 
 class Passenger:
-    def __init__(self, name: str, starting_edge: str, destination_edge: str, lane: int, dist: float) -> None:
-        self.destination = Location(destination_edge, dist)
+    """Represents a passenger request to a tricycle within the simulation.
+    
+    Attributes:
+        name: unique ID assigned to a passenger.
+        willingness_to_pay: maximum amount they would pay for their trip.
+        destination: location they wish to go to.
+    """
+
+    def __init__(self, name: str, willingness_to_pay: float, 
+                 destination: Location) -> None:
+        """Initializes passenger with name, destination, and willingness to pay.
+        
+        Args:
+            name: unique ID assigned to a passenger.
+            willingness_to_pay: maximum amount they would pay for their trip.
+            destination: location they wish to go to.
+        """
         self.name = name
-        self.startingEdge = starting_edge
-        self.alive = True
-        self.willingness_to_pay = stats.lognorm.rvs(0.7134231299166108, loc=0, scale=38.38513260285555, size=1)
-        self.lane = lane
-    def __str__(self) -> str:
-        return f"Passenger(name=,\"{self.name}\", start=\"{self.startingEdge}\", destination=\"{self.destination}\")"
-    def kill(self) -> None:
-        self.alive = False
-    def isAlive(self) -> bool:
-        return self.alive 
+        self.willingness_to_pay = willingness_to_pay
+        self.destination = destination

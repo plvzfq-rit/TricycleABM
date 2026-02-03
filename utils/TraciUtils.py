@@ -1,4 +1,5 @@
 import traci
+
 from domain.Location import Location
 
 def getListOfHubIds() -> list[str]:
@@ -32,7 +33,8 @@ def getTricycleLocation(tricycle_id: str) -> Location | None:
         return None
     current_edge = traci.vehicle.getRoadID(tricycle_id)
     current_position = traci.vehicle.getLanePosition(tricycle_id)
-    return Location(current_edge, current_position)
+    current_lane = traci.vehicle.getLaneIndex(tricycle_id)
+    return Location(current_edge, current_position, current_lane)
 
 def getTricycleHubEdge(hub_string: str) -> str:
     return traci.parkingarea.getLaneID(hub_string).split("_")[0]
@@ -70,3 +72,4 @@ def getNumberOfLanes(edge:str)->int:
 
 def getLaneLength(lane_id:str)->float:
     return traci.lane.getLength(lane_id)
+

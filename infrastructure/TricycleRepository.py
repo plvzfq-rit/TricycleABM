@@ -7,7 +7,7 @@ from domain.TricycleState import TricycleState
 
 from .TricycleFactory import TricycleFactory
 from .SumoRepository import SumoRepository
-from .TraciUtils import getTricycleLocation, checkIfTricycleParked, getListofGasEdges, getListofGasIds
+from utils.TraciUtils import getTricycleLocation, checkIfTricycleParked, getListofGasEdges, getListofGasIds
 from .SimulationConfig import SimulationConfig
 from .SimulationLogger import SimulationLogger
 
@@ -97,7 +97,7 @@ class TricycleRepository:
         destination = passenger.destination
 
         hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
-        dest_edge = destination.location
+        dest_edge = destination.edge
         current_edge = traci.vehicle.getRoadID(tricycle_id)
 
         if current_edge == dest_edge:
@@ -120,7 +120,7 @@ class TricycleRepository:
 
         traci.vehicle.setRoute(tricycle_id, full_route)
 
-        traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=passenger.lane, pos=destination.position, duration=60)
+        traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=passenger.destination.lane, pos=destination.position, duration=60)
 
         self.getTricycle(tricycle_id).acceptPassenger(destination)
         self.setTricycleDestination(tricycle_id, destination)

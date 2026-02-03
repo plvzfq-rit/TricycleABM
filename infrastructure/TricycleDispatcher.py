@@ -36,7 +36,7 @@ class TricycleDispatcher:
 
     def canDispatch(self, tricycle_id: str, tricycle_location: Location, passenger_location: Location, tricycle_farthest_distance: float):
         try:
-            estimated_distance = traci.simulation.getDistanceRoad(tricycle_location.location, tricycle_location.position, passenger_location.location, passenger_location.position)
+            estimated_distance = traci.simulation.getDistanceRoad(tricycle_location.edge, tricycle_location.position, passenger_location.edge, passenger_location.position)
         except Exception as e:
             print(e)
             print(str(tricycle_location), str(passenger_location))

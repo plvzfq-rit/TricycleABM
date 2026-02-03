@@ -1,5 +1,5 @@
 from .TricycleRepository import TricycleRepository
-from .TraciUtils import getTricycleIds
+from utils.TraciUtils import getTricycleIds
 
 class TricycleSynchronizer:
     """Synchronizer between Python/Traci program and Sumo simulation
@@ -10,7 +10,8 @@ class TricycleSynchronizer:
     
     Attributes:
         tricycleRepository: TricycleRepository object.
-        """
+    """
+
     def __init__(self, tricycle_repository: TricycleRepository):
         """Initializes the instance given a tricycle repository.
         

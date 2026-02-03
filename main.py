@@ -4,6 +4,7 @@ import os
 os.dup2(os.open(os.devnull, os.O_WRONLY), 2)
 from infrastructure import *
 from application import *
+from utils.ParkingAreaParser import parseParkingAreaFile
 import traci
 
 # PHASE 1: INITIALIZING THE MAP ENVIRONMENT

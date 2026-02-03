@@ -1,5 +1,5 @@
 from .TricycleRepository import TricycleRepository
-from .TraciUtils import initializeTricycle, getTricycleLocation, returnTricycleToHub, getTricycleHubEdge, removeTricycle 
+from utils.TraciUtils import initializeTricycle, getTricycleLocation, returnTricycleToHub, getTricycleHubEdge, removeTricycle 
 from .SimulationLogger import SimulationLogger
 import traci
 
@@ -50,7 +50,7 @@ class TricycleStateManager:
                 tricycle.returnToToda()
                 continue
 
-            if current_location.location == getTricycleHubEdge(tricycle_hub) and traci.vehicle.isStoppedParking(tricycle_id):
+            if current_location.edge == getTricycleHubEdge(tricycle_hub) and traci.vehicle.isStoppedParking(tricycle_id):
                 tricycle.activate()
                 continue
             
