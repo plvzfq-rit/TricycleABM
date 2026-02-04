@@ -7,8 +7,7 @@ def getListOfHubIds() -> list[str]:
     parking_area_ids = traci.parkingarea.getIDList()
     for parking_area_id in parking_area_ids:
         if parking_area_id[0:3] == "hub":
-            edge = traci.parkingarea.getLaneID(parking_area_id).split("_")[0]
-            hub_ids.append(edge)
+            hub_ids.append(parking_area_id)
     return hub_ids
 
 def getListofGasEdges() -> list[str]:
