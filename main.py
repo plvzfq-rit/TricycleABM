@@ -22,8 +22,10 @@ traci.start([
 ])
 
 # PHASE 2: INITIALIZING SERVICES
-sumo_service = SumoRepository(simulation_config.getNetworkFilePath())
-toda_hub_descriptor = parseParkingAreaFile(simulation_config.getParkingFilePath())
+network_file_path = simulation_config.getNetworkFilePath()
+parking_file_path = simulation_config.getParkingFilePath()
+sumo_service = SumoRepository(network_file_path)
+toda_hub_descriptor = parseParkingAreaFile(parking_file_path)
 
 duration = 61200
 

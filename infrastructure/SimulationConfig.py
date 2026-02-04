@@ -8,18 +8,13 @@ class SimulationConfig:
     DEFAULT_ROUTE_FILE_NAME = "routes.xml"
     DEFAULT_GAS_PRICE_PER_LITER = 58.9
 
-    def __init__(self, assetDirectoryName: str=DEFAULT_ASSET_DIRECTORY_NAME, 
-                networkFileName: str=DEFAULT_NETWORK_FILE_NAME, 
-                parkingFileName: str=DEFAULT_PARKING_FILE_NAME, 
-                decalFileName: str = DEFAULT_DECAL_FILE_NAME, 
-                routesFileName:str =DEFAULT_ROUTE_FILE_NAME, 
-                gasPricePerLiter=DEFAULT_GAS_PRICE_PER_LITER) -> None:
-        self.assetDirectoryName = assetDirectoryName
-        self.networkFileName = networkFileName
-        self.parkingFileName = parkingFileName
-        self.decalFileName = decalFileName
-        self.routesFileName = routesFileName
-        self.gasPricePerLiter = gasPricePerLiter
+    def __init__(self) -> None:
+        self.assetDirectoryName = self.DEFAULT_ASSET_DIRECTORY_NAME
+        self.networkFileName = self.DEFAULT_NETWORK_FILE_NAME
+        self.parkingFileName = self.DEFAULT_PARKING_FILE_NAME
+        self.decalFileName = self.DEFAULT_ROUTE_FILE_NAME
+        self.routesFileName = self.DEFAULT_ROUTE_FILE_NAME
+        self.gasPricePerLiter = self.DEFAULT_GAS_PRICE_PER_LITER
 
     def getAssetDirectoryName(self) -> str:
         return self.directoryName
