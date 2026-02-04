@@ -158,7 +158,7 @@ def get2DCoordinates(location: Location) -> tuple:
 def getManhattanDistance(location: Location, 
                          another_Location: Location) -> float:
     """Gets the Manhattan distance between two locations within the 
-    simulation.
+    simulation (in meters).
     
     Args:
         location: a location within the simulation.
@@ -186,7 +186,7 @@ def getManhattanDistance(location: Location,
 def getEuclideanDistance(location: Location, 
                          another_location: Location) -> float:
     """Gets the Euclidean distance between two locations within the 
-    simulation.
+    simulation (in meters).
     
     Args:
         location: a location within the simulation.

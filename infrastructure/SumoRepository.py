@@ -13,6 +13,6 @@ class SumoRepository:
     
     def getNetworkPedestrianEdges(self):
         if self.network:
-            return [e for e in self.network.getEdges() if e.allows("pedestrian")]
+            return [e.getID() for e in self.network.getEdges() if e.allows("pedestrian")]
         network = self.getNetwork()
-        return [e for e in network.getEdges() if e.allows("pedestrian")]
+        return [e.getID() for e in network.getEdges() if e.allows("pedestrian")]

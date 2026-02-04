@@ -1,46 +1,81 @@
 import random
-from scipy.stats import lognorm
+
+from infrastructure import SimulationConfig
 
 from .SumoRepository import SumoRepository
 from utils.TraciUtils import getNumberOfLanes, getLaneLength
 
 from domain.Passenger import Passenger
-from domain.Location import Location
+from domain.Location import Location, getManhattanDistance
 
 class PassengerFactory:
     """Generates Passenger objects with a random destination in the
     simulation.
 
     Attributes:
-        sumoService: 
+        networkPedestrianEdges: list of pedestrian edges in the network.
+        wtpDistribution: distribution function for willingness to pay.
+        todaPositions: dictionary of Toda hub positions.
+        index: integer index for unique passenger naming.
     """
-    def __init__(self, sumo_repository: SumoRepository):
-        """Initializes object with access to a SumoRepository and a count.
-        
-        SumoRepository serves as a source of """
-        self.sumoRepository = sumo_repository 
+    def __init__(self, sumo_repository: SumoRepository, simulation_config: SimulationConfig) -> None:
+        """Initializes object with elements from SumoRepository and SimulationConfig.
+
+        Args:
+            sumo_repository: SumoRepository object to extract network edges.
+            simulation_config: SimulationConfig object to extract WTP and Toda positions.
+        """
+
+        # Extract necessary data from SumoRepository and SimulationConfig
+        self.networkPedestrianEdges = sumo_repository.getNetworkPedestrianEdges()
+        self.wtpDistribution = simulation_config.getWTPDistribution()
+        self.todaPositions = simulation_config.getTodaPositions()
+
+        # Initialize passenger index for unique naming
         self.index = 0
 
     def createRandomPassenger(self, starting_edge: str) -> tuple[str, Passenger]:
-        pedestrian_edges = self.sumoRepository.getNetworkPedestrianEdges()
+        """Creates a Passenger object with a random destination edge.
 
-        # pick start and destination
-        destination_edge = random.choice(pedestrian_edges)
-        while destination_edge.getID() == starting_edge:
-            destination_edge = random.choice(pedestrian_edges)
+        Args:
+            starting_edge: the edge ID where the passenger starts.
 
+        Returns:
+            A Passenger object with a random destination edge.
+        """
+
+        # select a random destination edge different from starting edge
+        destination_edge = random.choice(self.networkPedestrianEdges)
+        while destination_edge == starting_edge:
+            destination_edge = random.choice(self.networkPedestrianEdges)
+
+        # create passenger name
         name = f"ped{self.index}"
         self.index += 1
 
-        # destination position
-        lane_index = getNumberOfLanes(destination_edge.getID()) - 1 if random.random() >= 0.5 else 0
-        lane = destination_edge.getID() + "_" + str(lane_index)
-
-        lane_length = getLaneLength(lane)
-        dist = random.random() * lane_length
-
-        willingness_to_pay = lognorm.rvs(0.7134231299166108, loc=0, scale=38.38513260285555, size=1)
-
-        destination = Location(destination_edge.getID(), dist, lane_index)
+        # select lane index (first or last lane of the edge)
+        lane_index = getNumberOfLanes(destination_edge) - 1 if \
+                     random.random() >= 0.5 else \
+                     0
         
+        # construct full lane ID
+        lane_id = destination_edge + "_" + str(lane_index)
+
+        # select random distance along lane
+        lane_length = getLaneLength(lane_id)
+        position = random.random() * lane_length
+
+        # calculate distance to destination
+        source_position = self.todaPositions.get(starting_edge, 0.0)
+        source = Location(starting_edge, source_position, -1)
+        destination = Location(destination_edge, position, lane_index)
+        distance = getManhattanDistance(source, destination) / 1000.0  # convert to km
+
+        # generate willingness to pay (peso/km times distance in km)
+        willingness_to_pay = self.wtpDistribution(size=1)[0] * distance
+
+        # create Location object for destination
+        destination = Location(destination_edge, position, lane_index)
+        
+        # create and return Passenger object
         return Passenger(name, willingness_to_pay, destination)

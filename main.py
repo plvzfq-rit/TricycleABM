@@ -24,16 +24,17 @@ traci.start([
 # PHASE 2: INITIALIZING SERVICES
 network_file_path = simulation_config.getNetworkFilePath()
 parking_file_path = simulation_config.getParkingFilePath()
-sumo_service = SumoRepository(network_file_path)
+sumo_repository = SumoRepository(network_file_path)
 toda_hub_descriptor = parseParkingAreaFile(parking_file_path)
 
 duration = 61200
 
 # PHASE 3: INITIALIZING TRICYCLE REPOSITORY
-tricycle_repository = TricycleRepository(sumo_service, simulation_config)
+tricycle_repository = TricycleRepository(sumo_repository, simulation_config)
 
 # PHASE 4: INITIALIZING PASSENGER REPOSITORY
-passenger_factory = PassengerFactory(sumo_service)
+passenger_network_edges = sumo_repository.getNetworkPedestrianEdges()
+passenger_factory = PassengerFactory(sumo_repository, simulation_config)
 
 # PHASE 5: INITIALIZING OTHER SERVICES
 tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_factory)
