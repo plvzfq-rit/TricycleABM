@@ -27,7 +27,7 @@ passenger_network_edges = sumo_repository.getNetworkPedestrianEdges()
 passenger_factory = PassengerFactory(sumo_repository, simulation_config)
 
 # PHASE 5: INITIALIZING OTHER SERVICES
-tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_factory)
+tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_factory, simulation_config)
 
 for i in range(2):
     print(f"running run# {i}...")

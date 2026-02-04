@@ -1,5 +1,6 @@
 from domain.Location import Location
 
+from infrastructure import SimulationConfig
 from infrastructure.TricycleRepository import TricycleRepository
 from infrastructure.TodaRepository import TodaRepository
 from infrastructure.PassengerFactory import PassengerFactory
@@ -11,14 +12,13 @@ import random
 
 class TricycleDispatcher:
 
-    def __init__(self, tricycle_repository: TricycleRepository, passenger_factory: PassengerFactory):
+    def __init__(self, tricycle_repository: TricycleRepository, passenger_factory: PassengerFactory, simulation_config: SimulationConfig) -> None:
         self.tricycleRepository = tricycle_repository
         self.passengerFactory = passenger_factory
+        self.peakHourProbabilities = simulation_config.getPeakHourProbabilities()
 
     def dispatchTricycles(self, simulationLogger, tick, todaRepository: TodaRepository) -> None:
-        peak_hour_prob = [0.08284023669, 0.1301775148, 0.1538461538, 0.1301775148, 0.08284023669, 0.07100591716, 0.04733727811, 0.0650887574, 0.03550295858, 0.02366863905, 0.02366863905, 0.04142011834, 0.02366863905, 0.01183431953, 0.005917159763, 0.005917159763, 0.005917159763, 0.005917159763]
-
-        curr_prob = peak_hour_prob[math.floor(tick / 60 / 60)] / 60.0
+        curr_prob = self.peakHourProbabilities[math.floor(tick / 60 / 60)] / 60.0
 
         todaQueues = todaRepository.getAllToda()
 
