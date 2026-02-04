@@ -55,9 +55,5 @@ class SimulationEngine:
         # Log driver info with actual durations at the end of simulation
         self.simulationLogger.addDriverInfo(self.tricycleRepository.getTricycles())
 
-    def setPassengerBoundaries(self, lower_bound: int, upper_bound: int) -> None:
-        self.LEAST_NUMBER_OF_PASSENGERS = lower_bound
-        self.MOST_NUMBER_OF_PASSENGERS = upper_bound
-
     def close(self) -> None:
         self.tick = 0
