@@ -11,16 +11,6 @@ import traci
 
 simulation_config = SimulationConfig()
 
-# Start TRACI/SUMO early so all services can use it
-traci.start([
-    "sumo",
-    "-n", simulation_config.getNetworkFilePath(),
-    "-r", simulation_config.getRoutesFilePath(),
-    "-a", simulation_config.getParkingFilePath(),
-    "--lateral-resolution", "2.0",
-    "--no-step-log"
-])
-
 # PHASE 2: INITIALIZING SERVICES
 network_file_path = simulation_config.getNetworkFilePath()
 parking_file_path = simulation_config.getParkingFilePath()

@@ -7,6 +7,7 @@ from infrastructure.SimulationConfig import SimulationConfig
 from infrastructure.TricycleDispatcher import TricycleDispatcher
 from infrastructure.TricycleStateManager import TricycleStateManager
 from infrastructure.SimulationLogger import SimulationLogger
+from infrastructure.TodaRepository import TodaRepository
 
 class SimulationEngine:
     def __init__(self, toda_hub_descriptor: TodaHubDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, tricycle_repository: TricycleRepository, tricycle_state_manager: TricycleStateManager, logger: SimulationLogger, duration: int, first_run: bool = True) -> None:
@@ -21,12 +22,13 @@ class SimulationEngine:
         self.first_run = first_run
         if first_run:
             self.tricycleRepository.createTricycles(toda_hub_descriptor.getNumberOfTricycles(), toda_hub_descriptor.getHubDistribution())
+        self.todaRepository = None
 
     def startTraci(self) -> None:
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()},{self.simulationConfig.getDecalFilePath()}"
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()}"
         traci.start([
-            "sumo",
+            "sumo-gui",
             "-n", self.simulationConfig.getNetworkFilePath(),
             "-r", self.simulationConfig.getRoutesFilePath(),
             "-a", additionalFiles,
@@ -36,9 +38,13 @@ class SimulationEngine:
         ])
 
     def doMainLoop(self, simulation_duration: int) -> None:
+        self.startTraci()
+        self.todaRepository = TodaRepository()
+        #TODO:
         while self.tick < simulation_duration:
             self.tricycleStateManager.updateTricycleStates(self.tick)
-            self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick)
+            self.todaRepository.manageTodaQueues()
+            self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick, self.todaRepository)
             self.tick += 1
             if self.tick % 60 == 0:
                 print(f"\rCurrent time: {math.floor(self.tick / 3600) + 6:02d}:{math.floor((self.tick % 3600) / 60):02d}:{self.tick % 60:02d}                 ", end="")
