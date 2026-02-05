@@ -17,7 +17,7 @@ class TricycleDispatcher:
         self.passengerFactory = passenger_factory
         self.peakHourProbabilities = simulation_config.getPeakHourProbabilities()
 
-    def dispatchTricycles(self, simulationLogger, tick, todaRepository: TodaRepository) -> None:
+    def tryDispatchFromTodaQueues(self, simulationLogger, tick, todaRepository: TodaRepository) -> None:
         curr_prob = self.peakHourProbabilities[math.floor(tick / 60 / 60)] / 60.0
 
         todaQueues = todaRepository.getAllToda()

@@ -44,7 +44,7 @@ class SimulationEngine:
         while self.tick < simulation_duration:
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.todaRepository.manageTodaQueues()
-            self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick, self.todaRepository)
+            self.tricycleDispatcher.tryDispatchFromTodaQueues(self.simulationLogger, self.tick, self.todaRepository)
             self.tick += 1
             if self.tick % 60 == 0:
                 print(f"\rCurrent time: {math.floor(self.tick / 3600) + 6:02d}:{math.floor((self.tick % 3600) / 60):02d}:{self.tick % 60:02d}                 ", end="")
