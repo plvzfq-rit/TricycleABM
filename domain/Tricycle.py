@@ -40,6 +40,9 @@ class Tricycle:
     def __str__(self) -> str:
         return f"Tricycle(name={self.name}, state={self.state})"
     
+    def getState(self) -> TricycleState:
+        return self.state
+    
     def recordLog(self, run_id:str, trike_id: str, origin_edge: str, dest_edge:str, distance:str, price:str, tick:str) -> None:
         self.currentLog = self.log(run_id, trike_id, origin_edge, dest_edge, distance, price, tick)
     
@@ -131,6 +134,9 @@ class Tricycle:
     def park(self, current_location: Location) -> None:
         self.state = TricycleState.PARKED
         self.lastLocation = current_location
+
+    def getLastLocation(self) -> Location:
+        return self.lastLocation
 
     def setLastLocation(self, last_location: Location) -> None:
         self.lastLocation = last_location
