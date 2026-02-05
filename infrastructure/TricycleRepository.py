@@ -37,9 +37,10 @@ def manila_matrix(given):
     return 16 if given < 1000 else 16 + 5 * math.ceil((given - 1000) / 500)
 
 class TricycleRepository:
-    def __init__(self, sumo_service: SumoRepository, simulation_config: SimulationConfig):
+    def __init__(self, sumo_service: SumoRepository, tricycle_factory: TricycleFactory,simulation_config: SimulationConfig):
         self.tricycles = dict()
         self.sumoService = sumo_service
+        self.tricycleFactory = tricycle_factory
         self.simulationConfig = simulation_config
 
     def hasActiveTricycles(self) -> bool:
@@ -58,7 +59,7 @@ class TricycleRepository:
         for i in range(number_of_tricycles):
             assigned_hub = hubs.pop()
             assigned_id = i
-            trike_name, tricycle = TricycleFactory.createRandomTricycle(assigned_id, assigned_hub)
+            trike_name, tricycle = self.tricycleFactory.createRandomTricycle(assigned_id, assigned_hub)
             self.tricycles[trike_name] = tricycle
 
     def getTricycle(self, tricycle_id: str) -> Tricycle:

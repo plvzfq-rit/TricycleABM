@@ -5,40 +5,26 @@ import scipy.stats as stats
 from domain.Tricycle import Tricycle
 
 class TricycleFactory:
-    @staticmethod
-    def createRandomTricycle(assigned_id: int, assigned_hub: str) -> tuple[str, Tricycle]:
+    def __init__(self, simulation_config):
+        self.getStartTime = simulation_config.getStartTimeDistribution()
+        self.getEndTime = simulation_config.getEndTimeDistribution()
+        self.getMaxGas = simulation_config.getMaxGasDistribution()
+        self.getGasConsumption = simulation_config.getGasConsumptionDistribution()
+        self.getGasPayment = simulation_config.getGasPaymentDistribution()
+        self.getGetsFullTank = simulation_config.getGetsFullTankDistribution()
+        self.getDailyExpense = simulation_config.getDailyExpenseDistribution()
+        self.getFarthestDistance = simulation_config.getFarthestDistanceDistribution()
+    def createRandomTricycle(self, assigned_id: int, assigned_hub: str) -> tuple[str, Tricycle]:
         trike_name = "trike" + str(assigned_id)
-
-        start_time = max(0, 60 * 60 * stats.lognorm.rvs(0.21442788235989804, loc=0, scale=6.471010297664735, size=1).item() - 6 * 60 * 60)
-        # start_time = 0
-
+        start_time = self.getStartTime()
         end_time = 0
         while end_time <= start_time:
-            end_time = min(64800 - 60 * 60 * stats.lognorm.rvs(0.4675881648065253, loc=0, scale=4.4056405084474735, size=1).item(), 61199)
-
-        unique_max_gas = [ 8.        ,  8.6       ,  9.5       ,  9.64      ,  9.70294118,10.        , 10.2       , 10.5       , 10.75      , 12.        ]
-        prob_max_gas = [0.05405405, 0.21621622, 0.05405405, 0.27027027, 0.08108108, 0.08108108, 0.02702703, 0.02702703, 0.10810811, 0.08108108]
-        max_gas = (np.random.choice(unique_max_gas, size=1, p=prob_max_gas) + np.random.normal(0, 0.1, size=1)).item()
-
-        # in km/L
-        unique_gas_consumption = [33.        , 40.        , 40.25      , 46.21764706, 48.        , 61.4       , 62.5       ]
-        prob_gas_consumption = [0.02702703, 0.48648649, 0.10810811, 0.08108108, 0.05405405, 0.02702703, 0.21621622]
-        gas_consumption = (np.random.choice(unique_gas_consumption, size=1, p=prob_gas_consumption) + np.random.normal(0, 0.1, size=1)).item()
-
+            end_time = self.getEndTime()
+        max_gas = self.getMaxGas()
+        gas_consumption = self.getGasConsumption()
         gas_threshold = 0
-
-        unique_gas_payment = [ 50., 100., 110., 120., 125., 150., 200., 300.]
-        prob_gas_payment = [0.02702703, 0.21621622, 0.02702703, 0.05405405, 0.02702703, 0.32432432, 0.2972973 , 0.02702703]
-        usual_gas_payment = (np.random.choice(unique_gas_payment, size=1, p=prob_gas_payment)).item()
-
-        w_af = [27/37, 1 - 27/37]
-        index = np.random.choice(list(range(2)), p=w_af).item()
-        gets_full_tank = False
-        if index == 1:
-            gets_full_tank = True
-
-        daily_expense = stats.lognorm.rvs(0.5551170551235295, loc=0, scale=375.96181139256873)
-
-        farthest_distance = stats.lognorm.rvs(0.4562970511172417, loc=0, scale=4.119316604349962) * 1000
-
+        usual_gas_payment = self.getGasPayment()
+        gets_full_tank = self.getGetsFullTank()
+        daily_expense = self.getDailyExpense()
+        farthest_distance = self.getFarthestDistance()
         return (trike_name, Tricycle(trike_name, assigned_hub, start_time, end_time, max_gas, gas_consumption, gas_threshold, usual_gas_payment, gets_full_tank, farthest_distance, daily_expense))

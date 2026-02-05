@@ -20,7 +20,8 @@ toda_hub_descriptor = parseParkingAreaFile(parking_file_path)
 duration = 61200
 
 # PHASE 3: INITIALIZING TRICYCLE REPOSITORY
-tricycle_repository = TricycleRepository(sumo_repository, simulation_config)
+tricycle_factory = TricycleFactory(simulation_config)
+tricycle_repository = TricycleRepository(sumo_repository, tricycle_factory, simulation_config)
 
 # PHASE 4: INITIALIZING PASSENGER REPOSITORY
 passenger_network_edges = sumo_repository.getNetworkPedestrianEdges()
