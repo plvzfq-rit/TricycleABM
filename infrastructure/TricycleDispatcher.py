@@ -43,14 +43,14 @@ class TricycleDispatcher:
             tricycle_location = self.tricycleRepository.getTricycleLocation(tricycle_id)
             passenger = self.passengerFactory.createRandomPassenger(traci.parkingarea.getLaneID(tricycle.hub).split("_")[0])
 
-            if self.canDispatch(tricycle_id, tricycle_location, passenger.destination, tricycle.farthestDistance):
+            if self.isDispatchFeasible(tricycle_id, tricycle_location, passenger.destination, tricycle.farthestDistance):
                 success = self.tricycleRepository.dispatchTricycle(tricycle_id, passenger, simulationLogger, tick)
                 if success:
                     # Only remove from queue on successful dispatch
                     todaRepository.dequeToda(toda)
 
 
-    def canDispatch(self, tricycle_id: str, tricycle_location: Location, passenger_location: Location, tricycle_farthest_distance: float):
+    def isDispatchFeasible(self, tricycle_id: str, tricycle_location: Location, passenger_location: Location, tricycle_farthest_distance: float):
         try:
             estimated_distance = traci.simulation.getDistanceRoad(tricycle_location.edge, tricycle_location.position, passenger_location.edge, passenger_location.position)
         except Exception as e:
