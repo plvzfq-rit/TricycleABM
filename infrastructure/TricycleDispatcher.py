@@ -17,8 +17,11 @@ class TricycleDispatcher:
         self.passengerFactory = passenger_factory
         self.peakHourProbabilities = simulation_config.getPeakHourProbabilities()
 
-    def tryDispatchFromTodaQueues(self, simulationLogger, tick, todaRepository: TodaRepository) -> None:
+    def shouldAttemptDispatch(self, tick) -> bool:
         curr_prob = self.peakHourProbabilities[math.floor(tick / 60 / 60)] / 60.0
+        return random.random() < curr_prob
+
+    def tryDispatchFromTodaQueues(self, simulationLogger, tick, todaRepository: TodaRepository) -> None:
 
         todaQueues = todaRepository.getAllToda()
 
@@ -26,7 +29,7 @@ class TricycleDispatcher:
             if not todaRepository.canTodaDispatch(toda):
                 continue
 
-            if random.random() >= curr_prob:
+            if not self.shouldAttemptDispatch(tick):
                 continue
 
             # Peek at first tricycle without removing from queue
