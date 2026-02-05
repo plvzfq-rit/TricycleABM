@@ -1,7 +1,7 @@
 from .Location import Location
-from .MapDescriptor import MapDescriptor
+from .TodaHubDescriptor import TodaHubDescriptor
 from .Passenger import Passenger
 from .Tricycle import Tricycle
 from .TricycleState import TricycleState
 
-__all__ = ["Location", "MapDescriptor", "Passenger", "Tricycle", "TricycleState"]
+__all__ = ["Location", "TodaHubDescriptor", "Passenger", "Tricycle", "TricycleState"]

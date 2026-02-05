@@ -1,49 +1,41 @@
-import os
-os.dup2(os.open(os.devnull, os.O_WRONLY), 2)
 
-from domain import *
+import os
+
+os.dup2(os.open(os.devnull, os.O_WRONLY), 2)
 from infrastructure import *
 from application import *
+from utils.ParkingAreaParser import parseParkingAreaFile
 import traci
 
 # PHASE 1: INITIALIZING THE MAP ENVIRONMENT
 
 simulation_config = SimulationConfig()
 
-# Start TRACI/SUMO early so all services can use it
-traci.start([
-    "sumo",
-    "-n", simulation_config.getNetworkFilePath(),
-    "-r", simulation_config.getRoutesFilePath(),
-    "-a", simulation_config.getParkingFilePath(),
-    "--lateral-resolution", "2.0",
-    "--no-step-log"
-])
-parking_area_parser = ParkingAreaParser()
-
 # PHASE 2: INITIALIZING SERVICES
-traci_service = TraciService()
-sumo_service = SumoService(simulation_config.getNetworkFilePath())
-map_descriptor = ParkingAreaParser.parse(simulation_config.getParkingFilePath())
+network_file_path = simulation_config.getNetworkFilePath()
+parking_file_path = simulation_config.getParkingFilePath()
+sumo_repository = SumoRepository(network_file_path)
+toda_hub_descriptor = parseParkingAreaFile(parking_file_path)
 
-duration = 64800
+duration = 61200
 
 # PHASE 3: INITIALIZING TRICYCLE REPOSITORY
-tricycle_repository = TricycleRepository(traci_service, sumo_service, simulation_config)
+tricycle_factory = TricycleFactory(simulation_config)
+tricycle_repository = TricycleRepository(sumo_repository, tricycle_factory, simulation_config)
 
 # PHASE 4: INITIALIZING PASSENGER REPOSITORY
-passenger_factory = PassengerFactory(sumo_service, traci_service)
+passenger_network_edges = sumo_repository.getNetworkPedestrianEdges()
+passenger_factory = PassengerFactory(sumo_repository, simulation_config)
 
 # PHASE 5: INITIALIZING OTHER SERVICES
-tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_factory)
-tricycle_synchronizer = TricycleSynchronizer(tricycle_repository, traci_service)
+tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_factory, simulation_config)
 
 for i in range(2):
     print(f"running run# {i}...")
     logger = SimulationLogger(i)
     tricycle_repository.changeLogger(logger)
-    tricycle_state_manager = TricycleStateManager(tricycle_repository, traci_service, logger)
-    simulation_loop = SimulationEngine(map_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_synchronizer, tricycle_state_manager, logger, duration, first_run=(i == 0))
+    tricycle_state_manager = TricycleStateManager(tricycle_repository, logger)
+    simulation_loop = SimulationEngine(toda_hub_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_state_manager, logger, duration, first_run=(i == 0))
     simulation_loop.doMainLoop(duration)
     simulation_loop.close()
     tricycle_repository.startRefuelAllTricycles()

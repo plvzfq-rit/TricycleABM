@@ -2,7 +2,7 @@ import traci
 import math
 import random
 from domain.TricycleState import TricycleState
-from domain.Location import Location
+from domain.Location import Location, getManhattanDistance
 from collections import namedtuple
 
 class Tricycle:
@@ -95,9 +95,6 @@ class Tricycle:
     def isRefuelling(self) -> bool:
         return self.state == TricycleState.REFUELLING
     
-    def isReturningToToda(self) -> bool:
-        return self.state == TricycleState.RETURNING_TO_TODA
-    
     def isDead(self) -> bool:
         return self.state == TricycleState.DEAD
     
@@ -138,7 +135,7 @@ class Tricycle:
     #METHOD FOR GAS CONSUMPTION
     def consumeGas(self, current_location: Location) -> bool:
         try:
-            distance_travelled = current_location.distanceTo(self.lastLocation)
+            distance_travelled = getManhattanDistance(current_location, self.lastLocation)
         except:
             distance_travelled = 0
             

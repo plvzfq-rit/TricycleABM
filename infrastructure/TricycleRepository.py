@@ -3,12 +3,13 @@ import traci
 from domain.Location import Location
 from domain.Tricycle import Tricycle
 from domain.Passenger import Passenger
-from infrastructure.TricycleFactory import TricycleFactory
 from domain.TricycleState import TricycleState
-from infrastructure.SumoService import SumoService
-from infrastructure.TraciService import TraciService
-from infrastructure.SimulationConfig import SimulationConfig
-from infrastructure.SimulationLogger import SimulationLogger
+
+from .TricycleFactory import TricycleFactory
+from .SumoRepository import SumoRepository
+from utils.TraciUtils import getTricycleLocation, checkIfTricycleParked, getListofGasEdges, getListofGasIds
+from .SimulationConfig import SimulationConfig
+from .SimulationLogger import SimulationLogger
 
 import math
 
@@ -36,11 +37,11 @@ def manila_matrix(given):
     return 16 if given < 1000 else 16 + 5 * math.ceil((given - 1000) / 500)
 
 class TricycleRepository:
-    def __init__(self, traci_service: TraciService | None = None, sumo_service: SumoService | None = None, simulation_config: SimulationConfig | None = None):
+    def __init__(self, sumo_service: SumoRepository, tricycle_factory: TricycleFactory,simulation_config: SimulationConfig):
         self.tricycles = dict()
-        self.traciService = traci_service or TraciService()
-        self.sumoService = sumo_service or SumoService()
-        self.simulationConfig = simulation_config or SimulationConfig()
+        self.sumoService = sumo_service
+        self.tricycleFactory = tricycle_factory
+        self.simulationConfig = simulation_config
 
     def hasActiveTricycles(self) -> bool:
         for tricycle in self.tricycles.values():
@@ -55,11 +56,10 @@ class TricycleRepository:
             for i in range(number_of_tricycles_in_hub):
                 hubs.append(hub)
 
-        print(number_of_tricycles)
         for i in range(number_of_tricycles):
             assigned_hub = hubs.pop()
             assigned_id = i
-            trike_name, tricycle = TricycleFactory.createRandomTricycle(assigned_id, assigned_hub)
+            trike_name, tricycle = self.tricycleFactory.createRandomTricycle(assigned_id, assigned_hub)
             self.tricycles[trike_name] = tricycle
 
     def getTricycle(self, tricycle_id: str) -> Tricycle:
@@ -81,7 +81,7 @@ class TricycleRepository:
         return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() or self.getTricycle(tricycle_id).isFree()])
     
     def getTricycleLocation(self, tricycle_id: str) -> Location:
-        return self.traciService.getTricycleLocation(tricycle_id)
+        return getTricycleLocation(tricycle_id)
     
     #Any tricycle literally moving
     def getBusyTricycleIds(self) -> set[str]:
@@ -97,7 +97,7 @@ class TricycleRepository:
         destination = passenger.destination
 
         hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
-        dest_edge = destination.location
+        dest_edge = destination.edge
         current_edge = traci.vehicle.getRoadID(tricycle_id)
 
         if current_edge == dest_edge:
@@ -120,7 +120,7 @@ class TricycleRepository:
 
         traci.vehicle.setRoute(tricycle_id, full_route)
 
-        traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=passenger.lane, pos=destination.position, duration=60)
+        traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=passenger.destination.lane, pos=destination.position, duration=60)
 
         self.getTricycle(tricycle_id).acceptPassenger(destination)
         self.setTricycleDestination(tricycle_id, destination)
@@ -130,10 +130,10 @@ class TricycleRepository:
         # SCENARIO TESTING
         default_fare = driver_matrix(distance)
 
-        if passenger.willingness_to_pay >= default_fare:
+        if passenger.willingness_to_pay * distance >= default_fare:
             tricycle.money += default_fare
         else:
-            tricycle.money += passenger.willingness_to_pay
+            tricycle.money += passenger.willingness_to_pay * distance
 
         tricycle.recordLog("run002", str(tricycle_id), str(hub_edge), str(dest_edge), str(distance), str(default_fare), str(tick))
 
@@ -151,7 +151,7 @@ class TricycleRepository:
     
     def isTricycleParked(self, tricycle_id: str) -> bool:
         tricycle = self.tricycles[tricycle_id]
-        return self.traciService.checkIfTricycleParked(tricycle_id, tricycle.hub)
+        return checkIfTricycleParked(tricycle_id, tricycle.hub)
 
     def activateTricycle(self, tricycle_id: str):
         self.getTricycle(tricycle_id).activate()
@@ -168,7 +168,7 @@ class TricycleRepository:
     #FUNCTIONS FOR GAS CONSUMPTION AND GAS REFUELLING
     def simulateGasConsumption(self, tricycle_id: str) -> None:
         tricycle = self.getTricycle(tricycle_id)
-        current_location = self.traciService.getTricycleLocation(tricycle_id)
+        current_location = getTricycleLocation(tricycle_id)
         tricycle.consumeGas(current_location)
     
     def rerouteToGasStation(self,tricycle_id: str) -> None:
@@ -198,8 +198,8 @@ class TricycleRepository:
     
     def findClosestGasStation(self, tricycle_id: str) -> str:
         start_edge = traci.vehicle.getRoadID(tricycle_id)
-        gas_stations_edges = self.traciService.getListofGasEdges()
-        gas_stations = self.traciService.getListofGasIds()
+        gas_stations_edges = getListofGasEdges()
+        gas_stations = getListofGasIds()
         nearest_station_edge = min(
             gas_stations_edges,
             key=lambda edge_id: traci.simulation.findRoute(start_edge, edge_id).travelTime
