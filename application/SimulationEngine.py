@@ -3,7 +3,7 @@ import random
 import math
 from infrastructure.TricycleRepository import TricycleRepository
 from domain.TodaHubDescriptor import TodaHubDescriptor
-from infrastructure.SimulationConfig import SimulationConfig
+from config.SimulationConfig import SimulationConfig
 from infrastructure.TricycleDispatcher import TricycleDispatcher
 from infrastructure.TricycleStateManager import TricycleStateManager
 from infrastructure.SimulationLogger import SimulationLogger

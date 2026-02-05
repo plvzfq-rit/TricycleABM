@@ -2,8 +2,11 @@
 import os
 
 os.dup2(os.open(os.devnull, os.O_WRONLY), 2)
+from utils import *
+from domain import *
 from infrastructure import *
 from application import *
+from config.SimulationConfig import SimulationConfig
 from utils.ParkingAreaParser import parseParkingAreaFile
 import traci
 

@@ -5,6 +5,7 @@ from domain.TricycleState import TricycleState
 from domain.Location import Location, getManhattanDistance
 from collections import namedtuple
 
+
 class Tricycle:
     def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float, usualGasPayment: float, getsAFullTank: bool, farthestDistance: float, dailyExpense: float) -> None:
         self.name = name
@@ -178,3 +179,9 @@ class Tricycle:
             'distance': self.dailyDistance,
             'actual_duration': self.getActualDuration()
         }
+    
+    def canAcceptDispatch(self, passenger_destination: Location) -> bool:
+        """Check if the tricycle can accept a dispatch to the given destination"""
+        current_location = self.lastLocation
+        estimated_distance = getManhattanDistance(current_location, passenger_destination)
+        return self.isFree() and estimated_distance <= self.farthestDistance

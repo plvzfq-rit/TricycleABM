@@ -8,7 +8,7 @@ from domain.TricycleState import TricycleState
 from .TricycleFactory import TricycleFactory
 from .SumoRepository import SumoRepository
 from utils.TraciUtils import getTricycleLocation, checkIfTricycleParked, getListofGasEdges, getListofGasIds
-from .SimulationConfig import SimulationConfig
+from config.SimulationConfig import SimulationConfig
 from .SimulationLogger import SimulationLogger
 
 import math

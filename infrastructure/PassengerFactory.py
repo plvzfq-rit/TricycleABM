@@ -1,6 +1,6 @@
 import random
 
-from infrastructure import SimulationConfig
+from config.SimulationConfig import SimulationConfig
 
 from .SumoRepository import SumoRepository
 from utils.TraciUtils import getNumberOfLanes, getLaneLength

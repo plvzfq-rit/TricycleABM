@@ -1,12 +1,12 @@
-from domain.Location import Location
+from domain.Location import Location, getManhattanDistance
 
-from infrastructure import SimulationConfig
+from config.SimulationConfig import SimulationConfig
 from infrastructure.TricycleRepository import TricycleRepository
 from infrastructure.TodaRepository import TodaRepository
 from infrastructure.PassengerFactory import PassengerFactory
 from domain.TricycleState import TricycleState
+from utils.TraciUtils import getTricycleLocation, getTricycleHubEdge
 
-import traci
 import math
 import random
 
@@ -40,21 +40,13 @@ class TricycleDispatcher:
             if not tricycle.isFree():
                 continue
 
-            tricycle_location = self.tricycleRepository.getTricycleLocation(tricycle_id)
-            passenger = self.passengerFactory.createRandomPassenger(traci.parkingarea.getLaneID(tricycle.hub).split("_")[0])
+            tricycle_location = getTricycleLocation(tricycle_id)
+            hub_edge = getTricycleHubEdge(tricycle.getHub())
+            passenger = self.passengerFactory.createRandomPassenger(hub_edge)
+            passenger_destination = passenger.getDestination()
 
-            if self.isDispatchFeasible(tricycle_id, tricycle_location, passenger.destination, tricycle.farthestDistance):
+            if tricycle.canAcceptDispatch(passenger_destination):
                 success = self.tricycleRepository.dispatchTricycle(tricycle_id, passenger, simulationLogger, tick)
                 if success:
                     # Only remove from queue on successful dispatch
                     todaRepository.dequeToda(toda)
-
-
-    def isDispatchFeasible(self, tricycle_id: str, tricycle_location: Location, passenger_location: Location, tricycle_farthest_distance: float):
-        try:
-            estimated_distance = traci.simulation.getDistanceRoad(tricycle_location.edge, tricycle_location.position, passenger_location.edge, passenger_location.position)
-        except Exception as e:
-            print(e)
-            print(str(tricycle_location), str(passenger_location))
-            estimated_distance = float("inf")
-        return self.tricycleRepository.isTricycleFree(tricycle_id) and estimated_distance <= tricycle_farthest_distance

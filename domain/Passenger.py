@@ -21,3 +21,11 @@ class Passenger:
         self.name = name
         self.willingness_to_pay = willingness_to_pay
         self.destination = destination
+
+    def getDestination(self) -> Location:
+        """Get the destination location of the passenger.
+        
+        Returns:
+            Location object representing the passenger's destination.
+        """
+        return self.destination
