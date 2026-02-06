@@ -7,7 +7,7 @@ from domain.TricycleState import TricycleState
 
 from .TricycleFactory import TricycleFactory
 from .SumoRepository import SumoRepository
-from utils.TraciUtils import getTricycleLocation, checkIfTricycleParked, getListofGasEdges, getListofGasIds
+from utils.TraciUtils import getTricycleHubEdge, getTricycleLocation, getListofGasEdges, getListofGasIds
 from config.SimulationConfig import SimulationConfig
 from .SimulationLogger import SimulationLogger
 
@@ -96,9 +96,9 @@ class TricycleRepository:
         tricycle = self.tricycles[tricycle_id]
         destination = passenger.destination
 
-        hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
+        hub_edge = getTricycleHubEdge(tricycle.getHub())
         dest_edge = destination.edge
-        current_edge = traci.vehicle.getRoadID(tricycle_id)
+        current_edge = hub_edge
 
         if current_edge == dest_edge:
             #print("Failed to assign.")
@@ -148,10 +148,6 @@ class TricycleRepository:
     
     def isTricycleFree(self, tricycle_id: str) -> bool:
         return self.getTricycle(tricycle_id).isFree()
-    
-    def isTricycleParked(self, tricycle_id: str) -> bool:
-        tricycle = self.tricycles[tricycle_id]
-        return checkIfTricycleParked(tricycle_id, tricycle.hub)
 
     def activateTricycle(self, tricycle_id: str):
         self.getTricycle(tricycle_id).activate()

@@ -107,9 +107,6 @@ class Tricycle:
     def hasSpawned(self) -> bool:
         return self.state != TricycleState.TO_SPAWN
     
-    def isParked(self) -> bool:
-        return self.state == TricycleState.PARKED
-    
     def shouldDie(self, time: int) -> bool:
         return self.endTime < time
     
@@ -131,10 +128,6 @@ class Tricycle:
     def getName(self) -> str:
         return self.name
     
-    def park(self, current_location: Location) -> None:
-        self.state = TricycleState.PARKED
-        self.lastLocation = current_location
-
     def getLastLocation(self) -> Location:
         return self.lastLocation
 

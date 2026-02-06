@@ -20,7 +20,7 @@ parking_file_path = simulation_config.getParkingFilePath()
 sumo_repository = SumoRepository(network_file_path)
 toda_hub_descriptor = parseParkingAreaFile(parking_file_path)
 
-duration = 61200
+duration = 57600
 
 # PHASE 3: INITIALIZING TRICYCLE REPOSITORY
 tricycle_factory = TricycleFactory(simulation_config)

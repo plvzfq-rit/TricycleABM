@@ -72,7 +72,6 @@ class TricycleStateManager:
             tricycle.isFree() or 
             tricycle.isRefuelling() or 
             tricycle.isDead() or 
-            tricycle.isParked() or 
             tricycle.isGoingToRefuel()
         ):
             self.tricycleRepository.simulateGasConsumption(tricycle.getName())
