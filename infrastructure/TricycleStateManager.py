@@ -1,8 +1,7 @@
 from domain import Location, Tricycle
 from .TricycleRepository import TricycleRepository
-from utils.TraciUtils import initializeTricycle, getTricycleLocation, returnTricycleToHub, getTricycleHubEdge, removeTricycle 
+from utils.TraciUtils import initializeTricycle, getTricycleLocation, returnTricycleToHub, getTricycleHubEdge, removeTricycle, hasTricycleParked, setTricycleSpeed
 from .SimulationLogger import SimulationLogger
-import traci
 
 class TricycleStateManager:
     def __init__(self, tricycle_repository: TricycleRepository, simulation_logger: SimulationLogger):
@@ -42,7 +41,7 @@ class TricycleStateManager:
         if self._handleDroppingOff(tricycle):
             return
         
-        is_parked = traci.vehicle.isStoppedParking(tricycle.getName())
+        is_parked = hasTricycleParked(tricycle.getName())
 
         # HUB ARRIVAL
         if self._handleHubArrival(tricycle, current_location, is_parked):
@@ -123,6 +122,7 @@ class TricycleStateManager:
             if is_parked:
                 gas_amt = self.tricycleRepository.refuelTricycle(tricycle.getName())
                 self.simulationLogger.addExpenseToLog(tricycle.getName(), "midday_gas", gas_amt, current_tick)
+                setTricycleSpeed(tricycle.getName(), 16.67)
                 tricycle.returnToToda()
                 return True
         return False
@@ -130,6 +130,6 @@ class TricycleStateManager:
     def _handleOutOfGas(self, tricycle: Tricycle) -> bool:
         if tricycle.currentGas <= 0:
             tricycle.goingToRefuel()
-            traci.vehicle.setSpeed(tricycle.getName(), 1)
+            setTricycleSpeed(tricycle.getName(), 1)
             return True
         return False

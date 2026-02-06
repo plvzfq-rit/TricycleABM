@@ -72,3 +72,8 @@ def getNumberOfLanes(edge:str)->int:
 def getLaneLength(lane_id:str)->float:
     return traci.lane.getLength(lane_id)
 
+def hasTricycleParked(tricycle_id: str):
+    return traci.vehicle.isStoppedParking(tricycle_id)
+
+def setTricycleSpeed(tricycle_id: str, speed: float) -> None:
+    traci.vehicle.setSpeed(tricycle_id, speed)
