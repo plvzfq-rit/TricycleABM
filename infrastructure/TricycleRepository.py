@@ -1,3 +1,4 @@
+import random
 import traci
 
 from domain.Location import Location
@@ -95,6 +96,7 @@ class TricycleRepository:
     def dispatchTricycle(self, tricycle_id: str, passenger: Passenger, simulationLogger, tick) -> bool:
         tricycle = self.tricycles[tricycle_id]
         destination = passenger.destination
+        
 
         hub_edge = getTricycleHubEdge(tricycle.getHub())
         dest_edge = destination.edge
@@ -102,6 +104,47 @@ class TricycleRepository:
 
         if current_edge == dest_edge:
             #print("Failed to assign.")
+            return False
+        
+        distance = traci.simulation.getDistanceRoad(current_edge, 0, dest_edge, 0, isDriving=True)
+        driver_patience = tricycle.getPatience()
+        passenger_patience = passenger.getPatience()
+        min_price = tricycle.gasConsumptionRate * distance * self.simulationConfig.gasPricePerLiter / 1000
+        driver_asp = tricycle.getAspiredPrice() * distance / 1000
+        max_price= passenger.willingness_to_pay * distance / 1000
+        passenger_asp = passenger.getAspiredPrice() * distance / 1000
+        curr_offer = driver_matrix(distance)
+        driver_sentinel = 0
+        passenger_sentinel = 1
+        turn = driver_sentinel if random.random() < 0.5 else passenger_sentinel
+        first = True
+        agree=False
+        max_turns = 2
+        for i in range(max_turns):
+            driver_asp = min_price + (driver_asp - min_price) * (driver_patience ** i)
+            passenger_asp = max_price - (max_price - passenger_asp) * (passenger_patience ** i)
+            if turn == driver_sentinel:
+                if curr_offer >= driver_asp:
+                    agree = True
+                    if first:
+                        pass
+                    break
+                else:
+                    curr_offer = driver_asp
+                    first = False
+                    turn = passenger_sentinel
+            elif turn == passenger_sentinel:
+                if curr_offer <= passenger_asp:
+                    agree = True
+                    if first:
+                        pass
+                    break
+                else:
+                    curr_offer = passenger_asp
+                    first = False
+                    turn = driver_sentinel
+        
+        if not agree:
             return False
 
         net = self.sumoService.getNetwork()
@@ -125,17 +168,7 @@ class TricycleRepository:
         self.getTricycle(tricycle_id).acceptPassenger(destination)
         self.setTricycleDestination(tricycle_id, destination)
 
-        distance = traci.simulation.getDistanceRoad(current_edge, 0, dest_edge, 0, isDriving=True)
-
-        # SCENARIO TESTING
-        default_fare = driver_matrix(distance)
-
-        if passenger.willingness_to_pay * distance >= default_fare:
-            tricycle.money += default_fare
-        else:
-            tricycle.money += passenger.willingness_to_pay * distance
-
-        tricycle.recordLog("run002", str(tricycle_id), str(hub_edge), str(dest_edge), str(distance), str(default_fare), str(tick))
+        tricycle.recordLog("run002", str(tricycle_id), str(hub_edge), str(dest_edge), str(distance), str(curr_offer), str(tick))
 
         #1. create a trip object
         #2. make a record
