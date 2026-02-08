@@ -9,7 +9,7 @@ from utils.TraciUtils import getTricycleLocation
 
 
 class Tricycle:
-    def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float, usualGasPayment: float, getsAFullTank: bool, farthestDistance: float, dailyExpense: float) -> None:
+    def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float, usualGasPayment: float, getsAFullTank: bool, farthestDistance: float, dailyExpense: float, patience: float, aspiredPrice: float) -> None:
         self.name = name
         self.hub = hub
         self.startTime = start_time
@@ -29,6 +29,8 @@ class Tricycle:
         self.log = namedtuple("log", ["run_id","trike_id","origin_edge", "dest_edge", "distance", "price","tick"])
         self.currentLog = None
         self.cooldownTime = 0
+        self.patience = patience
+        self.aspiredPrice = aspiredPrice
         # Track actual time spent in simulation
         self.actualStartTick = None
         self.actualEndTick = None
@@ -39,6 +41,12 @@ class Tricycle:
 
     def __str__(self) -> str:
         return f"Tricycle(name={self.name}, state={self.state})"
+
+    def getPatience(self) -> float:
+        return self.patience
+    
+    def getAspiredPrice(self) -> float:
+        return self.aspiredPrice
     
     def getState(self) -> TricycleState:
         return self.state
