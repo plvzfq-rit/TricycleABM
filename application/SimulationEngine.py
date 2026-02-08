@@ -3,7 +3,7 @@ import random
 import math
 from infrastructure.TricycleRepository import TricycleRepository
 from domain.TodaHubDescriptor import TodaHubDescriptor
-from infrastructure.SimulationConfig import SimulationConfig
+from config.SimulationConfig import SimulationConfig
 from infrastructure.TricycleDispatcher import TricycleDispatcher
 from infrastructure.TricycleStateManager import TricycleStateManager
 from infrastructure.SimulationLogger import SimulationLogger
@@ -28,7 +28,7 @@ class SimulationEngine:
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()},{self.simulationConfig.getDecalFilePath()}"
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()}"
         traci.start([
-            "sumo-gui",
+            "sumo",
             "-n", self.simulationConfig.getNetworkFilePath(),
             "-r", self.simulationConfig.getRoutesFilePath(),
             "-a", additionalFiles,
@@ -44,7 +44,7 @@ class SimulationEngine:
         while self.tick < simulation_duration:
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.todaRepository.manageTodaQueues()
-            self.tricycleDispatcher.dispatchTricycles(self.simulationLogger, self.tick, self.todaRepository)
+            self.tricycleDispatcher.tryDispatchFromTodaQueues(self.simulationLogger, self.tick, self.todaRepository)
             self.tick += 1
             if self.tick % 60 == 0:
                 print(f"\rCurrent time: {math.floor(self.tick / 3600) + 6:02d}:{math.floor((self.tick % 3600) / 60):02d}:{self.tick % 60:02d}                 ", end="")

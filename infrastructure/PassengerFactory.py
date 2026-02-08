@@ -1,9 +1,8 @@
 import random
 
-from infrastructure import SimulationConfig
+from config.SimulationConfig import SimulationConfig
 
 from .SumoRepository import SumoRepository
-from utils.TraciUtils import getNumberOfLanes, getLaneLength
 
 from domain.Passenger import Passenger
 from domain.Location import Location, getManhattanDistance
@@ -30,6 +29,7 @@ class PassengerFactory:
         self.networkPedestrianEdges = sumo_repository.getNetworkPedestrianEdges()
         self.wtpDistribution = simulation_config.getWTPDistribution()
         self.todaPositions = simulation_config.getTodaPositions()
+        self.sumoRepository = sumo_repository
 
         # Initialize passenger index for unique naming
         self.index = 0
@@ -54,7 +54,7 @@ class PassengerFactory:
         self.index += 1
 
         # select lane index (first or last lane of the edge)
-        lane_index = getNumberOfLanes(destination_edge) - 1 if \
+        lane_index = self.sumoRepository.getNumberOfLanes(destination_edge) - 1 if \
                      random.random() >= 0.5 else \
                      0
         
@@ -62,7 +62,7 @@ class PassengerFactory:
         lane_id = destination_edge + "_" + str(lane_index)
 
         # select random distance along lane
-        lane_length = getLaneLength(lane_id)
+        lane_length = self.sumoRepository.getLaneLength(lane_id)
         position = random.random() * lane_length
 
         # calculate distance to destination

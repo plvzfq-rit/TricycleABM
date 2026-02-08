@@ -5,6 +5,9 @@ from domain.TricycleState import TricycleState
 from domain.Location import Location, getManhattanDistance
 from collections import namedtuple
 
+from utils.TraciUtils import getTricycleLocation
+
+
 class Tricycle:
     def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float, usualGasPayment: float, getsAFullTank: bool, farthestDistance: float, dailyExpense: float) -> None:
         self.name = name
@@ -36,6 +39,9 @@ class Tricycle:
 
     def __str__(self) -> str:
         return f"Tricycle(name={self.name}, state={self.state})"
+    
+    def getState(self) -> TricycleState:
+        return self.state
     
     def recordLog(self, run_id:str, trike_id: str, origin_edge: str, dest_edge:str, distance:str, price:str, tick:str) -> None:
         self.currentLog = self.log(run_id, trike_id, origin_edge, dest_edge, distance, price, tick)
@@ -101,9 +107,6 @@ class Tricycle:
     def hasSpawned(self) -> bool:
         return self.state != TricycleState.TO_SPAWN
     
-    def isParked(self) -> bool:
-        return self.state == TricycleState.PARKED
-    
     def shouldDie(self, time: int) -> bool:
         return self.endTime < time
     
@@ -125,9 +128,8 @@ class Tricycle:
     def getName(self) -> str:
         return self.name
     
-    def park(self, current_location: Location) -> None:
-        self.state = TricycleState.PARKED
-        self.lastLocation = current_location
+    def getLastLocation(self) -> Location:
+        return self.lastLocation
 
     def setLastLocation(self, last_location: Location) -> None:
         self.lastLocation = last_location
@@ -178,3 +180,9 @@ class Tricycle:
             'distance': self.dailyDistance,
             'actual_duration': self.getActualDuration()
         }
+    
+    def canAcceptDispatch(self, passenger_destination: Location) -> bool:
+        """Check if the tricycle can accept a dispatch to the given destination"""
+        current_location = getTricycleLocation(self.name)
+        estimated_distance = getManhattanDistance(current_location, passenger_destination)
+        return self.isFree() and estimated_distance <= self.farthestDistance

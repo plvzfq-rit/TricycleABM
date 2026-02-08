@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import random
+
 class SimulationConfig:
     assetDirectoryName = "maps"
     networkFileName = "net.net.xml"
@@ -116,3 +118,7 @@ class SimulationConfig:
         MULTIPLICATIVE_CONSTANT = 1000
         return lambda size=1: lognorm.rvs(shape, loc=0, scale=scale, size=size) * MULTIPLICATIVE_CONSTANT
     
+    def getProfitDistribution(self) -> callable:
+        from scipy.stats import lognorm
+        prob_zero = 24/37
+        return lambda size=1: 0 if random.random() < 24/37 else random.sample([30,10,50,-20,-50,20], size, p=[2/13,2/13,3/13,2/13,1/13,3/13])[0]
