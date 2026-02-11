@@ -70,7 +70,8 @@ class Tricycle:
         self.destination = destination
 
     def hasArrived(self, current_location: Location) -> bool:
-        self.cooldownTime = math.ceil(-600 * math.log(random.random()))
+        # temporarily removed
+        #self.cooldownTime = math.ceil(-600 * math.log(random.random()))
         return current_location.isNear(self.destination)
     
     def isInCooldown(self):
