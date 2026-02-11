@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 
 import random
@@ -61,10 +62,10 @@ class SimulationConfig:
         MULTIPLICATIVE_CONSTANT = MINUTES_OVER_HOURS * SECONDS_OVER_MINUTES
         START_TIME = 6 #AM
         NORMALIZING_CONSTANT = 6 * MULTIPLICATIVE_CONSTANT
-        return lambda size=1: max(0, \
+        return lambda size=1: math.floor(max(0, \
             MULTIPLICATIVE_CONSTANT * 
             lognorm.rvs(shape, loc=0, scale=scale, size=size) - 
-            NORMALIZING_CONSTANT)
+            NORMALIZING_CONSTANT))
     
     def getEndTimeDistribution(self) -> callable:
         from scipy.stats import lognorm
@@ -75,9 +76,9 @@ class SimulationConfig:
         MULTIPLICATIVE_CONSTANT = MINUTES_OVER_HOURS * SECONDS_OVER_MINUTES
         MAX_END_TIME = 64800 # 12AM in seconds
         SET_END_TIME = 23 * 60 * 60 - 1 # 11:59:59PM in seconds
-        return lambda size=1: min(SET_END_TIME, \
+        return lambda size=1: math.floor(min(SET_END_TIME, \
             MAX_END_TIME - MULTIPLICATIVE_CONSTANT * 
-            lognorm.rvs(shape, loc=0, scale=scale, size=size))
+            lognorm.rvs(shape, loc=0, scale=scale, size=size)))
     
     def getMaxGasDistribution(self) -> callable:
         import numpy as np
