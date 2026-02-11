@@ -59,6 +59,8 @@ class SimulationEngine:
                 tricycle.recordActualEnd(final_tick)
         # Log driver info with actual durations at the end of simulation
         self.simulationLogger.addDriverInfo(self.tricycleRepository.getTricycles())
+        self.simulationLogger.writeTripSummary()
+        print(f"\nTrip summary: {self.simulationLogger.accepted_trips} accepted, {self.simulationLogger.rejected_trips} rejected out of {self.simulationLogger.accepted_trips + self.simulationLogger.rejected_trips} attempts")
 
     def close(self) -> None:
         self.tick = 0

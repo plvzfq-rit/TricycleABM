@@ -127,6 +127,7 @@ else:
 df_all_list = []
 df_expenses_list = []
 df_drivers_list = []  # Store driver info for per-day stats
+df_trip_summary_list = []  # Store trip acceptance/rejection summaries
 
 sim_count = 0
 
@@ -179,8 +180,15 @@ for folder in all_folders:
         expenses_df.dropna(subset=['amount'], inplace=True) 
         df_expenses_list.append(expenses_df)
 
+        # Load trip summary if available
+        trip_summary_file = os.path.join(folder_path, "trip_summary.csv")
+        if os.path.exists(trip_summary_file):
+            summary_df = pd.read_csv(trip_summary_file)
+            summary_df["run_id"] = run_id
+            df_trip_summary_list.append(summary_df)
+
         sim_count += 1
-        
+
     except Exception as e:
         st.error(f"Error processing folder {folder}: {e}")
 
@@ -272,6 +280,32 @@ col2.metric("Total Distance", f"{df_all['distance'].sum():,.0f} m")
 col3.metric("Total Income", f"PHP {df_all['price'].sum():,.2f}")
 col1.metric("Total Expenses", f"PHP {df_all_expenses['amount'].sum():,.2f}")
 col2.metric("Total Profit", f"PHP {(df_all['price'].sum() - df_all_expenses['amount'].sum()):,.2f}")
+
+# --- Trip Acceptance/Rejection Summary ---
+if df_trip_summary_list:
+    df_trip_summary = pd.concat(df_trip_summary_list, ignore_index=True)
+    # Pivot so each metric becomes a column per run
+    summary_pivot = df_trip_summary.pivot(index='run_id', columns='metric', values='count').reset_index()
+
+    if 'accepted_trips' in summary_pivot.columns and 'rejected_trips' in summary_pivot.columns:
+        total_accepted = int(summary_pivot['accepted_trips'].sum())
+        total_rejected = int(summary_pivot['rejected_trips'].sum())
+        total_attempts = total_accepted + total_rejected
+        acceptance_rate = (total_accepted / total_attempts * 100) if total_attempts > 0 else 0
+
+        st.subheader("Trip Dispatch Outcomes")
+        col_t1, col_t2, col_t3, col_t4 = st.columns(4)
+        col_t1.metric("Total Attempts", f"{total_attempts:,}")
+        col_t2.metric("Accepted Trips", f"{total_accepted:,}")
+        col_t3.metric("Rejected Trips", f"{total_rejected:,}")
+        col_t4.metric("Acceptance Rate", f"{acceptance_rate:.1f}%")
+
+        # Per-day breakdown
+        if 'total_attempts' not in summary_pivot.columns:
+            summary_pivot['total_attempts'] = summary_pivot['accepted_trips'] + summary_pivot['rejected_trips']
+        summary_pivot['acceptance_rate'] = (summary_pivot['accepted_trips'] / summary_pivot['total_attempts'] * 100).round(1)
+        st.dataframe(summary_pivot[['run_id', 'accepted_trips', 'rejected_trips', 'total_attempts', 'acceptance_rate']].sort_values('run_id'))
+
 st.divider()
 
 # --- Per-Day Summary (Overall Daily Stats) ---
@@ -520,7 +554,7 @@ st.header("Trip-Level Analytics (Based on Analyzed Runs)")
 
 # --- Clean up columns ---
 # Select and reorder relevant columns for display
-trip_display_cols = ['run_id', 'trike_id', 'hub_id', 'origin_edge', 'dest_edge', 'distance', 'price', 'tick']
+trip_display_cols = ['run_id', 'trike_id', 'hub_id', 'origin_edge', 'dest_edge', 'distance', 'price', 'tick', 'driver_asp', 'passenger_asp']
 # Handle potential duplicate columns from merge (run_id_x, run_id_y)
 if 'run_id_x' in df_all.columns:
     df_all['run_id'] = df_all['run_id_x']
@@ -596,11 +630,90 @@ with col_a:
     # histogram of tick
     st.subheader("Trips Over Time (by Tick)")
     plot_distribution_with_stats(
-        df_all, 
-        'tick', 
+        df_all,
+        'tick',
         "Trips Over Time",
         "Tick",
         color="violet"
     )
-   
+
+# --- Aspiration Price (Bargaining) Analytics ---
+has_asp_data = 'driver_asp' in df_all.columns and 'passenger_asp' in df_all.columns
+
+if has_asp_data:
+    st.divider()
+    st.header("Bargaining Analytics (Driver & Passenger Aspiration Prices)")
+    st.write("Aspiration prices represent the driver's willingness-to-sell and the passenger's willingness-to-pay during fare negotiation.")
+
+    # Filter out rows where ASP data might be missing
+    asp_data = filtered_trips.dropna(subset=['driver_asp', 'passenger_asp']).copy()
+
+    if not asp_data.empty:
+        # Bargaining gap: difference between what driver wants and what passenger offers
+        asp_data['asp_gap'] = asp_data['driver_asp'] - asp_data['passenger_asp']
+        asp_data['asp_midpoint'] = (asp_data['driver_asp'] + asp_data['passenger_asp']) / 2
+
+        # Summary metrics
+        col_b1, col_b2, col_b3, col_b4 = st.columns(4)
+        col_b1.metric("Avg Driver ASP", f"PHP {asp_data['driver_asp'].mean():,.2f}")
+        col_b2.metric("Avg Passenger ASP", f"PHP {asp_data['passenger_asp'].mean():,.2f}")
+        col_b3.metric("Avg Agreed Price", f"PHP {asp_data['price'].mean():,.2f}")
+        col_b4.metric("Avg Bargaining Gap", f"PHP {asp_data['asp_gap'].mean():,.2f}")
+
+        # Distribution plots
+        st.subheader("Driver Aspiration Price Distribution")
+        plot_distribution_with_stats(
+            asp_data,
+            'driver_asp',
+            "Distribution of Driver Aspiration Prices",
+            "Driver ASP (PHP)",
+            color="#e76f51"
+        )
+
+        st.subheader("Passenger Aspiration Price Distribution")
+        plot_distribution_with_stats(
+            asp_data,
+            'passenger_asp',
+            "Distribution of Passenger Aspiration Prices",
+            "Passenger ASP (PHP)",
+            color="#2a9d8f"
+        )
+
+        st.subheader("Bargaining Gap Distribution (Driver ASP - Passenger ASP)")
+        plot_distribution_with_stats(
+            asp_data,
+            'asp_gap',
+            "Distribution of Bargaining Gap",
+            "Gap (PHP)",
+            color="#f4a261"
+        )
+
+        # Scatter: Driver ASP vs Passenger ASP, colored by agreed price
+        st.subheader("Driver ASP vs Passenger ASP")
+        fig_scatter, ax_scatter = plt.subplots(figsize=(6, 5))
+        scatter = ax_scatter.scatter(
+            asp_data['passenger_asp'],
+            asp_data['driver_asp'],
+            c=asp_data['price'],
+            cmap='viridis',
+            alpha=0.6,
+            edgecolors='black',
+            linewidths=0.3,
+            s=20
+        )
+        plt.colorbar(scatter, ax=ax_scatter, label='Agreed Price (PHP)')
+        # Add diagonal reference line
+        asp_min = min(asp_data['passenger_asp'].min(), asp_data['driver_asp'].min())
+        asp_max = max(asp_data['passenger_asp'].max(), asp_data['driver_asp'].max())
+        ax_scatter.plot([asp_min, asp_max], [asp_min, asp_max], 'r--', alpha=0.5, label='Equal ASP line')
+        ax_scatter.set_xlabel("Passenger ASP (PHP)")
+        ax_scatter.set_ylabel("Driver ASP (PHP)")
+        ax_scatter.set_title("Driver vs Passenger Aspiration Prices")
+        ax_scatter.legend()
+
+        col_sc1, col_sc2, col_sc3 = st.columns([1, 2, 1])
+        with col_sc2:
+            st.pyplot(fig_scatter, use_container_width=False)
+    else:
+        st.info("No aspiration price data available in the filtered trips.")
 

@@ -48,5 +48,10 @@ class TricycleDispatcher:
             if tricycle.canAcceptDispatch(passenger_destination):
                 success = self.tricycleRepository.dispatchTricycle(tricycle_id, passenger, simulationLogger, tick)
                 if success:
+                    simulationLogger.recordAcceptedTrip()
                     # Only remove from queue on successful dispatch
                     todaRepository.dequeToda(toda)
+                else:
+                    simulationLogger.recordRejectedTrip()
+            else:
+                simulationLogger.recordRejectedTrip()

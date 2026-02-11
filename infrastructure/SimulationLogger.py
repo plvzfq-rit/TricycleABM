@@ -37,6 +37,10 @@ class SimulationLogger:
 
         self._lock = threading.Lock()
 
+        # Trip acceptance/rejection counters
+        self.accepted_trips = 0
+        self.rejected_trips = 0
+
     #include the driver's willingness to sell and passenger's willingness to pay
     def add(self, run_id: str, taxi_id: str, origin_edge: str, dest_edge: str, distance: float, price: float, tick:int, driver_asp: float, passenger_asp: float) -> None:
         row = [run_id, taxi_id, origin_edge, dest_edge, distance, price, tick, driver_asp, passenger_asp]
@@ -74,6 +78,25 @@ class SimulationLogger:
             with open(self.expenses_filename, mode="a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow([tricycleId, expensetype, amount, tick])
+
+    def recordAcceptedTrip(self):
+        with self._lock:
+            self.accepted_trips += 1
+
+    def recordRejectedTrip(self):
+        with self._lock:
+            self.rejected_trips += 1
+
+    def writeTripSummary(self):
+        summary_path = os.path.join(self.filedirectory, "trip_summary.csv")
+        with self._lock:
+            with open(summary_path, mode="w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(["metric", "count"])
+                writer.writerow(["accepted_trips", self.accepted_trips])
+                writer.writerow(["rejected_trips", self.rejected_trips])
+                total = self.accepted_trips + self.rejected_trips
+                writer.writerow(["total_attempts", total])
 
     def getDirectory(self):
         return self.filedirectory
