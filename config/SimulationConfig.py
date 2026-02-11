@@ -1,7 +1,9 @@
 import math
 from pathlib import Path
+from scipy.stats import lognorm
 
 import random
+import numpy as np
 
 class SimulationConfig:
     assetDirectoryName = "maps"
@@ -32,7 +34,6 @@ class SimulationConfig:
         return float(self.gasPricePerLiter)
     
     def getWTPDistribution(self) -> callable:
-        from scipy.stats import lognorm
         shape = 0.7134231299166108
         scale = 38.38513260285555
         return lambda size=1: lognorm.rvs(shape, loc=0, scale=scale, size=size)
@@ -54,7 +55,6 @@ class SimulationConfig:
         return [0.08284023669, 0.1301775148, 0.1538461538, 0.1301775148, 0.08284023669, 0.07100591716, 0.04733727811, 0.0650887574, 0.03550295858, 0.02366863905, 0.02366863905, 0.04142011834, 0.02366863905, 0.01183431953, 0.005917159763, 0.005917159763, 0.005917159763, 0.005917159763]
 
     def getStartTimeDistribution(self) -> callable:
-        from scipy.stats import lognorm
         shape = 0.21442788235989804
         scale = 6.471010297664735
         MINUTES_OVER_HOURS = 60
@@ -68,7 +68,6 @@ class SimulationConfig:
             NORMALIZING_CONSTANT))
     
     def getEndTimeDistribution(self) -> callable:
-        from scipy.stats import lognorm
         shape = 0.4675881648065253
         scale = 4.4056405084474735
         MINUTES_OVER_HOURS = 60
@@ -107,19 +106,47 @@ class SimulationConfig:
         return lambda size=1: np.random.choice([False, True], size=size, p=w_af).item()
     
     def getDailyExpenseDistribution(self) -> callable:
-        from scipy.stats import lognorm
         shape = 0.5551170551235295
         scale = 375.96181139256873
         return lambda size=1: lognorm.rvs(shape, loc=0, scale=scale, size=size)
 
     def getFarthestDistanceDistribution(self) -> callable:
-        from scipy.stats import lognorm
         shape = 0.4562970511172417
         scale = 4.119316604349962
         MULTIPLICATIVE_CONSTANT = 1000
         return lambda size=1: lognorm.rvs(shape, loc=0, scale=scale, size=size) * MULTIPLICATIVE_CONSTANT
     
     def getProfitDistribution(self) -> callable:
-        from scipy.stats import lognorm
         prob_zero = 24/37
-        return lambda size=1: 0 if random.random() < 24/37 else random.sample([30,10,50,-20,-50,20], size, p=[2/13,2/13,3/13,2/13,1/13,3/13])[0]
+        return lambda size=1: 0 if random.random() < 24/37 else np.random.choice([30,10,50,-20,-50,20], size=size, p=[2/13,2/13,3/13,2/13,1/13,3/13])[0]
+
+    def getTricyclePatienceDistribution(self) -> callable:
+        def patience_distribution(size=1):
+            draw = random.random()
+            if draw < 17/28:
+                return random.uniform(0, 1/3)
+            elif draw < 26/28:  # 17/28 + 9/28
+                return random.uniform(1/3, 2/3)
+            else:
+                return random.uniform(2/3, 1)
+        return patience_distribution
+    
+    def getPassengerPatienceDistribution(self) -> callable:
+        def patience_distribution(size=1):
+            draw = random.random()
+            if draw < 16/28:
+                return random.uniform(0, 1/4)
+            elif draw < 22/28:  # 16/28 + 6/28
+                return random.uniform(1/4, 1/2)
+            elif draw < 27/28:  # 16/28 + 6/28 + 5/28
+                return random.uniform(1/2, 3/4)
+            else:
+                return random.uniform(3/4, 1)
+        return patience_distribution
+
+    def getTricycleAspiredPriceDistribution(self) -> callable:
+        return lambda size=1: np.random.choice([50, 70, 100, 60], size=size, p=[37/54, 9/54, 7/54, 1/54])[0]
+
+    def getPassengerAspiredPriceDistribution(self) -> callable:
+        
+        return lambda size=1: lognorm.rvs(0.7234913879629307, loc=0, scale=36.844797800005615, size=size)[0]

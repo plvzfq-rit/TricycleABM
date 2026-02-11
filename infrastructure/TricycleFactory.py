@@ -14,6 +14,8 @@ class TricycleFactory:
         self.getGetsFullTank = simulation_config.getGetsFullTankDistribution()
         self.getDailyExpense = simulation_config.getDailyExpenseDistribution()
         self.getFarthestDistance = simulation_config.getFarthestDistanceDistribution()
+        self.getPatience = simulation_config.getTricyclePatienceDistribution()
+        self.getAspiredPrice = simulation_config.getTricycleAspiredPriceDistribution()
     def createRandomTricycle(self, assigned_id: int, assigned_hub: str) -> tuple[str, Tricycle]:
         trike_name = "trike" + str(assigned_id)
         start_time = self.getStartTime()
@@ -27,4 +29,6 @@ class TricycleFactory:
         gets_full_tank = self.getGetsFullTank()
         daily_expense = self.getDailyExpense()
         farthest_distance = self.getFarthestDistance()
-        return (trike_name, Tricycle(trike_name, assigned_hub, start_time, end_time, max_gas, gas_consumption, gas_threshold, usual_gas_payment, gets_full_tank, farthest_distance, daily_expense))
+        patience = self.getPatience()
+        aspired_price = self.getAspiredPrice()
+        return (trike_name, Tricycle(trike_name, assigned_hub, start_time, end_time, max_gas, gas_consumption, gas_threshold, usual_gas_payment, gets_full_tank, farthest_distance, daily_expense, patience, aspired_price))

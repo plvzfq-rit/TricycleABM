@@ -22,7 +22,7 @@ class SimulationLogger:
         self.expenses_filename = os.path.join(run_dir, f"expenses.csv")
 
         # Define headers
-        self.headers = ["run_id", "trike_id", "origin_edge", "dest_edge", "distance", "price", "tick"]
+        self.headers = ["run_id", "trike_id", "origin_edge", "dest_edge", "distance", "price", "tick", "driver_asp", "passenger_asp"]
 
         if not os.path.exists(self.transactions_filename):
             with open(self.transactions_filename, mode="w", newline="", encoding="utf-8") as f:
@@ -37,8 +37,9 @@ class SimulationLogger:
 
         self._lock = threading.Lock()
 
-    def add(self, run_id: str, taxi_id: str, origin_edge: str, dest_edge: str, distance: float, price: float, tick:int):
-        row = [run_id, taxi_id, origin_edge, dest_edge, distance, price, tick]
+    #include the driver's willingness to sell and passenger's willingness to pay
+    def add(self, run_id: str, taxi_id: str, origin_edge: str, dest_edge: str, distance: float, price: float, tick:int, driver_asp: float, passenger_asp: float) -> None:
+        row = [run_id, taxi_id, origin_edge, dest_edge, distance, price, tick, driver_asp, passenger_asp]
         with self._lock:
             with open(self.transactions_filename, mode="a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)

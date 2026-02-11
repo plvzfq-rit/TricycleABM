@@ -29,6 +29,8 @@ class PassengerFactory:
         self.networkPedestrianEdges = sumo_repository.getNetworkPedestrianEdges()
         self.wtpDistribution = simulation_config.getWTPDistribution()
         self.todaPositions = simulation_config.getTodaPositions()
+        self.patienceDistribution = simulation_config.getPassengerPatienceDistribution()
+        self.aspiredPriceDistribution = simulation_config.getPassengerAspiredPriceDistribution()
         self.sumoRepository = sumo_repository
 
         # Initialize passenger index for unique naming
@@ -76,6 +78,10 @@ class PassengerFactory:
 
         # create Location object for destination
         destination = Location(destination_edge, position, lane_index)
+
+        patience = self.patienceDistribution()
+
+        aspiredPrice = self.aspiredPriceDistribution()
         
         # create and return Passenger object
-        return Passenger(name, willingness_to_pay, destination)
+        return Passenger(name, willingness_to_pay, patience, aspiredPrice, destination)
