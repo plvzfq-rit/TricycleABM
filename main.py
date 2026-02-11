@@ -1,7 +1,7 @@
 
 import os
 
-os.dup2(os.open(os.devnull, os.O_WRONLY), 2)
+# os.dup2(os.open(os.devnull, os.O_WRONLY), 2)
 from utils import *
 from domain import *
 from infrastructure import *

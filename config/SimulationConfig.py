@@ -36,7 +36,7 @@ class SimulationConfig:
     def getWTPDistribution(self) -> callable:
         shape = 0.7134231299166108
         scale = 38.38513260285555
-        return lambda size=1: round(lognorm.rvs(shape, loc=0, scale=scale, size=size), 2)
+        return lambda size=1: round(lognorm.rvs(shape, loc=0, scale=scale, size=size).item(), 2)
     
     def getTodaPositions(self) -> dict[str, float]:
         return {
@@ -63,8 +63,8 @@ class SimulationConfig:
         START_TIME = 6 #AM
         NORMALIZING_CONSTANT = 6 * MULTIPLICATIVE_CONSTANT
         return lambda size=1: math.floor(max(0, \
-            MULTIPLICATIVE_CONSTANT * 
-            lognorm.rvs(shape, loc=0, scale=scale, size=size) - 
+            MULTIPLICATIVE_CONSTANT *
+            lognorm.rvs(shape, loc=0, scale=scale, size=size).item() -
             NORMALIZING_CONSTANT))
     
     def getEndTimeDistribution(self) -> callable:
@@ -76,8 +76,8 @@ class SimulationConfig:
         MAX_END_TIME = 64800 # 12AM in seconds
         SET_END_TIME = 23 * 60 * 60 - 1 # 11:59:59PM in seconds
         return lambda size=1: math.floor(min(SET_END_TIME, \
-            MAX_END_TIME - MULTIPLICATIVE_CONSTANT * 
-            lognorm.rvs(shape, loc=0, scale=scale, size=size)))
+            MAX_END_TIME - MULTIPLICATIVE_CONSTANT *
+            lognorm.rvs(shape, loc=0, scale=scale, size=size).item()))
     
     def getMaxGasDistribution(self) -> callable:
         import numpy as np
@@ -108,13 +108,13 @@ class SimulationConfig:
     def getDailyExpenseDistribution(self) -> callable:
         shape = 0.5551170551235295
         scale = 375.96181139256873
-        return lambda size=1: round(lognorm.rvs(shape, loc=0, scale=scale, size=size), 2)
+        return lambda size=1: round(lognorm.rvs(shape, loc=0, scale=scale, size=size).item(), 2)
 
     def getFarthestDistanceDistribution(self) -> callable:
         shape = 0.4562970511172417
         scale = 4.119316604349962
         MULTIPLICATIVE_CONSTANT = 1000
-        return lambda size=1: lognorm.rvs(shape, loc=0, scale=scale, size=size) * MULTIPLICATIVE_CONSTANT
+        return lambda size=1: lognorm.rvs(shape, loc=0, scale=scale, size=size).item() * MULTIPLICATIVE_CONSTANT
     
     def getProfitDistribution(self) -> callable:
         prob_zero = 24/37

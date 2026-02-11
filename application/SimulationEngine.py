@@ -32,13 +32,12 @@ class SimulationEngine:
             "-n", self.simulationConfig.getNetworkFilePath(),
             "-r", self.simulationConfig.getRoutesFilePath(),
             "-a", additionalFiles,
-            "--lateral-resolution", "2.0",
-            "--no-warnings",
-            "--ignore-route-errors"
+            "--lateral-resolution", "2.0"
         ])
 
     def doMainLoop(self, simulation_duration: int) -> None:
-        self.startTraci()
+        if self.first_run:
+            self.startTraci()
         self.todaRepository = TodaRepository()
         #TODO:
         while self.tick < simulation_duration:

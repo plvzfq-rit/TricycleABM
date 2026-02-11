@@ -74,7 +74,7 @@ class PassengerFactory:
         distance = getManhattanDistance(source, destination) / 1000.0  # convert to km
 
         # generate willingness to pay (peso/km times distance in km)
-        willingness_to_pay = self.wtpDistribution(size=1)[0] * distance
+        willingness_to_pay = self.wtpDistribution(size=1) * distance
 
         # create Location object for destination
         destination = Location(destination_edge, position, lane_index)
