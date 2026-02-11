@@ -168,7 +168,8 @@ class TricycleRepository:
         self.getTricycle(tricycle_id).acceptPassenger(destination)
         self.setTricycleDestination(tricycle_id, destination)
 
-        tricycle.recordLog("run002", str(tricycle_id), str(hub_edge), str(dest_edge), str(distance), str(curr_offer), str(tick))
+        #need to include in the call the WTS and WTP 
+        tricycle.recordLog("run002", str(tricycle_id), str(hub_edge), str(dest_edge), str(distance), str(curr_offer), str(tick), str(driver_asp), str(passenger_asp))
 
         #1. create a trip object
         #2. make a record

@@ -26,7 +26,7 @@ class Tricycle:
         self.getsAFullTank = getsAFullTank
         self.dailyExpense = dailyExpense
         self.farthestDistance = farthestDistance
-        self.log = namedtuple("log", ["run_id","trike_id","origin_edge", "dest_edge", "distance", "price","tick"])
+        self.log = namedtuple("log", ["run_id","trike_id","origin_edge", "dest_edge", "distance", "price","tick", "driver_asp", "passenger_asp"])
         self.currentLog = None
         self.cooldownTime = 0
         self.patience = patience
@@ -51,8 +51,11 @@ class Tricycle:
     def getState(self) -> TricycleState:
         return self.state
     
-    def recordLog(self, run_id:str, trike_id: str, origin_edge: str, dest_edge:str, distance:str, price:str, tick:str) -> None:
-        self.currentLog = self.log(run_id, trike_id, origin_edge, dest_edge, distance, price, tick)
+    #Need to include the Driver's willingness to sell and Passenger's willingness to pay
+    def recordLog(
+            self, run_id:str, trike_id: str, origin_edge: str, dest_edge:str, distance:str, price:str, tick:str, driver_asp: str, passenger_asp: str
+            ) -> None:
+        self.currentLog = self.log(run_id, trike_id, origin_edge, dest_edge, distance, price, tick, driver_asp, passenger_asp)
     
     def activate(self) -> None:
         self.state = TricycleState.FREE
