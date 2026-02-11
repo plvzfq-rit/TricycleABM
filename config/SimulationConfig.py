@@ -36,7 +36,7 @@ class SimulationConfig:
     def getWTPDistribution(self) -> callable:
         shape = 0.7134231299166108
         scale = 38.38513260285555
-        return lambda size=1: lognorm.rvs(shape, loc=0, scale=scale, size=size)
+        return lambda size=1: round(lognorm.rvs(shape, loc=0, scale=scale, size=size), 2)
     
     def getTodaPositions(self) -> dict[str, float]:
         return {
@@ -108,7 +108,7 @@ class SimulationConfig:
     def getDailyExpenseDistribution(self) -> callable:
         shape = 0.5551170551235295
         scale = 375.96181139256873
-        return lambda size=1: lognorm.rvs(shape, loc=0, scale=scale, size=size)
+        return lambda size=1: round(lognorm.rvs(shape, loc=0, scale=scale, size=size), 2)
 
     def getFarthestDistanceDistribution(self) -> callable:
         shape = 0.4562970511172417
@@ -145,8 +145,8 @@ class SimulationConfig:
         return patience_distribution
 
     def getTricycleAspiredPriceDistribution(self) -> callable:
-        return lambda size=1: np.random.choice([50, 70, 100, 60], size=size, p=[37/54, 9/54, 7/54, 1/54])[0]
+        return lambda size=1: round(np.random.choice([50, 70, 100, 60], size=size, p=[37/54, 9/54, 7/54, 1/54])[0], 2)
 
     def getPassengerAspiredPriceDistribution(self) -> callable:
         
-        return lambda size=1: lognorm.rvs(0.7234913879629307, loc=0, scale=36.844797800005615, size=size)[0]
+        return lambda size=1: round(lognorm.rvs(0.7234913879629307, loc=0, scale=36.844797800005615, size=size)[0], 2)

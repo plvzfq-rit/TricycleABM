@@ -109,11 +109,11 @@ class TricycleRepository:
         distance = traci.simulation.getDistanceRoad(current_edge, 0, dest_edge, 0, isDriving=True)
         driver_patience = tricycle.getPatience()
         passenger_patience = passenger.getPatience()
-        min_price = tricycle.gasConsumptionRate * distance * self.simulationConfig.gasPricePerLiter / 1000
-        driver_asp = tricycle.getAspiredPrice() * distance / 1000
-        max_price= passenger.willingness_to_pay * distance / 1000
-        passenger_asp = passenger.getAspiredPrice() * distance / 1000
-        curr_offer = driver_matrix(distance)
+        min_price = round(tricycle.gasConsumptionRate * distance * self.simulationConfig.gasPricePerLiter / 1000, 2)
+        driver_asp = round(tricycle.getAspiredPrice() * distance / 1000, 2)
+        max_price= round(passenger.willingness_to_pay * distance / 1000, 2)
+        passenger_asp = round(passenger.getAspiredPrice() * distance / 1000, 2)
+        curr_offer = round(driver_matrix(distance), 2)
         driver_sentinel = 0
         passenger_sentinel = 1
         turn = driver_sentinel if random.random() < 0.5 else passenger_sentinel
@@ -121,8 +121,8 @@ class TricycleRepository:
         agree=False
         max_turns = 2
         for i in range(max_turns):
-            driver_asp = min_price + (driver_asp - min_price) * (driver_patience ** i)
-            passenger_asp = max_price - (max_price - passenger_asp) * (passenger_patience ** i)
+            driver_asp = round(min_price + (driver_asp - min_price) * (driver_patience ** i), 2)
+            passenger_asp = round(max_price - (max_price - passenger_asp) * (passenger_patience ** i), 2)
             if turn == driver_sentinel:
                 if curr_offer >= driver_asp:
                     agree = True
