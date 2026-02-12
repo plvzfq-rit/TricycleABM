@@ -9,7 +9,7 @@ from utils.TraciUtils import getTricycleLocation
 
 
 class Tricycle:
-    def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float, usualGasPayment: float, getsAFullTank: bool, farthestDistance: float, dailyExpense: float, patience: float, aspiredPrice: float) -> None:
+    def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float, usualGasPayment: float, getsAFullTank: bool, farthestDistance: float, dailyExpense: float, patience: float, aspiredPrice: float, minimumPrice: float) -> None:
         self.name = name
         self.hub = hub
         self.startTime = start_time
@@ -31,6 +31,7 @@ class Tricycle:
         self.cooldownTime = 0
         self.patience = patience
         self.aspiredPrice = aspiredPrice
+        self.minimumPrice = minimumPrice
         # Track actual time spent in simulation
         self.actualStartTick = None
         self.actualEndTick = None

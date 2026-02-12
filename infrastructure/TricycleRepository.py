@@ -109,8 +109,14 @@ class TricycleRepository:
         distance = traci.simulation.getDistanceRoad(current_edge, 0, dest_edge, 0, isDriving=True)
         driver_patience = tricycle.getPatience()
         passenger_patience = passenger.getPatience()
-        min_price = round(driver_matrix(distance, base_price=self.simulationConfig.gasPricePerLiter / tricycle.gasConsumptionRate), 2)
-        driver_asp = round(driver_matrix(distance, tricycle.getAspiredPrice()), 2)
+
+        driver_price_1 = round(driver_matrix(distance, tricycle.getAspiredPrice()), 2)
+        driver_price_2 = round(driver_matrix(distance, tricycle.minimumPrice), 2)
+
+
+        min_price = min(driver_price_1, driver_price_2)
+        driver_asp = max(driver_price_1, driver_price_2)
+        
         max_price= round(passenger.willingness_to_pay * distance / 1000, 2)
         passenger_asp = round(passenger.getAspiredPrice() * distance / 1000, 2)
         curr_offer = round(driver_matrix(distance, 50), 2)

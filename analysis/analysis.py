@@ -95,8 +95,10 @@ st.sidebar.header("Analysis Configuration")
 
 # 1. Select Log Directory
 # Find all directories that match the expected pattern
-available_logs = ["Driver_55.9", "Driver_58.9", "Manila_55.9", "Manila_58.9", "Test", "Without_Queue"] 
-existing_logs = [d for d in available_logs if os.path.isdir(d)]
+existing_logs = [
+    d for d in os.listdir(".")
+    if os.path.isdir(os.path.join(".", d))
+]
 
 if not existing_logs:
     st.error("No log directories (e.g., 'logs', 'log1') found. Please check your folder structure.")
