@@ -41,6 +41,10 @@ class TricycleDispatcher:
                 continue
 
             tricycle_location = getTricycleLocation(tricycle_id)
+            if tricycle_location is None:
+                tricycle.kill()
+                continue
+                
             hub_edge = getTricycleHubEdge(tricycle.getHub())
             passenger = self.passengerFactory.createRandomPassenger(hub_edge)
             passenger_destination = passenger.getDestination()

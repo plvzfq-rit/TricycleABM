@@ -14,10 +14,10 @@ from .SimulationLogger import SimulationLogger
 
 import math
 
-def driver_matrix(given):
+def driver_matrix(given, base_price=50):
     # Starting point
     limit = 1000
-    value = 50
+    value = base_price
     
     # Alternating increments: +20, +30, +20, +30, ...
     increments = [20, 30]
@@ -109,11 +109,11 @@ class TricycleRepository:
         distance = traci.simulation.getDistanceRoad(current_edge, 0, dest_edge, 0, isDriving=True)
         driver_patience = tricycle.getPatience()
         passenger_patience = passenger.getPatience()
-        min_price = round(tricycle.gasConsumptionRate * distance * self.simulationConfig.gasPricePerLiter / 1000, 2)
-        driver_asp = round(tricycle.getAspiredPrice() * distance / 1000, 2)
+        min_price = round(driver_matrix(distance, base_price=self.simulationConfig.gasPricePerLiter / tricycle.gasConsumptionRate), 2)
+        driver_asp = round(driver_matrix(distance, tricycle.getAspiredPrice()), 2)
         max_price= round(passenger.willingness_to_pay * distance / 1000, 2)
         passenger_asp = round(passenger.getAspiredPrice() * distance / 1000, 2)
-        curr_offer = round(driver_matrix(distance), 2)
+        curr_offer = round(driver_matrix(distance, 50), 2)
         driver_sentinel = 0
         passenger_sentinel = 1
         turn = driver_sentinel if random.random() < 0.5 else passenger_sentinel
