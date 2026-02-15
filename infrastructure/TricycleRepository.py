@@ -38,11 +38,12 @@ def manila_matrix(given):
     return 16 if given < 1000 else 16 + 5 * math.ceil((given - 1000) / 500)
 
 class TricycleRepository:
-    def __init__(self, sumo_service: SumoRepository, tricycle_factory: TricycleFactory,simulation_config: SimulationConfig):
+    def __init__(self, sumo_service: SumoRepository, tricycle_factory: TricycleFactory,simulation_config: SimulationConfig, simulation_logger: SimulationLogger):
         self.tricycles = dict()
         self.sumoService = sumo_service
         self.tricycleFactory = tricycle_factory
         self.simulationConfig = simulation_config
+        self.simulationLogger = simulation_logger
 
     def hasActiveTricycles(self) -> bool:
         for tricycle in self.tricycles.values():
@@ -113,10 +114,9 @@ class TricycleRepository:
         driver_price_1 = round(driver_matrix(distance, tricycle.getAspiredPrice()), 2)
         driver_price_2 = round(driver_matrix(distance, tricycle.minimumPrice), 2)
 
-
         min_price = min(driver_price_1, driver_price_2)
         driver_asp = max(driver_price_1, driver_price_2)
-        
+
         max_price= round(passenger.willingness_to_pay * distance / 1000, 2)
         passenger_asp = round(passenger.getAspiredPrice() * distance / 1000, 2)
         curr_offer = round(driver_matrix(distance, 50), 2)
@@ -126,7 +126,15 @@ class TricycleRepository:
         first = True
         agree=False
         max_turns = 2
-        for i in range(max_turns):
+
+        rounds = []
+
+        round_0 = [curr_offer, driver_asp, passenger_asp, "driver" if turn == driver_sentinel else "passenger", 0]
+        rounds.append(round_0)
+
+        turn = passenger_sentinel if turn == driver_sentinel else driver_sentinel
+
+        for i in range(1, max_turns + 1):
             driver_asp = round(min_price + (driver_asp - min_price) * (driver_patience ** i), 2)
             passenger_asp = round(max_price - (max_price - passenger_asp) * (passenger_patience ** i), 2)
             if turn == driver_sentinel:
@@ -137,6 +145,7 @@ class TricycleRepository:
                     break
                 else:
                     curr_offer = driver_asp
+                    rounds.append([curr_offer, driver_asp, passenger_asp, "driver", i])
                     first = False
                     turn = passenger_sentinel
             elif turn == passenger_sentinel:
@@ -147,8 +156,12 @@ class TricycleRepository:
                     break
                 else:
                     curr_offer = passenger_asp
+                    rounds.append([curr_offer, driver_asp, passenger_asp, "passenger", i])
                     first = False
                     turn = driver_sentinel
+
+        transaction = [tricycle_id, passenger.name, distance, tick, "agree" if agree else "failed", curr_offer if agree else -1]
+        simulationLogger.recordTransaction(transaction, rounds)
         
         if not agree:
             return False
@@ -175,7 +188,7 @@ class TricycleRepository:
         self.setTricycleDestination(tricycle_id, destination)
 
         #need to include in the call the WTS and WTP 
-        tricycle.recordLog("run002", str(tricycle_id), str(hub_edge), str(dest_edge), str(distance), str(curr_offer), str(tick), str(driver_asp), str(passenger_asp))
+        # tricycle.recordLog("run002", str(tricycle_id), str(hub_edge), str(dest_edge), str(distance), str(curr_offer), str(tick), str(driver_asp), str(passenger_asp))
 
         #1. create a trip object
         #2. make a record
@@ -269,13 +282,13 @@ class TricycleRepository:
                     payment = amount * self.simulationConfig.gasPricePerLiter
             tricycle.money -= payment
             tricycle.currentGas += amount
-            self.simulationLogger.addExpenseToLog(tricycle_id, "end_gas", payment, 1080)
+            self.simulationLogger.addExpense(tricycle_id, "end_gas", payment)
 
     def startExpenseAllTricycles(self) -> None:
         for tricycle_id in self.tricycles.keys():
             tricycle = self.getTricycle(tricycle_id)
             tricycle.money -= tricycle.dailyExpense
-            self.simulationLogger.addExpenseToLog(tricycle_id, "daily_expense", tricycle.dailyExpense, 1080)
+            self.simulationLogger.addExpense(tricycle_id, "daily_expense", tricycle.dailyExpense)
 
     def changeLogger(self, simulationLogger) -> None:
         self.simulationLogger = simulationLogger

@@ -22,6 +22,8 @@ class SimulationEngine:
         self.first_run = first_run
         if first_run:
             self.tricycleRepository.createTricycles(toda_hub_descriptor.getNumberOfTricycles(), toda_hub_descriptor.getHubDistribution())
+            for tricycle in self.tricycleRepository.getTricycles():
+                self.simulationLogger.addDriver(tricycle)
         self.todaRepository = None
 
     def startTraci(self) -> None:
@@ -39,7 +41,7 @@ class SimulationEngine:
         if self.first_run:
             self.startTraci()
         self.todaRepository = TodaRepository()
-        #TODO:
+        
         while self.tick < simulation_duration:
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.todaRepository.manageTodaQueues()
@@ -48,19 +50,6 @@ class SimulationEngine:
             if self.tick % 60 == 0:
                 print(f"\rCurrent time: {math.floor(self.tick / 3600) + 6:02d}:{math.floor((self.tick % 3600) / 60):02d}:{self.tick % 60:02d}                 ", end="")
             traci.simulationStep()
-
-        # Finalize any tricycles still active and log driver info with actual durations
-        self._finalizeSimulation(simulation_duration)
-
-    def _finalizeSimulation(self, final_tick: int) -> None:
-        """Record final actual end times for any tricycles still active and log all driver info"""
-        for tricycle in self.tricycleRepository.getTricycles():
-            if tricycle.actualEndTick is None and tricycle.actualStartTick is not None:
-                tricycle.recordActualEnd(final_tick)
-        # Log driver info with actual durations at the end of simulation
-        self.simulationLogger.addDriverInfo(self.tricycleRepository.getTricycles())
-        self.simulationLogger.writeTripSummary()
-        print(f"\nTrip summary: {self.simulationLogger.accepted_trips} accepted, {self.simulationLogger.rejected_trips} rejected out of {self.simulationLogger.accepted_trips + self.simulationLogger.rejected_trips} attempts")
 
     def close(self) -> None:
         self.tick = 0

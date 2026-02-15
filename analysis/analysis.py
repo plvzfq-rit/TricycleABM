@@ -1,721 +1,759 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import seaborn as sns
+import sqlite3
 import os
-import re # For cleaning expense amount
 
-# Set page config for a wider layout
-st.set_page_config(layout="wide")
-
-# Use a nice seaborn theme
+# ---------------------------------------------------------------------------
+# Page config
+# ---------------------------------------------------------------------------
+st.set_page_config(page_title="Tricycle Market Analysis", layout="wide")
 sns.set_theme(style="whitegrid")
 
-## --- Helper Functions ---
+# ---------------------------------------------------------------------------
+# Helper utilities
+# ---------------------------------------------------------------------------
 
-# Regex to find numbers in the amount column (handles floats, ints)
-AMOUNT_REGEX = re.compile(r"[-+]?\d*\.\d+|\d+")
-
-def extract_amount(amount_str):
-    """
-    Cleans the 'amount' column by extracting the first
-    number found in a string (e.g., from "[310.96]").
-    """
-    if isinstance(amount_str, (int, float)):
-        return amount_str
-    if not isinstance(amount_str, str):
-        return pd.NA
-    
-    match = AMOUNT_REGEX.search(amount_str)
-    if match:
-        return float(match.group(0))
-    return pd.NA
-
-def plot_distribution_with_stats(data, x_col, title, xlabel, ylabel="Count", color="skyblue", bins=30):
-    """
-    Plots a distribution using Seaborn and adds a text box with Mean, Median, Mode, and Std Dev.
-    """
-    if data.empty:
-        st.write(f"No data to plot for {title}")
+def plot_distribution(data, x_col, title, xlabel, ylabel="Count", color="skyblue", bins=30):
+    """Histogram + KDE with descriptive stats box."""
+    if data.empty or x_col not in data.columns:
+        st.write(f"No data for {title}")
         return
-
+    series = data[x_col].dropna()
+    if series.empty:
+        st.write(f"No data for {title}")
+        return
     fig, ax = plt.subplots(figsize=(6, 4))
-    
-    # Plot histogram with KDE
-    sns.histplot(data=data, x=x_col, bins=bins, color=color, kde=True, ax=ax, edgecolor="black")
-    
-    # Calculate stats
-    mean_val = data[x_col].mean()
-    median_val = data[x_col].median()
-    std_val = data[x_col].std()
-    
-    # Mode calculation (approximate for continuous data)
-    try:
-        # Rounding to 2 decimals to find a meaningful mode in float data
-        mode_series = data[x_col].round(2).mode()
-        if len(mode_series) > 0:
-            mode_val = mode_series[0] # Take the first mode if multiple
-            mode_str = f"{mode_val:,.2f}"
-        else:
-            mode_str = "N/A"
-    except:
-        mode_str = "N/A"
-
-    # Create stats text block
-    stats_text = (
-        f"Mean: {mean_val:,.2f}\n"
-        f"Median: {median_val:,.2f}\n"
-        f"Mode: {mode_str}\n"
-        f"Std Dev: {std_val:,.2f}"
+    sns.histplot(series, bins=bins, color=color, kde=True, ax=ax, edgecolor="black")
+    stats = (
+        f"Mean: {series.mean():,.2f}\n"
+        f"Median: {series.median():,.2f}\n"
+        f"Std: {series.std():,.2f}\n"
+        f"N: {len(series):,}"
     )
-    
-    # Add text box to the plot (top right corner usually works well)
-    # transform=ax.transAxes uses relative coordinates (0 to 1)
-    ax.text(
-        0.95, 0.95, 
-        stats_text, 
-        transform=ax.transAxes, 
-        fontsize=10, 
-        verticalalignment='top', 
-        horizontalalignment='right',
-        bbox=dict(boxstyle='round', facecolor='white', alpha=0.8)
-    )
-
+    ax.text(0.95, 0.95, stats, transform=ax.transAxes, fontsize=9,
+            va='top', ha='right',
+            bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
         st.pyplot(fig, use_container_width=False)
+    plt.close(fig)
 
 
-## --- NEW: Sidebar Configuration ---
-st.sidebar.header("Analysis Configuration")
+def gini_coefficient(values):
+    """Compute Gini coefficient for a 1-D array of non-negative values."""
+    v = np.sort(np.asarray(values, dtype=float))
+    v = v[~np.isnan(v)]
+    n = len(v)
+    if n == 0 or v.sum() == 0:
+        return 0.0
+    index = np.arange(1, n + 1)
+    return (2 * np.sum(index * v) - (n + 1) * np.sum(v)) / (n * np.sum(v))
 
-# 1. Select Log Directory
-# Find all directories that match the expected pattern
-existing_logs = [
-    d for d in os.listdir(".")
-    if os.path.isdir(os.path.join(".", d))
+
+def lorenz_curve(values, label="", ax=None):
+    """Plot Lorenz curve on given axes."""
+    v = np.sort(np.asarray(values, dtype=float))
+    v = v[~np.isnan(v)]
+    if len(v) == 0:
+        return
+    cum = np.concatenate(([0], np.cumsum(v) / v.sum()))
+    x = np.linspace(0, 1, len(cum))
+    if ax is None:
+        _, ax = plt.subplots()
+    ax.plot(x, cum, label=label)
+    ax.plot([0, 1], [0, 1], 'k--', alpha=0.4, label='Perfect equality')
+    ax.set_xlabel("Cumulative share of agents")
+    ax.set_ylabel("Cumulative share of value")
+
+
+def income_shares(values, top_pct=0.10, bottom_pct=0.40):
+    """Return top X% share and bottom Y% share of total."""
+    v = np.sort(np.asarray(values, dtype=float))
+    v = v[~np.isnan(v)]
+    n = len(v)
+    if n == 0 or v.sum() == 0:
+        return 0.0, 0.0
+    top_n = max(1, int(np.ceil(n * top_pct)))
+    bottom_n = max(1, int(np.ceil(n * bottom_pct)))
+    total = v.sum()
+    top_share = v[-top_n:].sum() / total
+    bottom_share = v[:bottom_n].sum() / total
+    return top_share, bottom_share
+
+
+# ---------------------------------------------------------------------------
+# Database connection
+# ---------------------------------------------------------------------------
+DB_PATH = os.path.join(os.path.dirname(__file__), "..", "db", "simulation_logs.db")
+DB_PATH = os.path.normpath(DB_PATH)
+
+if not os.path.isfile(DB_PATH):
+    st.error(f"Database not found at `{DB_PATH}`. Run the simulation first.")
+    st.stop()
+
+
+@st.cache_data(ttl=60)
+def load_data():
+    conn = sqlite3.connect(DB_PATH)
+
+    runs = pd.read_sql("SELECT * FROM runs", conn)
+    drivers = pd.read_sql("SELECT * FROM drivers", conn)
+    passengers = pd.read_sql("SELECT * FROM passengers", conn)
+    transactions = pd.read_sql("SELECT * FROM passenger_transactions", conn)
+    neg_steps = pd.read_sql("SELECT * FROM negotiation_steps", conn)
+    expenses = pd.read_sql("SELECT * FROM expenses", conn)
+
+    conn.close()
+    return runs, drivers, passengers, transactions, neg_steps, expenses
+
+
+runs_df, drivers_df, passengers_df, txn_df, neg_df, expenses_df = load_data()
+
+if txn_df.empty:
+    st.warning("No transaction data found. Run the simulation first.")
+    st.stop()
+
+# ---------------------------------------------------------------------------
+# Sidebar - run selection
+# ---------------------------------------------------------------------------
+st.sidebar.header("Configuration")
+all_run_ids = sorted(runs_df["id"].unique())
+selected_runs = st.sidebar.multiselect(
+    "Select simulation runs",
+    options=all_run_ids,
+    default=all_run_ids,
+    help="Leave empty to include all runs"
+)
+if not selected_runs:
+    selected_runs = all_run_ids
+
+# Filter data to selected runs
+drivers = drivers_df[drivers_df["run_id"].isin(selected_runs)].copy()
+passengers = passengers_df[passengers_df["run_id"].isin(selected_runs)].copy()
+txn = txn_df[txn_df["run_id"].isin(selected_runs)].copy()
+neg = neg_df[neg_df["transaction_id"].isin(txn["id"])].copy()
+expenses = expenses_df[expenses_df["run_id"].isin(selected_runs)].copy()
+
+n_runs = len(selected_runs)
+
+# ---------------------------------------------------------------------------
+# Pre-compute useful columns
+# ---------------------------------------------------------------------------
+# Merge driver info onto transactions
+txn = txn.merge(
+    drivers[["id", "trike_code", "hub", "gas_consumption_rate",
+             "aspired_price", "minimum_price"]],
+    left_on="driver_id", right_on="id", how="left", suffixes=("", "_drv")
+)
+# Merge passenger info onto transactions
+txn = txn.merge(
+    passengers[["id", "willingness_to_pay", "aspired_price"]],
+    left_on="passenger_id", right_on="id", how="left", suffixes=("", "_pax")
+)
+
+# Compute passenger WTP & aspired price in absolute terms (per-km * distance/1000)
+txn["pax_wtp"] = txn["willingness_to_pay"] * txn["distance"] / 1000.0
+txn["pax_asp_abs"] = txn["aspired_price_pax"] * txn["distance"] / 1000.0
+
+# Get initial negotiation step for driver asp at start of negotiation
+init_neg = neg[neg["iteration"] == 0].drop_duplicates(subset=["transaction_id"])
+txn = txn.merge(
+    init_neg[["transaction_id", "driver_asp", "passenger_asp"]],
+    left_on="id", right_on="transaction_id", how="left", suffixes=("", "_neg")
+)
+
+# Marginal cost proxy: gas_consumption_rate * distance * gas_price_per_liter
+# gas_consumption_rate is liters/meter essentially; gas price ~ 58.9 PHP/L
+GAS_PRICE = 58.9
+txn["marginal_cost"] = txn["gas_consumption_rate"] * txn["distance"] * GAS_PRICE
+
+# Separate accepted / failed negotiation / rejected (too far)
+accepted = txn[txn["result"] == "agree"].copy()
+failed_neg = txn[txn["result"] == "failed"].copy()
+rejected = txn[txn["result"] == "reject"].copy()
+not_accepted = txn[txn["result"] != "agree"].copy()
+
+# Consumer surplus (accepted only)
+accepted["consumer_surplus"] = accepted["pax_wtp"] - accepted["final_price"]
+# Producer surplus (accepted only)
+accepted["producer_surplus"] = accepted["final_price"] - accepted["marginal_cost"]
+
+# ---------------------------------------------------------------------------
+# TITLE
+# ---------------------------------------------------------------------------
+st.title("Measurement Framework: Tricycle Negotiation Market")
+st.markdown(
+    "A multi-dimensional measurement framework for evaluating access, welfare, "
+    "inequality, bargaining distribution, and spatial heterogeneity in a Monte Carlo "
+    "simulation of negotiated tricycle fares. The framework is **descriptive and "
+    "comparative**, not causal."
+)
+st.caption(f"Analyzing **{n_runs}** simulation run(s)  |  "
+           f"{len(txn):,} total transactions  |  "
+           f"{len(accepted):,} accepted  |  "
+           f"{len(failed_neg):,} failed negotiations  |  "
+           f"{len(rejected):,} rejected (too far)")
+st.divider()
+
+# =========================================================================
+# SECTION 1 - Passenger Outcome Metrics
+# =========================================================================
+st.header("1. Passenger Outcome Metrics")
+st.markdown(
+    "These metrics measure **access** (whether passengers are served) and "
+    "**realized welfare** (the economic benefit passengers receive from completed "
+    "transactions)."
+)
+
+# 1.1 Access Ratios
+st.subheader("1.1 Access Ratios")
+st.markdown(
+    "Access ratios decompose every passenger interaction into one of three outcomes:\n"
+    "- **Served (Accepted):** Negotiation succeeded and the passenger was transported.\n"
+    "- **Failed Negotiation:** A negotiation took place but driver and passenger "
+    "could not agree on a fare.\n"
+    "- **Rejected (Too Far):** The passenger's destination exceeded the driver's "
+    "maximum service distance (`farthest_distance`), so no negotiation was attempted."
+)
+total_txn = len(txn)
+n_accepted = len(accepted)
+n_failed = len(failed_neg)
+n_rejected = len(rejected)
+c1, c2, c3, c4 = st.columns(4)
+c1.metric("% Served", f"{n_accepted / total_txn * 100:.1f}%" if total_txn else "N/A")
+c2.metric("% Failed Negotiation", f"{n_failed / total_txn * 100:.1f}%" if total_txn else "N/A")
+c3.metric("% Rejected (Too Far)", f"{n_rejected / total_txn * 100:.1f}%" if total_txn else "N/A")
+c4.metric("Total Interactions", f"{total_txn:,}")
+
+# Pie chart of outcomes
+fig_pie, ax_pie = plt.subplots(figsize=(4, 4))
+outcome_counts = [n_accepted, n_failed, n_rejected]
+outcome_labels = [
+    f"Served\n({n_accepted:,})",
+    f"Failed Negotiation\n({n_failed:,})",
+    f"Rejected (Too Far)\n({n_rejected:,})"
 ]
+outcome_colors = ["#2a9d8f", "#e76f51", "#e9c46a"]
+# Only plot non-zero slices
+nonzero = [(c, l, co) for c, l, co in zip(outcome_counts, outcome_labels, outcome_colors) if c > 0]
+if nonzero:
+    ax_pie.pie(
+        [x[0] for x in nonzero],
+        labels=[x[1] for x in nonzero],
+        colors=[x[2] for x in nonzero],
+        autopct='%1.1f%%', startangle=90
+    )
+    ax_pie.set_title("Transaction Outcome Breakdown")
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
+        st.pyplot(fig_pie, use_container_width=False)
+    plt.close(fig_pie)
 
-if not existing_logs:
-    st.error("No log directories (e.g., 'logs', 'log1') found. Please check your folder structure.")
-    st.stop()
+# 1.2 Consumer Surplus
+st.subheader("1.2 Consumer Surplus")
+st.markdown(
+    "For each accepted transaction: **Consumer Surplus = Passenger WTP - Final Price**.\n\n"
+    "This measures the welfare gain a passenger receives relative to the maximum they "
+    "were willing to pay. A higher consumer surplus indicates passengers are paying "
+    "well below their reservation price."
+)
+if not accepted.empty:
+    cs_total = accepted["consumer_surplus"].sum()
+    cs_mean = accepted["consumer_surplus"].mean()
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Total Consumer Surplus", f"PHP {cs_total:,.2f}")
+    c2.metric("Avg Consumer Surplus / Passenger", f"PHP {cs_mean:,.2f}")
+    c3.metric("Median Consumer Surplus", f"PHP {accepted['consumer_surplus'].median():,.2f}")
 
-LOG_DIRECTORY = st.sidebar.selectbox(
-    "Select Log Directory to Analyze",
-    options=existing_logs,
-    index=0 # Default to the first one found
+    # Hub-level consumer surplus
+    hub_cs = accepted.groupby("hub")["consumer_surplus"].agg(["sum", "mean", "count"]).reset_index()
+    hub_cs.columns = ["Hub", "Total CS", "Avg CS", "Transactions"]
+    st.dataframe(hub_cs.sort_values("Total CS", ascending=False), use_container_width=True)
+
+    plot_distribution(accepted, "consumer_surplus",
+                      "Consumer Surplus Distribution", "Consumer Surplus (PHP)", color="#2a9d8f")
+else:
+    st.info("No accepted transactions to compute consumer surplus.")
+
+st.divider()
+
+# =========================================================================
+# SECTION 2 - Driver Outcome Metrics
+# =========================================================================
+st.header("2. Driver Outcome Metrics")
+st.markdown(
+    "These metrics measure **economic sustainability** and **rent capture** for "
+    "drivers. They answer the question: can drivers sustain their livelihoods under "
+    "the negotiated fare regime?"
 )
 
-# 2. Select number of runs to skip
-all_folders = []
-if os.path.isdir(LOG_DIRECTORY):
-    # Get all items, then filter for directories (which are the sim runs)
-    try:
-        all_items = sorted(os.listdir(LOG_DIRECTORY))
-        all_folders = [item for item in all_items if os.path.isdir(os.path.join(LOG_DIRECTORY, item))]
-    except Exception as e:
-        st.error(f"Error reading directory {LOG_DIRECTORY}: {e}")
-        st.stop()
-else:
-    st.error(f"Selected log directory '{LOG_DIRECTORY}' does not exist or is not a directory.")
-    st.stop()
-
-## --- DATA LOADING ---
-
-df_all_list = []
-df_expenses_list = []
-df_drivers_list = []  # Store driver info for per-day stats
-df_trip_summary_list = []  # Store trip acceptance/rejection summaries
-
-sim_count = 0
-
-# USES THE FILTERED LIST 'folders_to_process'
-for folder in all_folders:
-    folder_path = os.path.join(LOG_DIRECTORY, folder)
-    
-    # Use folder name as the run_id for consistency
-    run_id = folder 
-    
-    drivers_file = os.path.join(folder_path, "drivers.csv")
-    transactions_file = os.path.join(folder_path, "transactions.csv")
-    expenses_file = os.path.join(folder_path, "expenses.csv")
-
-    # Check if all required files exist before trying to read
-    if not os.path.exists(drivers_file):
-        st.warning(f"Skipping folder {folder}: drivers.csv not found.")
-        continue
-    if not os.path.exists(transactions_file):
-        st.warning(f"Skipping folder {folder}: transactions.csv not found.")
-        continue
-    if not os.path.exists(expenses_file):
-        st.warning(f"Skipping folder {folder}: expenses.csv not found.")
-        continue
-
-    try:
-        # Load all files for this run
-        driver_df = pd.read_csv(drivers_file)
-        transaction_df = pd.read_csv(transactions_file)
-        expenses_df = pd.read_csv(expenses_file)
-
-        # Add run_id to driver_df for per-day tracking
-        driver_df["run_id"] = run_id
-        df_drivers_list.append(driver_df)
-
-        # --- Process Transactions & Drivers (Income) ---
-        # Merge transactions and driver info
-        merged_df = pd.merge(transaction_df, driver_df, on="trike_id", how="left")
-
-        # Assign the run_id from the folder
-        merged_df["run_id"] = run_id
-        df_all_list.append(merged_df)
-
-        # --- Process Expenses ---
-        expenses_df["run_id"] = run_id
-        
-        # Clean the 'amount' column using the helper function
-        expenses_df["amount"] = expenses_df["amount"].apply(extract_amount)
-        # Clean expenses *before* calculating run-level profit
-        expenses_df.dropna(subset=['amount'], inplace=True) 
-        df_expenses_list.append(expenses_df)
-
-        # Load trip summary if available
-        trip_summary_file = os.path.join(folder_path, "trip_summary.csv")
-        if os.path.exists(trip_summary_file):
-            summary_df = pd.read_csv(trip_summary_file)
-            summary_df["run_id"] = run_id
-            df_trip_summary_list.append(summary_df)
-
-        sim_count += 1
-
-    except Exception as e:
-        st.error(f"Error processing folder {folder}: {e}")
-
-# Exit if no data was loaded
-if sim_count == 0:
-    st.warning(f"No simulation data was successfully loaded. Check the 'logs' directory and file contents, or adjust the 'skip' value.")
-    st.stop()
-    
-# Concatenate all data from all runs
-df_all = pd.concat(df_all_list, ignore_index=True)
-df_all_expenses = pd.concat(df_expenses_list, ignore_index=True)
-df_all_drivers = pd.concat(df_drivers_list, ignore_index=True) if df_drivers_list else pd.DataFrame()
-
-# Drop any rows where expense amount could not be parsed
-df_all_expenses.dropna(subset=['amount'], inplace=True)
-
-## --- NEW DRIVER-CENTRIC ANALYSIS ---
-
-# 1. Total Income per driver (grouped by trike_id)
-income_by_driver = df_all.groupby('trike_id')['price'].sum().reset_index().rename(columns={'price': 'total_income'})
-
-# 2. Total Expenses per driver (grouped by trike_id)
-expenses_by_driver = df_all_expenses.groupby('trike_id')['amount'].sum().reset_index().rename(columns={'amount': 'total_expenses'})
-
-# 3. Daily Income Variance per driver (Corrected)
-# Calculate daily income for each driver in each run first
-daily_income_per_run = df_all.groupby(['trike_id', 'run_id'])['price'].sum().reset_index()
-
-# Now calculate the variance of these daily totals for each driver
-variance_by_driver = daily_income_per_run.groupby('trike_id')['price'].var().reset_index().rename(columns={'price': 'income_variance'}).fillna(0)
-
-# 4. Trip Count per driver (grouped by trike_id)
-trip_count_by_driver = df_all.groupby('trike_id').size().reset_index(name='total_trip_count')
-
-# 5. Combine all driver stats
-# Use 'outer' merge to include drivers with income but no expenses, or vice-versa
-driver_stats = pd.merge(income_by_driver, expenses_by_driver, on='trike_id', how='outer')
-driver_stats = pd.merge(driver_stats, variance_by_driver, on='trike_id', how='outer')
-driver_stats = pd.merge(driver_stats, trip_count_by_driver, on='trike_id', how='outer')
-
-# Fill with 0 for any NaNs resulting from the outer merge
-driver_stats.fillna(0, inplace=True)
-
-# 6. Calculate Total Profit
-driver_stats['total_profit'] = driver_stats['total_income'] - driver_stats['total_expenses']
-
-# --- NEW: Daily Averages & 30-Day Projections ---
-# sim_count is now the number of *processed* runs
-if sim_count > 0:
-    driver_stats['avg_daily_income'] = driver_stats['total_income'] / sim_count
-    driver_stats['avg_daily_expenses'] = driver_stats['total_expenses'] / sim_count
-    driver_stats['avg_daily_profit'] = driver_stats['total_profit'] / sim_count
-    driver_stats['avg_daily_trips'] = driver_stats['total_trip_count'] / sim_count
-    
-    driver_stats['projected_30day_income'] = driver_stats['avg_daily_income'] * 30
-    driver_stats['projected_30day_profit'] = driver_stats['avg_daily_profit'] * 30
-else:
-     # Avoid division by zero, though we stop earlier if sim_count is 0
-     for col in ['avg_daily_income', 'avg_daily_expenses', 'avg_daily_profit', 'avg_daily_trips', 'projected_30day_income', 'projected_30day_profit']:
-         driver_stats[col] = 0
-
-# Reorder columns for clarity
-driver_stats = driver_stats[[
-    'trike_id', 
-    'avg_daily_profit',
-    'projected_30day_profit',
-    'avg_daily_income',
-    'projected_30day_income',
-    'avg_daily_expenses',
-    'avg_daily_trips',
-    'total_profit', 
-    'total_income', 
-    'total_expenses', 
-    'income_variance', 
-    'total_trip_count'
-]]
-
-
-## --- STREAMLIT APP LAYOUT ---
-
-st.title(f"Tricycle Simulation Analysis: {LOG_DIRECTORY}")
-st.divider()
-
-# --- Global Metrics ---
-st.header("Overall Simulation Metrics (Based on Analyzed Runs)")
-col1, col2, col3 = st.columns(3)
-col1.metric("Total Trips", f"{len(df_all):,}")
-col2.metric("Total Distance", f"{df_all['distance'].sum():,.0f} m")
-col3.metric("Total Income", f"PHP {df_all['price'].sum():,.2f}")
-col1.metric("Total Expenses", f"PHP {df_all_expenses['amount'].sum():,.2f}")
-col2.metric("Total Profit", f"PHP {(df_all['price'].sum() - df_all_expenses['amount'].sum()):,.2f}")
-
-# --- Trip Acceptance/Rejection Summary ---
-if df_trip_summary_list:
-    df_trip_summary = pd.concat(df_trip_summary_list, ignore_index=True)
-    # Pivot so each metric becomes a column per run
-    summary_pivot = df_trip_summary.pivot(index='run_id', columns='metric', values='count').reset_index()
-
-    if 'accepted_trips' in summary_pivot.columns and 'rejected_trips' in summary_pivot.columns:
-        total_accepted = int(summary_pivot['accepted_trips'].sum())
-        total_rejected = int(summary_pivot['rejected_trips'].sum())
-        total_attempts = total_accepted + total_rejected
-        acceptance_rate = (total_accepted / total_attempts * 100) if total_attempts > 0 else 0
-
-        st.subheader("Trip Dispatch Outcomes")
-        col_t1, col_t2, col_t3, col_t4 = st.columns(4)
-        col_t1.metric("Total Attempts", f"{total_attempts:,}")
-        col_t2.metric("Accepted Trips", f"{total_accepted:,}")
-        col_t3.metric("Rejected Trips", f"{total_rejected:,}")
-        col_t4.metric("Acceptance Rate", f"{acceptance_rate:.1f}%")
-
-        # Per-day breakdown
-        if 'total_attempts' not in summary_pivot.columns:
-            summary_pivot['total_attempts'] = summary_pivot['accepted_trips'] + summary_pivot['rejected_trips']
-        summary_pivot['acceptance_rate'] = (summary_pivot['accepted_trips'] / summary_pivot['total_attempts'] * 100).round(1)
-        st.dataframe(summary_pivot[['run_id', 'accepted_trips', 'rejected_trips', 'total_attempts', 'acceptance_rate']].sort_values('run_id'))
-
-st.divider()
-
-# --- Per-Day Summary (Overall Daily Stats) ---
-st.header("Per-Day Overall Summary")
-st.write("Aggregate statistics for each simulation day/run.")
-
-# Calculate per-day aggregates from transactions
-daily_trips = df_all.groupby('run_id').agg({
-    'price': ['sum', 'count'],
-    'distance': 'sum'
-}).reset_index()
-daily_trips.columns = ['run_id', 'total_income', 'total_trips', 'total_distance']
-
-# Calculate per-day expenses
-daily_expenses = df_all_expenses.groupby('run_id')['amount'].sum().reset_index()
-daily_expenses.columns = ['run_id', 'total_expenses']
-
-# Calculate per-day driver count
-daily_drivers = df_all_drivers.groupby('run_id')['trike_id'].nunique().reset_index()
-daily_drivers.columns = ['run_id', 'active_drivers']
-
-# Merge all daily stats
-daily_summary = pd.merge(daily_trips, daily_expenses, on='run_id', how='left')
-daily_summary = pd.merge(daily_summary, daily_drivers, on='run_id', how='left')
-daily_summary.fillna(0, inplace=True)
-
-# Calculate derived metrics
-daily_summary['total_profit'] = daily_summary['total_income'] - daily_summary['total_expenses']
-daily_summary['avg_income_per_driver'] = daily_summary['total_income'] / daily_summary['active_drivers']
-daily_summary['avg_trips_per_driver'] = daily_summary['total_trips'] / daily_summary['active_drivers']
-daily_summary['avg_distance_per_driver'] = daily_summary['total_distance'] / daily_summary['active_drivers']
-
-# Reorder columns
-daily_summary = daily_summary[[
-    'run_id',
-    'total_trips',
-    'total_income',
-    'total_expenses',
-    'total_profit',
-    'total_distance',
-    'active_drivers',
-    'avg_trips_per_driver',
-    'avg_income_per_driver',
-    'avg_distance_per_driver'
-]]
-
-st.dataframe(daily_summary.sort_values(by='run_id'))
-
-# Summary statistics across all days
-st.subheader("Cross-Day Statistics")
-col_s1, col_s2, col_s3, col_s4 = st.columns(4)
-col_s1.metric("Avg Daily Trips", f"{daily_summary['total_trips'].mean():,.1f}")
-col_s2.metric("Avg Daily Income", f"PHP {daily_summary['total_income'].mean():,.2f}")
-col_s3.metric("Avg Daily Expenses", f"PHP {daily_summary['total_expenses'].mean():,.2f}")
-col_s4.metric("Avg Daily Profit", f"PHP {daily_summary['total_profit'].mean():,.2f}")
-
-col_s5, col_s6, col_s7, col_s8 = st.columns(4)
-col_s5.metric("Std Dev Daily Profit", f"PHP {daily_summary['total_profit'].std():,.2f}")
-col_s6.metric("Min Daily Profit", f"PHP {daily_summary['total_profit'].min():,.2f}")
-col_s7.metric("Max Daily Profit", f"PHP {daily_summary['total_profit'].max():,.2f}")
-col_s8.metric("Avg Active Drivers", f"{daily_summary['active_drivers'].mean():,.1f}")
-
-st.divider()
-
-# --- Driver Analytics (New Section) ---
-st.header("Driver-Level Analytics (Based on Analyzed Runs)")
-st.write(f"Summary of driver performance, averaged over **{sim_count}** simulation run(s). 'Trike ID' is the consistent identifier across all runs.")
-st.dataframe(driver_stats.sort_values(by='avg_daily_profit', ascending=False))
-
-st.subheader("Driver Average Daily Profit Distribution")
-plot_distribution_with_stats(
-    driver_stats, 
-    'avg_daily_profit', 
-    "Distribution of Driver Average Daily Profits",
-    "Average Daily Profit (PHP)",
-    color="#2a9d8f"
+# 2.1 Income and Profit
+st.subheader("2.1 Income and Profit")
+st.markdown(
+    "- **Income** = Sum of all accepted fares for a driver.\n"
+    "- **Profit** = Income - Total Expenses.\n"
+    "- Expenses include **fuel costs** (end-of-day and midday refueling) and "
+    "**daily operating costs** (food, vehicle maintenance, etc.)."
 )
 
-st.subheader("Driver Daily Income Variance Distribution")
-# Filter out extreme outliers for a better plot
-q99 = driver_stats['income_variance'].quantile(0.99)
-if q99 > 0:
-    plot_data = driver_stats[driver_stats['income_variance'] < q99]
-else:
-    plot_data = driver_stats # Show all if q99 is 0
+driver_income = accepted.groupby("driver_id")["final_price"].sum().reset_index()
+driver_income.columns = ["driver_id", "income"]
 
-plot_distribution_with_stats(
-    plot_data, 
-    'income_variance', 
-    "Distribution of Driver Income Variance (Daily Totals, capped at 99th percentile)",
-    "Daily Income Variance",
-    color="#e76f51"
+driver_expenses = expenses.groupby("driver_id")["amount"].sum().reset_index()
+driver_expenses.columns = ["driver_id", "total_expenses"]
+
+# Breakdown by expense type
+fuel_expenses = expenses[expenses["expense_type"].isin(["end_gas", "midday_gas"])].groupby("driver_id")["amount"].sum().reset_index()
+fuel_expenses.columns = ["driver_id", "fuel_cost"]
+
+daily_exp = expenses[expenses["expense_type"] == "daily_expense"].groupby("driver_id")["amount"].sum().reset_index()
+daily_exp.columns = ["driver_id", "daily_expense_total"]
+
+driver_profit = drivers[["id", "trike_code", "hub", "run_id"]].copy()
+driver_profit = driver_profit.merge(driver_income, left_on="id", right_on="driver_id", how="left")
+driver_profit = driver_profit.merge(driver_expenses, left_on="id", right_on="driver_id", how="left", suffixes=("", "_exp"))
+driver_profit = driver_profit.merge(fuel_expenses, left_on="id", right_on="driver_id", how="left", suffixes=("", "_fuel"))
+driver_profit = driver_profit.merge(daily_exp, left_on="id", right_on="driver_id", how="left", suffixes=("", "_daily"))
+driver_profit["income"] = driver_profit["income"].fillna(0)
+driver_profit["total_expenses"] = driver_profit["total_expenses"].fillna(0)
+driver_profit["fuel_cost"] = driver_profit["fuel_cost"].fillna(0)
+driver_profit["daily_expense_total"] = driver_profit["daily_expense_total"].fillna(0)
+driver_profit["profit"] = driver_profit["income"] - driver_profit["total_expenses"]
+
+c1, c2, c3, c4 = st.columns(4)
+c1.metric("Total Driver Income", f"PHP {driver_profit['income'].sum():,.2f}")
+c2.metric("Total Expenses", f"PHP {driver_profit['total_expenses'].sum():,.2f}")
+c3.metric("Total Profit", f"PHP {driver_profit['profit'].sum():,.2f}")
+c4.metric("Avg Profit / Driver", f"PHP {driver_profit['profit'].mean():,.2f}")
+
+display_cols = ["trike_code", "hub", "run_id", "income", "fuel_cost",
+                "daily_expense_total", "total_expenses", "profit"]
+st.dataframe(
+    driver_profit[display_cols].sort_values("profit", ascending=False),
+    use_container_width=True
 )
 
+plot_distribution(driver_profit, "profit", "Driver Profit Distribution",
+                  "Profit (PHP)", color="#264653")
+
+# 2.2 Sustainability Ratios
+st.subheader("2.2 Sustainability Ratios")
+st.markdown(
+    "Three progressively stricter thresholds evaluate whether drivers can sustain "
+    "operations:\n\n"
+    "| Threshold | Condition | Interpretation |\n"
+    "|---|---|---|\n"
+    "| **Operational Viability** | Income >= Fuel cost | Can the driver keep driving? |\n"
+    "| **Livelihood Adequacy** | Income >= Fuel + Daily expense | Can the driver cover basic needs? |\n"
+    "| **Profitability** | Profit > 0 | Does the driver earn a net surplus? |"
+)
+n_drivers = len(driver_profit)
+operational = (driver_profit["income"] >= driver_profit["fuel_cost"]).sum()
+livelihood = (driver_profit["income"] >= (driver_profit["fuel_cost"] + driver_profit["daily_expense_total"])).sum()
+profitable = (driver_profit["profit"] > 0).sum()
+
+c1, c2, c3 = st.columns(3)
+c1.metric("Operational Viability", f"{operational}/{n_drivers} ({operational/n_drivers*100:.1f}%)" if n_drivers else "N/A")
+c2.metric("Livelihood Adequacy", f"{livelihood}/{n_drivers} ({livelihood/n_drivers*100:.1f}%)" if n_drivers else "N/A")
+c3.metric("Profitability", f"{profitable}/{n_drivers} ({profitable/n_drivers*100:.1f}%)" if n_drivers else "N/A")
+
+# 2.3 Producer Surplus
+st.subheader("2.3 Producer Surplus")
+st.markdown(
+    "For each accepted transaction: **Producer Surplus = Final Price - Marginal Cost**.\n\n"
+    "Marginal cost is estimated as `gas_consumption_rate x distance x gas_price_per_liter`. "
+    "This measures the economic rent per trip, distinct from accounting profit (which "
+    "also includes fixed daily expenses)."
+)
+if not accepted.empty:
+    ps_total = accepted["producer_surplus"].sum()
+    ps_mean = accepted["producer_surplus"].mean()
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Total Producer Surplus", f"PHP {ps_total:,.2f}")
+    c2.metric("Avg Producer Surplus / Trip", f"PHP {ps_mean:,.2f}")
+    c3.metric("Median Producer Surplus", f"PHP {accepted['producer_surplus'].median():,.2f}")
+
+    plot_distribution(accepted, "producer_surplus",
+                      "Producer Surplus Distribution", "Producer Surplus (PHP)", color="#e76f51")
+
 st.divider()
 
-# --- Per-Day Driver Statistics (New Section) ---
-st.header("Per-Day Driver Statistics")
+# =========================================================================
+# SECTION 3 - System-Level Welfare Metrics
+# =========================================================================
+st.header("3. System-Level Welfare Metrics")
+st.markdown(
+    "These metrics assess the overall **allocative efficiency** of the market: "
+    "how well the negotiation system converts potential gains from trade into "
+    "realized transactions."
+)
 
-# Helper function to convert ticks to HH:MM:SS format
-def ticks_to_time(ticks):
-    """Convert simulation ticks to time format (starting at 06:00)"""
-    if pd.isna(ticks) or ticks is None:
-        return "N/A"
-    ticks = int(ticks)
-    hours = (ticks // 3600) + 6  # Simulation starts at 6 AM
-    minutes = (ticks % 3600) // 60
-    seconds = ticks % 60
-    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+# 3.1 Total Surplus
+st.subheader("3.1 Total Surplus")
+st.markdown(
+    "**Total Surplus = Consumer Surplus + Producer Surplus** (equivalently, "
+    "Passenger WTP - Marginal Cost, summed across accepted transactions). "
+    "This is the standard measure of allocative efficiency."
+)
+if not accepted.empty:
+    accepted["total_surplus"] = accepted["consumer_surplus"] + accepted["producer_surplus"]
+    ts = accepted["total_surplus"].sum()
+    c1, c2 = st.columns(2)
+    c1.metric("Total Surplus (Accepted)", f"PHP {ts:,.2f}")
+    c2.metric("Avg Total Surplus / Trip", f"PHP {accepted['total_surplus'].mean():,.2f}")
 
-def ticks_to_hours(ticks):
-    """Convert ticks to hours (for duration display)"""
-    if pd.isna(ticks) or ticks is None:
-        return 0
-    return ticks / 3600
-
-# Check if new columns exist in the driver data
-has_duration_data = not df_all_drivers.empty and 'actual_duration' in df_all_drivers.columns
-
-if has_duration_data:
-    st.write("This section shows per-day (per-run) statistics for each driver, including actual time spent in the simulation.")
-
-    # Create a summary with formatted times
-    per_day_stats = df_all_drivers.copy()
-
-    # Format time columns if they exist
-    if 'actual_start_tick' in per_day_stats.columns:
-        per_day_stats['start_time'] = per_day_stats['actual_start_tick'].apply(ticks_to_time)
-    if 'actual_end_tick' in per_day_stats.columns:
-        per_day_stats['end_time'] = per_day_stats['actual_end_tick'].apply(ticks_to_time)
-    if 'actual_duration' in per_day_stats.columns:
-        per_day_stats['duration_hours'] = per_day_stats['actual_duration'].apply(ticks_to_hours)
-
-    # Select columns to display
-    display_cols = ['trike_id', 'run_id', 'hub_id']
-    if 'start_time' in per_day_stats.columns:
-        display_cols.append('start_time')
-    if 'end_time' in per_day_stats.columns:
-        display_cols.append('end_time')
-    if 'duration_hours' in per_day_stats.columns:
-        display_cols.append('duration_hours')
-    if 'daily_trips' in per_day_stats.columns:
-        display_cols.append('daily_trips')
-    if 'daily_income' in per_day_stats.columns:
-        display_cols.append('daily_income')
-    if 'daily_distance' in per_day_stats.columns:
-        display_cols.append('daily_distance')
-
-    # Filter available columns
-    display_cols = [c for c in display_cols if c in per_day_stats.columns]
-
-    st.subheader("Per-Day Driver Details")
-
-    # --- Filters ---
-    filter_col1, filter_col2, filter_col3 = st.columns(3)
-
-    with filter_col1:
-        all_drivers = sorted(per_day_stats['trike_id'].unique())
-        selected_drivers = st.multiselect("Filter by Driver", options=all_drivers, default=[], placeholder="All drivers")
-
-    with filter_col2:
-        all_runs = sorted(per_day_stats['run_id'].unique())
-        selected_runs = st.multiselect("Filter by Day/Run", options=all_runs, default=[], placeholder="All days")
-
-    with filter_col3:
-        all_hubs = sorted(per_day_stats['hub_id'].unique())
-        selected_hubs = st.multiselect("Filter by Hub", options=all_hubs, default=[], placeholder="All hubs")
-
-    # Apply filters
-    filtered_stats = per_day_stats.copy()
-    if selected_drivers:
-        filtered_stats = filtered_stats[filtered_stats['trike_id'].isin(selected_drivers)]
-    if selected_runs:
-        filtered_stats = filtered_stats[filtered_stats['run_id'].isin(selected_runs)]
-    if selected_hubs:
-        filtered_stats = filtered_stats[filtered_stats['hub_id'].isin(selected_hubs)]
-
-    st.caption(f"Showing {len(filtered_stats)} of {len(per_day_stats)} records")
-    st.dataframe(filtered_stats[display_cols].sort_values(by=['run_id', 'trike_id']))
-
-    # Summary statistics for duration (uses filtered data)
-    if 'actual_duration' in filtered_stats.columns and len(filtered_stats) > 0:
-        st.subheader("Driver Duration Statistics (Filtered)")
-        col_d1, col_d2, col_d3, col_d4 = st.columns(4)
-
-        avg_duration_hours = filtered_stats['actual_duration'].mean() / 3600
-        min_duration_hours = filtered_stats['actual_duration'].min() / 3600
-        max_duration_hours = filtered_stats['actual_duration'].max() / 3600
-        std_duration_hours = filtered_stats['actual_duration'].std() / 3600
-
-        col_d1.metric("Avg Duration", f"{avg_duration_hours:.2f} hrs")
-        col_d2.metric("Min Duration", f"{min_duration_hours:.2f} hrs")
-        col_d3.metric("Max Duration", f"{max_duration_hours:.2f} hrs")
-        col_d4.metric("Std Dev", f"{std_duration_hours:.2f} hrs")
-
-        # Distribution of driver durations
-        st.subheader("Driver Duration Distribution")
-        filtered_stats['duration_hours_plot'] = filtered_stats['actual_duration'] / 3600
-        plot_distribution_with_stats(
-            filtered_stats,
-            'duration_hours_plot',
-            "Distribution of Driver Time in Simulation",
-            "Duration (hours)",
-            color="#264653"
-        )
-
-    # Per-day income and trips if available (uses filtered data)
-    if 'daily_income' in filtered_stats.columns and 'daily_trips' in filtered_stats.columns and len(filtered_stats) > 0:
-        st.subheader("Per-Day Performance Summary (Filtered)")
-        col_p1, col_p2, col_p3 = st.columns(3)
-
-        avg_daily_trips = filtered_stats['daily_trips'].mean()
-        avg_daily_income = filtered_stats['daily_income'].mean()
-        avg_daily_distance = filtered_stats['daily_distance'].mean() if 'daily_distance' in filtered_stats.columns else 0
-
-        col_p1.metric("Avg Trips per Driver/Day", f"{avg_daily_trips:.1f}")
-        col_p2.metric("Avg Income per Driver/Day", f"PHP {avg_daily_income:,.2f}")
-        col_p3.metric("Avg Distance per Driver/Day", f"{avg_daily_distance:,.0f} m")
-
-        # Income per hour analysis
-        if 'actual_duration' in filtered_stats.columns:
-            filtered_stats['income_per_hour'] = filtered_stats.apply(
-                lambda x: x['daily_income'] / (x['actual_duration'] / 3600) if x['actual_duration'] > 0 else 0,
-                axis=1
-            )
-            st.subheader("Income per Hour Distribution")
-            plot_distribution_with_stats(
-                filtered_stats[filtered_stats['income_per_hour'] > 0],
-                'income_per_hour',
-                "Distribution of Driver Income per Hour",
-                "Income per Hour (PHP)",
-                color="#e9c46a"
-            )
-
-            avg_income_per_hour = filtered_stats['income_per_hour'].mean()
-            st.metric("Average Income per Hour", f"PHP {avg_income_per_hour:,.2f}")
-
+# 3.2 Deadweight Loss
+st.subheader("3.2 Deadweight Loss")
+st.markdown(
+    "When a transaction is **feasible** (Passenger WTP >= Marginal Cost) but "
+    "no agreement is reached, the unrealized surplus is counted as **deadweight loss**. "
+    "This measures inefficiency due to negotiation breakdown or spatial friction.\n\n"
+    "*Note: Rejected transactions (too far) are excluded because they represent "
+    "structural infeasibility, not negotiation failure.*"
+)
+# Only use failed negotiations (not rejections) for DWL
+if not failed_neg.empty:
+    feasible_failed = failed_neg[failed_neg["pax_wtp"] >= failed_neg["marginal_cost"]].copy()
+    feasible_failed["unrealized_surplus"] = feasible_failed["pax_wtp"] - feasible_failed["marginal_cost"]
+    dwl = feasible_failed["unrealized_surplus"].sum()
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Deadweight Loss", f"PHP {dwl:,.2f}")
+    c2.metric("Feasible-but-Failed Negotiations", f"{len(feasible_failed):,}")
+    c3.metric("Avg Unrealized Surplus", f"PHP {feasible_failed['unrealized_surplus'].mean():,.2f}" if len(feasible_failed) else "N/A")
 else:
-    st.info("Per-day driver statistics (duration, daily trips, daily income) are not available in the current data. "
-            "Run the simulation again to generate this data.")
+    st.info("No failed negotiations.")
+    dwl = 0
+
+# 3.3 Surplus Realization Rate
+st.subheader("3.3 Surplus Realization Rate")
+st.markdown(
+    "**Realization Rate = Realized Surplus / Feasible Surplus**, where feasible "
+    "surplus includes both realized surplus and deadweight loss. A rate of 100% "
+    "means every feasible transaction was completed."
+)
+if not accepted.empty:
+    realized = accepted["total_surplus"].sum()
+    feasible = realized + dwl
+    realization_rate = realized / feasible if feasible > 0 else 0
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Realized Surplus", f"PHP {realized:,.2f}")
+    c2.metric("Feasible Surplus", f"PHP {feasible:,.2f}")
+    c3.metric("Surplus Realization Rate", f"{realization_rate:.2%}")
 
 st.divider()
 
-# --- Trip-Level Analytics (Original Section) ---
-st.header("Trip-Level Analytics (Based on Analyzed Runs)")
+# =========================================================================
+# SECTION 4 - Distributional Metrics
+# =========================================================================
+st.header("4. Distributional Metrics")
+st.markdown(
+    "Aggregate efficiency tells only part of the story. These metrics examine "
+    "**how outcomes are distributed** across agents, distinguishing outcome "
+    "inequality from bargaining inequality."
+)
 
-# --- Clean up columns ---
-# Select and reorder relevant columns for display
-trip_display_cols = ['run_id', 'trike_id', 'hub_id', 'origin_edge', 'dest_edge', 'distance', 'price', 'tick', 'driver_asp', 'passenger_asp']
-# Handle potential duplicate columns from merge (run_id_x, run_id_y)
-if 'run_id_x' in df_all.columns:
-    df_all['run_id'] = df_all['run_id_x']
-if 'run_id_y' in df_all.columns and 'run_id' not in df_all.columns:
-    df_all['run_id'] = df_all['run_id_y']
-# Filter to only existing columns
-trip_display_cols = [c for c in trip_display_cols if c in df_all.columns]
+# 4.1 Income Inequality (measured on profit)
+st.subheader("4.1 Income (Profit) Inequality")
+st.markdown(
+    "Income inequality is measured using driver **profit** (income minus all expenses):\n"
+    "- **Gini coefficient:** 0 = perfect equality, 1 = one driver captures all profit.\n"
+    "- **Top 10% share:** Fraction of total profit captured by the highest-earning 10%.\n"
+    "- **Bottom 40% share:** Fraction captured by the lowest-earning 40%.\n"
+    "- **Lorenz curve:** Visual representation; the further from the diagonal, the "
+    "greater the inequality."
+)
+profits = driver_profit["profit"].values
+gini = gini_coefficient(profits)
+top10, bot40 = income_shares(profits, 0.10, 0.40)
 
-# --- Filters ---
-trip_filter_col1, trip_filter_col2, trip_filter_col3, trip_filter_col4 = st.columns(4)
+c1, c2, c3 = st.columns(3)
+c1.metric("Gini Coefficient", f"{gini:.4f}")
+c2.metric("Top 10% Profit Share", f"{top10:.2%}")
+c3.metric("Bottom 40% Profit Share", f"{bot40:.2%}")
 
-with trip_filter_col1:
-    trip_all_drivers = sorted(df_all['trike_id'].unique())
-    trip_selected_drivers = st.multiselect("Filter by Driver", options=trip_all_drivers, default=[], placeholder="All drivers", key="trip_driver_filter")
+# Lorenz Curve
+fig_lorenz, ax_lorenz = plt.subplots(figsize=(5, 5))
+lorenz_curve(profits, label=f"Driver Profit (Gini={gini:.3f})", ax=ax_lorenz)
+ax_lorenz.set_title("Lorenz Curve - Driver Profit")
+ax_lorenz.legend()
+c1, c2, c3 = st.columns([1, 2, 1])
+with c2:
+    st.pyplot(fig_lorenz, use_container_width=False)
+plt.close(fig_lorenz)
 
-with trip_filter_col2:
-    trip_all_runs = sorted(df_all['run_id'].unique()) if 'run_id' in df_all.columns else []
-    trip_selected_runs = st.multiselect("Filter by Day/Run", options=trip_all_runs, default=[], placeholder="All days", key="trip_run_filter")
+# 4.2 Surplus Distribution
+st.subheader("4.2 Surplus Distribution")
+st.markdown(
+    "Separate Gini coefficients for consumer and producer surplus reveal whether "
+    "inequality stems from **outcome dispersion** (some agents simply have more "
+    "transactions) or **bargaining power** (some agents extract more per transaction)."
+)
+if not accepted.empty:
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("**Consumer Surplus across Passengers**")
+        pax_cs = accepted.groupby("passenger_id")["consumer_surplus"].sum()
+        gini_cs = gini_coefficient(pax_cs.values)
+        st.metric("Gini (Consumer Surplus)", f"{gini_cs:.4f}")
+        plot_distribution(pax_cs.reset_index(), "consumer_surplus",
+                          "Consumer Surplus per Passenger", "PHP", color="#2a9d8f")
 
-with trip_filter_col3:
-    if 'hub_id' in df_all.columns:
-        trip_all_hubs = sorted(df_all['hub_id'].dropna().unique())
-        trip_selected_hubs = st.multiselect("Filter by Hub", options=trip_all_hubs, default=[], placeholder="All hubs", key="trip_hub_filter")
+    with col_b:
+        st.markdown("**Producer Surplus across Drivers**")
+        drv_ps = accepted.groupby("driver_id")["producer_surplus"].sum()
+        gini_ps = gini_coefficient(drv_ps.values)
+        st.metric("Gini (Producer Surplus)", f"{gini_ps:.4f}")
+        plot_distribution(drv_ps.reset_index(), "producer_surplus",
+                          "Producer Surplus per Driver", "PHP", color="#e76f51")
+
+st.divider()
+
+# =========================================================================
+# SECTION 5 - Bargaining Dynamics
+# =========================================================================
+st.header("5. Bargaining Dynamics")
+st.markdown(
+    "These metrics examine the **procedural distribution** within each negotiation: "
+    "given a zone of possible agreement, who captures the surplus?"
+)
+
+# 5.1 Bargaining Surplus
+st.subheader("5.1 Bargaining Surplus")
+st.markdown(
+    "When Passenger WTP >= Driver ASP, a **zone of possible agreement** exists. "
+    "The bargaining surplus is the size of that zone:\n\n"
+    "**Bargaining Surplus = Passenger WTP - Driver ASP**\n\n"
+    "This is the total value available to be split between driver and passenger "
+    "through negotiation."
+)
+barg = accepted.dropna(subset=["driver_asp", "pax_wtp"]).copy()
+barg = barg[barg["pax_wtp"] >= barg["driver_asp"]].copy()
+if not barg.empty:
+    barg["bargaining_surplus"] = barg["pax_wtp"] - barg["driver_asp"]
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Avg Bargaining Surplus", f"PHP {barg['bargaining_surplus'].mean():,.2f}")
+    c2.metric("Total Bargaining Surplus", f"PHP {barg['bargaining_surplus'].sum():,.2f}")
+    c3.metric("N (feasible bargains)", f"{len(barg):,}")
+
+    # 5.2 Surplus Capture Ratio
+    st.subheader("5.2 Surplus Capture Ratio")
+    st.markdown(
+        "**Driver Capture Ratio = (Final Price - Driver ASP) / (Passenger WTP - Driver ASP)**\n\n"
+        "| Value | Interpretation |\n"
+        "|---|---|\n"
+        "| Near 1.0 | Driver dominant - fare is close to passenger's maximum |\n"
+        "| Near 0.5 | Balanced - surplus is split roughly evenly |\n"
+        "| Near 0.0 | Passenger dominant - fare is close to driver's minimum |"
+    )
+    barg["driver_capture"] = (barg["final_price"] - barg["driver_asp"]) / barg["bargaining_surplus"]
+    barg["driver_capture"] = barg["driver_capture"].clip(0, 1)
+
+    cap_mean = barg["driver_capture"].mean()
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Avg Driver Capture Ratio", f"{cap_mean:.3f}")
+    c2.metric("Median Driver Capture", f"{barg['driver_capture'].median():.3f}")
+    c3.metric("Std Dev", f"{barg['driver_capture'].std():.3f}")
+
+    plot_distribution(barg, "driver_capture",
+                      "Driver Surplus Capture Ratio Distribution",
+                      "Capture Ratio (0=Pax dominant, 1=Driver dominant)", color="#f4a261")
+
+    # Scatter: Driver ASP vs Passenger WTP, colored by capture
+    fig_sc, ax_sc = plt.subplots(figsize=(6, 5))
+    sc = ax_sc.scatter(barg["pax_wtp"], barg["driver_asp"],
+                       c=barg["driver_capture"], cmap="RdYlGn_r",
+                       alpha=0.6, edgecolors="black", linewidths=0.3, s=20)
+    plt.colorbar(sc, ax=ax_sc, label="Driver Capture Ratio")
+    lims = [min(barg["pax_wtp"].min(), barg["driver_asp"].min()),
+            max(barg["pax_wtp"].max(), barg["driver_asp"].max())]
+    ax_sc.plot(lims, lims, "k--", alpha=0.4, label="Equal line")
+    ax_sc.set_xlabel("Passenger WTP (PHP)")
+    ax_sc.set_ylabel("Driver ASP (PHP)")
+    ax_sc.set_title("Bargaining Space: WTP vs Driver ASP")
+    ax_sc.legend()
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
+        st.pyplot(fig_sc, use_container_width=False)
+    plt.close(fig_sc)
+else:
+    st.info("No transactions with Passenger WTP >= Driver ASP found for bargaining analysis.")
+
+st.divider()
+
+# =========================================================================
+# SECTION 6 - Spatial (Hub-Level) Analysis
+# =========================================================================
+st.header("6. Spatial (Hub-Level) Analysis")
+st.markdown(
+    "The same metrics are decomposed **by hub** to identify spatial heterogeneity "
+    "in outcomes. No causal claims are made; these are descriptive decompositions "
+    "that reveal whether certain hubs systematically produce better or worse "
+    "outcomes for drivers and passengers."
+)
+
+hubs = drivers["hub"].dropna().unique()
+hub_rows = []
+
+for hub in sorted(hubs):
+    hub_driver_ids = drivers[drivers["hub"] == hub]["id"].values
+    hub_dp = driver_profit[driver_profit["id"].isin(hub_driver_ids)]
+    hub_acc = accepted[accepted["driver_id"].isin(hub_driver_ids)]
+    hub_txn = txn[txn["driver_id"].isin(hub_driver_ids)]
+
+    n_hub_drivers = len(hub_dp)
+    avg_profit = hub_dp["profit"].mean() if n_hub_drivers else 0
+    hub_gini = gini_coefficient(hub_dp["profit"].values) if n_hub_drivers > 1 else 0
+    survival = (hub_dp["profit"] > 0).sum() / n_hub_drivers if n_hub_drivers else 0
+
+    n_hub_txn = len(hub_txn)
+    n_hub_acc = len(hub_acc)
+    served_rate = n_hub_acc / n_hub_txn if n_hub_txn else 0
+
+    avg_cs = hub_acc["consumer_surplus"].mean() if not hub_acc.empty else 0
+    avg_ps = hub_acc["producer_surplus"].mean() if not hub_acc.empty else 0
+
+    # Capture ratio for this hub
+    hub_barg = hub_acc.dropna(subset=["driver_asp", "pax_wtp"])
+    hub_barg = hub_barg[hub_barg["pax_wtp"] >= hub_barg["driver_asp"]]
+    if not hub_barg.empty:
+        hub_barg_surplus = hub_barg["pax_wtp"] - hub_barg["driver_asp"]
+        hub_capture = ((hub_barg["final_price"] - hub_barg["driver_asp"]) / hub_barg_surplus).clip(0, 1).mean()
     else:
-        trip_selected_hubs = []
+        hub_capture = np.nan
 
-with trip_filter_col4:
-    row_limit = st.selectbox("Rows to display", options=[20, 50, 100, 250, 500, "All"], index=0, key="trip_row_limit")
+    hub_rows.append({
+        "Hub": hub,
+        "Drivers": n_hub_drivers,
+        "Avg Profit": round(avg_profit, 2),
+        "Gini": round(hub_gini, 4),
+        "Survival Rate": f"{survival:.1%}",
+        "Pax Served Rate": f"{served_rate:.1%}",
+        "Avg CS": round(avg_cs, 2),
+        "Avg PS": round(avg_ps, 2),
+        "Capture Ratio": round(hub_capture, 3) if not np.isnan(hub_capture) else "N/A"
+    })
 
-# Apply filters
-filtered_trips = df_all.copy()
-if trip_selected_drivers:
-    filtered_trips = filtered_trips[filtered_trips['trike_id'].isin(trip_selected_drivers)]
-if trip_selected_runs and 'run_id' in filtered_trips.columns:
-    filtered_trips = filtered_trips[filtered_trips['run_id'].isin(trip_selected_runs)]
-if trip_selected_hubs and 'hub_id' in filtered_trips.columns:
-    filtered_trips = filtered_trips[filtered_trips['hub_id'].isin(trip_selected_hubs)]
+hub_table = pd.DataFrame(hub_rows)
+st.dataframe(hub_table, use_container_width=True)
 
-# Apply row limit
-if row_limit == "All":
-    display_trips = filtered_trips[trip_display_cols].sort_values(by=['run_id', 'tick'] if 'run_id' in trip_display_cols else ['tick'])
+# Bar chart of avg profit by hub
+if not hub_table.empty:
+    fig_hub, ax_hub = plt.subplots(figsize=(8, 4))
+    ax_hub.bar(hub_table["Hub"].astype(str), hub_table["Avg Profit"], color="#264653")
+    ax_hub.set_xlabel("Hub")
+    ax_hub.set_ylabel("Avg Profit (PHP)")
+    ax_hub.set_title("Average Driver Profit by Hub")
+    plt.xticks(rotation=45, ha="right", fontsize=8)
+    plt.tight_layout()
+    st.pyplot(fig_hub, use_container_width=True)
+    plt.close(fig_hub)
+
+st.divider()
+
+# =========================================================================
+# SECTION 7 - Monte Carlo Aggregation
+# =========================================================================
+st.header("7. Monte Carlo Aggregation (Across Runs)")
+st.markdown(
+    "Because the model is stochastic, each parameter regime is evaluated using "
+    "repeated simulation runs. For each metric, we report the **mean**, **standard "
+    "deviation**, **min**, and **max** across runs. This distinguishes structural "
+    "properties of the market from stochastic noise."
+)
+
+if n_runs < 2:
+    st.info("Select multiple runs to see Monte Carlo aggregation statistics.")
 else:
-    display_trips = filtered_trips[trip_display_cols].sort_values(by=['run_id', 'tick'] if 'run_id' in trip_display_cols else ['tick']).head(row_limit)
+    mc_rows = []
+    for rid in selected_runs:
+        r_txn = txn[txn["run_id"] == rid]
+        r_acc = accepted[accepted["run_id"] == rid]
+        r_fail_neg = failed_neg[failed_neg["run_id"] == rid]
+        r_rej = rejected[rejected["run_id"] == rid]
+        r_drv = driver_profit[driver_profit["run_id"] == rid]
 
-st.caption(f"Showing {len(display_trips)} of {len(filtered_trips)} filtered trips ({len(df_all)} total)")
-st.dataframe(display_trips)
+        n_txn = len(r_txn)
+        served = len(r_acc) / n_txn if n_txn else 0
+        failed_pct = len(r_fail_neg) / n_txn if n_txn else 0
+        rejected_pct = len(r_rej) / n_txn if n_txn else 0
 
-# Create columns for the plots
-col_a = st.columns(1)[0]
+        cs = r_acc["consumer_surplus"].sum() if not r_acc.empty else 0
+        ps = r_acc["producer_surplus"].sum() if not r_acc.empty else 0
+        ts_val = cs + ps
 
-with col_a:
-    # Show histogram of trip distances
-    st.subheader("Trip Distance Distribution")
-    plot_distribution_with_stats(
-        df_all, 
-        'distance', 
-        "Trip Distance Distribution",
-        "Distance (meters)",
-        color="skyblue"
-    
-    )
+        # DWL for this run (failed negotiations only, not rejections)
+        ff = r_fail_neg[r_fail_neg["pax_wtp"] >= r_fail_neg["marginal_cost"]]
+        run_dwl = (ff["pax_wtp"] - ff["marginal_cost"]).sum() if not ff.empty else 0
 
-     # Show histogram of trip prices
-    st.subheader("Trip Price Distribution")
-    plot_distribution_with_stats(
-        df_all, 
-        'price', 
-        "Trip Price Distribution",
-        "Price (PHP)",
-        color="lightgreen"
-    )
-    
-    # histogram of tick
-    st.subheader("Trips Over Time (by Tick)")
-    plot_distribution_with_stats(
-        df_all,
-        'tick',
-        "Trips Over Time",
-        "Tick",
-        color="violet"
-    )
+        realization = ts_val / (ts_val + run_dwl) if (ts_val + run_dwl) > 0 else 0
 
-# --- Aspiration Price (Bargaining) Analytics ---
-has_asp_data = 'driver_asp' in df_all.columns and 'passenger_asp' in df_all.columns
+        run_gini = gini_coefficient(r_drv["profit"].values)
+        avg_profit = r_drv["profit"].mean() if not r_drv.empty else 0
 
-if has_asp_data:
-    st.divider()
-    st.header("Bargaining Analytics (Driver & Passenger Aspiration Prices)")
-    st.write("Aspiration prices represent the driver's willingness-to-sell and the passenger's willingness-to-pay during fare negotiation.")
+        mc_rows.append({
+            "Run": rid,
+            "Served %": served,
+            "Failed Neg %": failed_pct,
+            "Rejected %": rejected_pct,
+            "Total CS": cs,
+            "Total PS": ps,
+            "Total Surplus": ts_val,
+            "DWL": run_dwl,
+            "Realization Rate": realization,
+            "Gini (Profit)": run_gini,
+            "Avg Driver Profit": avg_profit,
+        })
 
-    # Filter out rows where ASP data might be missing
-    asp_data = filtered_trips.dropna(subset=['driver_asp', 'passenger_asp']).copy()
+    mc_df = pd.DataFrame(mc_rows)
 
-    if not asp_data.empty:
-        # Bargaining gap: difference between what driver wants and what passenger offers
-        asp_data['asp_gap'] = asp_data['driver_asp'] - asp_data['passenger_asp']
-        asp_data['asp_midpoint'] = (asp_data['driver_asp'] + asp_data['passenger_asp']) / 2
+    # Summary stats
+    st.subheader("7.1 Per-Metric Summary Across Runs")
+    metric_cols = ["Served %", "Failed Neg %", "Rejected %",
+                   "Total CS", "Total PS", "Total Surplus",
+                   "DWL", "Realization Rate", "Gini (Profit)", "Avg Driver Profit"]
+    summary_rows = []
+    for col in metric_cols:
+        vals = mc_df[col]
+        summary_rows.append({
+            "Metric": col,
+            "Mean": f"{vals.mean():.4f}",
+            "Std Dev": f"{vals.std():.4f}",
+            "Min": f"{vals.min():.4f}",
+            "Max": f"{vals.max():.4f}",
+        })
+    st.dataframe(pd.DataFrame(summary_rows), use_container_width=True)
 
-        # Summary metrics
-        col_b1, col_b2, col_b3, col_b4 = st.columns(4)
-        col_b1.metric("Avg Driver ASP", f"PHP {asp_data['driver_asp'].mean():,.2f}")
-        col_b2.metric("Avg Passenger ASP", f"PHP {asp_data['passenger_asp'].mean():,.2f}")
-        col_b3.metric("Avg Agreed Price", f"PHP {asp_data['price'].mean():,.2f}")
-        col_b4.metric("Avg Bargaining Gap", f"PHP {asp_data['asp_gap'].mean():,.2f}")
+    # Full run-level table
+    st.subheader("7.2 Run-Level Detail")
+    st.dataframe(mc_df.style.format({
+        "Served %": "{:.2%}",
+        "Failed Neg %": "{:.2%}",
+        "Rejected %": "{:.2%}",
+        "Total CS": "PHP {:.2f}",
+        "Total PS": "PHP {:.2f}",
+        "Total Surplus": "PHP {:.2f}",
+        "DWL": "PHP {:.2f}",
+        "Realization Rate": "{:.2%}",
+        "Gini (Profit)": "{:.4f}",
+        "Avg Driver Profit": "PHP {:.2f}",
+    }), use_container_width=True)
 
-        # Distribution plots
-        st.subheader("Driver Aspiration Price Distribution")
-        plot_distribution_with_stats(
-            asp_data,
-            'driver_asp',
-            "Distribution of Driver Aspiration Prices",
-            "Driver ASP (PHP)",
-            color="#e76f51"
-        )
+    # Distribution of key metrics across runs
+    st.subheader("7.3 Distribution of Metrics Across Runs")
+    plot_distribution(mc_df, "Total Surplus",
+                      "Total Surplus Across Runs", "PHP", color="#2a9d8f")
+    plot_distribution(mc_df, "Gini (Profit)",
+                      "Gini Coefficient Across Runs", "Gini", color="#e76f51")
+    plot_distribution(mc_df, "Avg Driver Profit",
+                      "Average Driver Profit Across Runs", "PHP", color="#264653")
 
-        st.subheader("Passenger Aspiration Price Distribution")
-        plot_distribution_with_stats(
-            asp_data,
-            'passenger_asp',
-            "Distribution of Passenger Aspiration Prices",
-            "Passenger ASP (PHP)",
-            color="#2a9d8f"
-        )
-
-        st.subheader("Bargaining Gap Distribution (Driver ASP - Passenger ASP)")
-        plot_distribution_with_stats(
-            asp_data,
-            'asp_gap',
-            "Distribution of Bargaining Gap",
-            "Gap (PHP)",
-            color="#f4a261"
-        )
-
-        # Scatter: Driver ASP vs Passenger ASP, colored by agreed price
-        st.subheader("Driver ASP vs Passenger ASP")
-        fig_scatter, ax_scatter = plt.subplots(figsize=(6, 5))
-        scatter = ax_scatter.scatter(
-            asp_data['passenger_asp'],
-            asp_data['driver_asp'],
-            c=asp_data['price'],
-            cmap='viridis',
-            alpha=0.6,
-            edgecolors='black',
-            linewidths=0.3,
-            s=20
-        )
-        plt.colorbar(scatter, ax=ax_scatter, label='Agreed Price (PHP)')
-        # Add diagonal reference line
-        asp_min = min(asp_data['passenger_asp'].min(), asp_data['driver_asp'].min())
-        asp_max = max(asp_data['passenger_asp'].max(), asp_data['driver_asp'].max())
-        ax_scatter.plot([asp_min, asp_max], [asp_min, asp_max], 'r--', alpha=0.5, label='Equal ASP line')
-        ax_scatter.set_xlabel("Passenger ASP (PHP)")
-        ax_scatter.set_ylabel("Driver ASP (PHP)")
-        ax_scatter.set_title("Driver vs Passenger Aspiration Prices")
-        ax_scatter.legend()
-
-        col_sc1, col_sc2, col_sc3 = st.columns([1, 2, 1])
-        with col_sc2:
-            st.pyplot(fig_scatter, use_container_width=False)
-    else:
-        st.info("No aspiration price data available in the filtered trips.")
-
+st.divider()
+st.caption("Measurement framework: descriptive and comparative, not causal. "
+           "See design document for interpretive boundaries.")

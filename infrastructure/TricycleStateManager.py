@@ -86,9 +86,6 @@ class TricycleStateManager:
     def _handleArrival(self, tricycle: Tricycle, current_location: Location) -> bool:
         if tricycle.hasArrived(current_location):
             tricycle.dropOff()
-            self.simulationLogger.add(*tricycle.currentLog)
-            # Record trip stats for per-day tracking
-            tricycle.recordTrip(tricycle.currentLog.distance, tricycle.currentLog.price)
             return True
         return False
     
@@ -119,8 +116,8 @@ class TricycleStateManager:
                 self.tricycleRepository.rerouteToGasStation(tricycle.getName())
                 return True
             if is_parked:
-                gas_amt = self.tricycleRepository.refuelTricycle(tricycle.getName())
-                self.simulationLogger.addExpenseToLog(tricycle.getName(), "midday_gas", gas_amt, current_tick)
+                gas_payment = self.tricycleRepository.refuelTricycle(tricycle.getName())
+                self.simulationLogger.addExpense(tricycle.getName(), "midday_gas", gas_payment)
                 setTricycleSpeed(tricycle.getName(), 16.67)
                 tricycle.returnToToda()
                 return True

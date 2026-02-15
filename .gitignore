@@ -213,3 +213,5 @@ assets/
 logs/
 
 test.py
+
+db/simulation_logs.db

@@ -22,33 +22,33 @@ sumo_repository = SumoRepository(network_file_path)
 toda_hub_descriptor = parseParkingAreaFile(parking_file_path)
 
 duration = 57600
+number_of_sims = 10
+number_of_days = 10
 
-# PHASE 3: INITIALIZING TRICYCLE REPOSITORY
-tricycle_factory = TricycleFactory(simulation_config)
-tricycle_repository = TricycleRepository(sumo_repository, tricycle_factory, simulation_config)
+for sim in range(number_of_sims):
 
-# PHASE 4: INITIALIZING PASSENGER REPOSITORY
-passenger_network_edges = sumo_repository.getNetworkPedestrianEdges()
-passenger_factory = PassengerFactory(sumo_repository, simulation_config)
+    # PHASE 3: INITIALIZING TRICYCLE REPOSITORY
+    tricycle_factory = TricycleFactory(simulation_config)
 
-# PHASE 5: INITIALIZING OTHER SERVICES
-tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_factory, simulation_config)
+    # PHASE 4: INITIALIZING PASSENGER REPOSITORY
+    logger = SimulationLogger()
+    tricycle_repository = TricycleRepository(sumo_repository, tricycle_factory, simulation_config, logger)
+    passenger_network_edges = sumo_repository.getNetworkPedestrianEdges()
+    passenger_factory = PassengerFactory(sumo_repository, simulation_config, logger)
 
-timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-
-# os.makedirs(f"{timestamp}", exist_ok=True)
-run_dir = os.path.join(".", timestamp)
-
-for i in range(2):
-    print(f"running run# {i}...")
-    logger = SimulationLogger(i, run_dir)
-    tricycle_repository.changeLogger(logger)
+    # PHASE 5: INITIALIZING OTHER SERVICES
+    tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_factory, simulation_config)
     tricycle_state_manager = TricycleStateManager(tricycle_repository, logger)
-    simulation_loop = SimulationEngine(toda_hub_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_state_manager, logger, duration, first_run=(i == 0))
-    simulation_loop.doMainLoop(duration)
-    simulation_loop.close()
-    tricycle_repository.startRefuelAllTricycles()
-    tricycle_repository.startExpenseAllTricycles()
 
-# Close TRACI after all runs are complete
-traci.close()
+    for day in range(number_of_days):
+        print(f"running sim# {sim + 1}, day# {day + 1}...")
+        # tricycle_repository.changeLogger(logger)
+        simulation_loop = SimulationEngine(toda_hub_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_state_manager, logger, duration, first_run=(day == 0))
+        simulation_loop.doMainLoop(duration)
+        simulation_loop.close()
+        tricycle_repository.startRefuelAllTricycles()
+        tricycle_repository.startExpenseAllTricycles()
+        logger.nextDay()
+
+    # Close TRACI after all runs are complete
+    traci.close()
