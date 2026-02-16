@@ -5,13 +5,13 @@ from datetime import datetime
 class SimulationLogger:
     def __init__(self):
         try:
-             os.makedirs("../db", exist_ok=True)
+             os.makedirs(os.path.join(os.getcwd(), "db"), exist_ok=True)
         except Exception as e:
             pass
-        if not os.path.isfile("../db/simulation_logs.db"):
-            with open("../db/simulation_logs.db", "w") as f:
+        if not os.path.isfile(os.path.join(os.getcwd(), "db/simulation_logs.db")):
+            with open(os.path.join(os.getcwd(), "db/simulation_logs.db"), "w") as f:
                 pass
-        self.conn = sqlite3.connect("../db/simulation_logs.db")
+        self.conn = sqlite3.connect(os.path.join(os.getcwd(), "db/simulation_logs.db"))
         self.cursor = self.conn.cursor()
         self.cursor.execute("PRAGMA foreign_keys = ON;")
         self._createTables()
