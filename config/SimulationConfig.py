@@ -11,7 +11,9 @@ class SimulationConfig:
     parkingFileName = "parking.add.xml"
     decalFileName = "map.xml"
     routesFileName = "routes.xml"
-    gasPricePerLiter = 58.9
+    gasPricePerLiter = 56.76
+    lowGasPricePerLiter = 54.8
+    highGasPricePerLiter = 61.0
     
     def getAssetDirectory(self) -> str:
         script_dir = Path(__file__).resolve().parent.parent
