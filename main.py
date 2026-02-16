@@ -22,7 +22,7 @@ sumo_repository = SumoRepository(network_file_path)
 toda_hub_descriptor = parseParkingAreaFile(parking_file_path)
 
 duration = 57600
-number_of_sims = 20
+number_of_sims = 30
 number_of_days = 10
 
 for sim in range(number_of_sims):
