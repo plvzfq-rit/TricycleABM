@@ -346,23 +346,54 @@ plot_distribution(driver_profit, "profit", "Driver Profit Distribution",
 # 2.2 Sustainability Ratios
 st.subheader("2.2 Sustainability Ratios")
 st.markdown(
-    "Three progressively stricter thresholds evaluate whether drivers can sustain "
-    "operations:\n\n"
+    "Two thresholds evaluate whether drivers can sustain operations:\n\n"
     "| Threshold | Condition | Interpretation |\n"
     "|---|---|---|\n"
-    "| **Operational Viability** | Income >= Fuel cost | Can the driver keep driving? |\n"
-    "| **Livelihood Adequacy** | Income >= Fuel + Daily expense | Can the driver cover basic needs? |\n"
-    "| **Profitability** | Profit > 0 | Does the driver earn a net surplus? |"
+    "| **Covers Fuel** | Income >= Fuel cost | Can the driver keep the vehicle running? |\n"
+    "| **Profitable** | Profit > 0 (Income > All expenses) | Does the driver take home any net earnings? |\n\n"
+    "*Fuel cost = end-of-day + midday refueling. "
+    "Total expenses = Fuel cost + Daily operating cost (food, maintenance, etc.).*"
 )
 n_drivers = len(driver_profit)
-operational = (driver_profit["income"] >= driver_profit["fuel_cost"]).sum()
-livelihood = (driver_profit["income"] >= (driver_profit["fuel_cost"] + driver_profit["daily_expense_total"])).sum()
+covers_fuel = (driver_profit["income"] >= driver_profit["fuel_cost"]).sum()
 profitable = (driver_profit["profit"] > 0).sum()
 
-c1, c2, c3 = st.columns(3)
-c1.metric("Operational Viability", f"{operational}/{n_drivers} ({operational/n_drivers*100:.1f}%)" if n_drivers else "N/A")
-c2.metric("Livelihood Adequacy", f"{livelihood}/{n_drivers} ({livelihood/n_drivers*100:.1f}%)" if n_drivers else "N/A")
-c3.metric("Profitability", f"{profitable}/{n_drivers} ({profitable/n_drivers*100:.1f}%)" if n_drivers else "N/A")
+c1, c2 = st.columns(2)
+c1.metric("Covers Fuel", f"{covers_fuel}/{n_drivers} ({covers_fuel/n_drivers*100:.1f}%)" if n_drivers else "N/A",
+          help="Income >= Fuel cost (end_gas + midday_gas)")
+c2.metric("Profitable", f"{profitable}/{n_drivers} ({profitable/n_drivers*100:.1f}%)" if n_drivers else "N/A",
+          help="Income > Fuel cost + Daily operating expense")
+
+# Breakdown: show how many drivers fall into each category
+n_below_fuel = n_drivers - covers_fuel
+n_covers_fuel_only = covers_fuel - profitable
+n_profitable = profitable
+st.markdown(
+    f"**Breakdown:** "
+    f"{n_below_fuel} cannot cover fuel | "
+    f"{n_covers_fuel_only} cover fuel but not daily expenses | "
+    f"{n_profitable} profitable"
+)
+
+# Stacked bar visualization
+fig_sust, ax_sust = plt.subplots(figsize=(6, 1.5))
+categories = [n_below_fuel, n_covers_fuel_only, n_profitable]
+cat_labels = ["Below fuel cost", "Covers fuel only", "Profitable"]
+cat_colors = ["#e76f51", "#f4a261", "#2a9d8f"]
+left = 0
+for count, label, color in zip(categories, cat_labels, cat_colors):
+    if count > 0:
+        ax_sust.barh(0, count, left=left, color=color, edgecolor="white", label=f"{label} ({count})")
+        left += count
+ax_sust.set_xlim(0, n_drivers)
+ax_sust.set_yticks([])
+ax_sust.set_xlabel("Number of drivers")
+ax_sust.legend(loc="upper center", bbox_to_anchor=(0.5, -0.3), ncol=3, fontsize=8)
+plt.tight_layout()
+c1, c2, c3 = st.columns([1, 2, 1])
+with c2:
+    st.pyplot(fig_sust, use_container_width=False)
+plt.close(fig_sust)
 
 # 2.3 Producer Surplus
 st.subheader("2.3 Producer Surplus")
