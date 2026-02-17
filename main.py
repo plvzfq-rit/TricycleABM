@@ -41,7 +41,7 @@ for sim in range(number_of_sims):
     tricycle_state_manager = TricycleStateManager(tricycle_repository, logger)
 
     for day in range(number_of_days):
-        print(f"running sim# {sim + 1}, day# {day + 1}...")
+        print(f"\n\nrunning sim# {sim + 1}, day# {day + 1}...")
         # tricycle_repository.changeLogger(logger)
         simulation_loop = SimulationEngine(toda_hub_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_state_manager, logger, duration, first_run=(day == 0))
         simulation_loop.doMainLoop(duration)

@@ -6,6 +6,12 @@ import matplotlib.ticker as mticker
 import seaborn as sns
 import sqlite3
 import os
+import sys
+sys.path.append('../')
+
+from config.SimulationConfig import SimulationConfig
+
+config = SimulationConfig()
 
 # ---------------------------------------------------------------------------
 # Page config
@@ -47,14 +53,51 @@ def plot_distribution(data, x_col, title, xlabel, ylabel="Count", color="skyblue
 
 
 def gini_coefficient(values):
-    """Compute Gini coefficient for a 1-D array of non-negative values."""
-    v = np.sort(np.asarray(values, dtype=float))
-    v = v[~np.isnan(v)]
-    n = len(v)
-    if n == 0 or v.sum() == 0:
-        return 0.0
-    index = np.arange(1, n + 1)
-    return (2 * np.sum(index * v) - (n + 1) * np.sum(v)) / (n * np.sum(v))
+    """
+    Compute the Gini coefficient adjusted for negative values using
+    the Raffinetti-Siletti-Vernizzi normalization (bounded in [0,1]).
+    Reference: E. Raffinetti, E. Siletti, A. Vernizzi (2015).
+    """
+
+    # Convert to numpy array and flatten
+    y = np.array(values, dtype=float).flatten()
+
+    # Remove NaNs
+    y = y[~np.isnan(y)]
+    n = len(y)
+    if n == 0:
+        return np.nan
+
+    # Sort values
+    y_sorted = np.sort(y)
+
+    # Compute mean differences (pairwise)
+    # |yi - yj| summed over all pairs
+    # Efficiently use broadcasting for moderate n
+    diff_matrix = np.abs(y_sorted.reshape(-1,1) - y_sorted.reshape(1,-1))
+    sum_abs_diffs = diff_matrix.sum()
+
+    # Basic "mean difference" numerator
+    # ≡ sum_{i,j} |yi - yj|
+    # Standard Gini denominator is 2 * n^2 * mu
+    # We'll compute RSV denom instead
+    T_pos = np.sum(y_sorted[y_sorted > 0])
+    T_neg = np.abs(np.sum(y_sorted[y_sorted < 0]))
+
+    # RSV normalization term: total absolute attribute
+    # Equivalent to (sum of positives + sum of absolute negatives)
+    mu_star = (T_pos + T_neg) / n
+
+    # Avoid division by zero
+    if mu_star == 0:
+        return np.nan
+
+    # RSV normalized Gini
+    # numerator divided by (2 * n^2 * mu_star)
+    gini = sum_abs_diffs / (2.0 * (n**2) * mu_star)
+
+    return gini
+
 
 
 def lorenz_curve(values, label="", ax=None):
@@ -78,8 +121,13 @@ def income_shares(values, top_pct=0.10, bottom_pct=0.40):
     v = np.sort(np.asarray(values, dtype=float))
     v = v[~np.isnan(v)]
     n = len(v)
-    if n == 0 or v.sum() == 0:
-        return 0.0, 0.0
+    if n == 0:
+        return np.nan, np.nan
+
+    total = v.sum()
+    if total <= 0:
+        return np.nan, np.nan
+
     top_n = max(1, int(np.ceil(n * top_pct)))
     bottom_n = max(1, int(np.ceil(n * bottom_pct)))
     total = v.sum()
@@ -161,6 +209,7 @@ txn = txn.merge(
 # Compute passenger WTP & aspired price in absolute terms (per-km * distance/1000)
 txn["pax_wtp"] = txn["willingness_to_pay"] * txn["distance"] / 1000.0
 txn["pax_asp_abs"] = txn["aspired_price_pax"] * txn["distance"] / 1000.0
+txn["driver_min_abs"] = txn["minimum_price"] * txn["distance"] / 1000.0
 
 # Get initial negotiation step for driver asp at start of negotiation
 init_neg = neg[neg["iteration"] == 0].drop_duplicates(subset=["transaction_id"])
@@ -171,8 +220,8 @@ txn = txn.merge(
 
 # Marginal cost proxy: gas_consumption_rate * distance * gas_price_per_liter
 # gas_consumption_rate is liters/meter essentially; gas price ~ 58.9 PHP/L
-GAS_PRICE = 58.9
-txn["marginal_cost"] = txn["gas_consumption_rate"] * txn["distance"] * GAS_PRICE
+GAS_PRICE = config.getGasPricePerLiter()
+txn["marginal_cost"] = txn["gas_consumption_rate"] * txn["distance"] * GAS_PRICE / 1000
 
 # Separate accepted / failed negotiation / rejected (too far)
 accepted = txn[txn["result"] == "agree"].copy()
@@ -300,7 +349,7 @@ st.markdown(
     "- **Income** = Sum of all accepted fares for a driver.\n"
     "- **Profit** = Income - Total Expenses.\n"
     "- Expenses include **fuel costs** (end-of-day and midday refueling) and "
-    "**daily operating costs** (food, vehicle maintenance, etc.)."
+    "**daily livelihood costs**."
 )
 
 driver_income = accepted.groupby("driver_id")["final_price"].sum().reset_index()
@@ -316,6 +365,8 @@ fuel_expenses.columns = ["driver_id", "fuel_cost"]
 daily_exp = expenses[expenses["expense_type"] == "daily_expense"].groupby("driver_id")["amount"].sum().reset_index()
 daily_exp.columns = ["driver_id", "daily_expense_total"]
 
+rides_count = accepted.groupby("driver_id").size().reset_index(name="num_rides")
+
 driver_profit = drivers[["id", "trike_code", "hub", "run_id"]].copy()
 driver_profit = driver_profit.merge(driver_income, left_on="id", right_on="driver_id", how="left")
 driver_profit = driver_profit.merge(driver_expenses, left_on="id", right_on="driver_id", how="left", suffixes=("", "_exp"))
@@ -325,7 +376,12 @@ driver_profit["income"] = driver_profit["income"].fillna(0)
 driver_profit["total_expenses"] = driver_profit["total_expenses"].fillna(0)
 driver_profit["fuel_cost"] = driver_profit["fuel_cost"].fillna(0)
 driver_profit["daily_expense_total"] = driver_profit["daily_expense_total"].fillna(0)
+driver_profit["profit_after_gas"] = driver_profit["income"] - driver_profit["fuel_cost"]
 driver_profit["profit"] = driver_profit["income"] - driver_profit["total_expenses"]
+driver_profit = driver_profit.merge(rides_count, left_on="id", right_on="driver_id", how="left")
+driver_profit["num_rides"] = driver_profit["num_rides"].fillna(0).astype(int)
+
+
 
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Total Driver Income", f"PHP {driver_profit['income'].sum():,.2f}")
@@ -333,7 +389,7 @@ c2.metric("Total Expenses", f"PHP {driver_profit['total_expenses'].sum():,.2f}")
 c3.metric("Total Profit", f"PHP {driver_profit['profit'].sum():,.2f}")
 c4.metric("Avg Profit / Driver", f"PHP {driver_profit['profit'].mean():,.2f}")
 
-display_cols = ["trike_code", "hub", "run_id", "income", "fuel_cost",
+display_cols = ["trike_code", "hub", "run_id", "num_rides", "income", "fuel_cost",
                 "daily_expense_total", "total_expenses", "profit"]
 st.dataframe(
     driver_profit[display_cols].sort_values("profit", ascending=False),
@@ -400,8 +456,6 @@ st.subheader("2.3 Producer Surplus")
 st.markdown(
     "For each accepted transaction: **Producer Surplus = Final Price - Marginal Cost**.\n\n"
     "Marginal cost is estimated as `gas_consumption_rate x distance x gas_price_per_liter`. "
-    "This measures the economic rent per trip, distinct from accounting profit (which "
-    "also includes fixed daily expenses)."
 )
 if not accepted.empty:
     ps_total = accepted["producer_surplus"].sum()
@@ -446,20 +500,31 @@ st.markdown(
     "When a transaction is **feasible** (Passenger WTP >= Marginal Cost) but "
     "no agreement is reached, the unrealized surplus is counted as **deadweight loss**. "
     "This measures inefficiency due to negotiation breakdown or spatial friction.\n\n"
-    "*Note: Rejected transactions (too far) are excluded because they represent "
-    "structural infeasibility, not negotiation failure.*"
+    "Both **failed negotiations** and **rejected transactions** (too far) are included "
+    "when the passenger's WTP exceeds the marginal cost, since either type represents "
+    "a forgone welfare gain."
 )
-# Only use failed negotiations (not rejections) for DWL
-if not failed_neg.empty:
-    feasible_failed = failed_neg[failed_neg["pax_wtp"] >= failed_neg["marginal_cost"]].copy()
-    feasible_failed["unrealized_surplus"] = feasible_failed["pax_wtp"] - feasible_failed["marginal_cost"]
-    dwl = feasible_failed["unrealized_surplus"].sum()
+# Combine failed negotiations and rejected transactions for DWL
+all_unsuccessful = pd.concat([failed_neg, rejected], ignore_index=True)
+if not all_unsuccessful.empty:
+    feasible_unsuccessful = all_unsuccessful[all_unsuccessful["pax_wtp"] >= all_unsuccessful["marginal_cost"]].copy()
+    feasible_unsuccessful["unrealized_surplus"] = feasible_unsuccessful["pax_wtp"] - feasible_unsuccessful["marginal_cost"]
+    dwl = feasible_unsuccessful["unrealized_surplus"].sum()
+
+    # Break down by source
+    feasible_failed = failed_neg[failed_neg["pax_wtp"] >= failed_neg["marginal_cost"]]
+    feasible_rejected = rejected[rejected["pax_wtp"] >= rejected["marginal_cost"]]
+
     c1, c2, c3 = st.columns(3)
-    c1.metric("Deadweight Loss", f"PHP {dwl:,.2f}")
-    c2.metric("Feasible-but-Failed Negotiations", f"{len(feasible_failed):,}")
-    c3.metric("Avg Unrealized Surplus", f"PHP {feasible_failed['unrealized_surplus'].mean():,.2f}" if len(feasible_failed) else "N/A")
+    c1.metric("Total Deadweight Loss", f"PHP {dwl:,.2f}")
+    c2.metric("Feasible-but-Unserved Transactions", f"{len(feasible_unsuccessful):,}")
+    c3.metric("Avg Unrealized Surplus", f"PHP {feasible_unsuccessful['unrealized_surplus'].mean():,.2f}" if len(feasible_unsuccessful) else "N/A")
+
+    c1, c2 = st.columns(2)
+    c1.metric("From Failed Negotiations", f"{len(feasible_failed):,}")
+    c2.metric("From Rejected (Too Far)", f"{len(feasible_rejected):,}")
 else:
-    st.info("No failed negotiations.")
+    st.info("No failed negotiations or rejected transactions.")
     dwl = 0
 
 # 3.3 Surplus Realization Rate
@@ -490,37 +555,86 @@ st.markdown(
     "inequality from bargaining inequality."
 )
 
-# 4.1 Income Inequality (measured on profit)
-st.subheader("4.1 Income (Profit) Inequality")
+# 4.1 Income Inequality
+st.subheader("4.1 Income Inequality (Gross)")
 st.markdown(
-    "Income inequality is measured using driver **profit** (income minus all expenses):\n"
-    "- **Gini coefficient:** 0 = perfect equality, 1 = one driver captures all profit.\n"
-    "- **Top 10% share:** Fraction of total profit captured by the highest-earning 10%.\n"
-    "- **Bottom 40% share:** Fraction captured by the lowest-earning 40%.\n"
-    "- **Lorenz curve:** Visual representation; the further from the diagonal, the "
-    "greater the inequality."
+    "Inequality of **gross income** (total fares collected, before any expenses):\n"
+    "- **Gini coefficient:** 0 = perfect equality, 1 = one driver captures all income.\n"
+    "- **Top 10% / Bottom 40% shares:** Fraction of total income captured by those groups.\n"
+    "- **Lorenz curve:** The further from the diagonal, the greater the inequality."
+)
+incomes = driver_profit["income"].values
+gini_inc = gini_coefficient(incomes)
+top10_inc, bot40_inc = income_shares(incomes, 0.10, 0.40)
+
+c1, c2, c3 = st.columns(3)
+c1.metric("Gini Coefficient", f"{gini_inc:.4f}" if not np.isnan(gini_inc) else "Not defined")
+
+c2.metric("Top 10% Income Share", f"{top10_inc:.2%}")
+c3.metric("Bottom 40% Income Share", f"{bot40_inc:.2%}")
+
+fig_lorenz_inc, ax_lorenz_inc = plt.subplots(figsize=(5, 5))
+lorenz_curve(incomes, label=f"Gross Income (Gini={gini_inc:.3f})", ax=ax_lorenz_inc)
+ax_lorenz_inc.set_title("Lorenz Curve - Gross Income")
+ax_lorenz_inc.legend()
+c1, c2, c3 = st.columns([1, 2, 1])
+with c2:
+    st.pyplot(fig_lorenz_inc, use_container_width=False)
+plt.close(fig_lorenz_inc)
+
+# 4.2 Profit Inequality (Gas Only)
+st.subheader("4.2 Profit Inequality (After Gas Expenses)")
+st.markdown(
+    "Inequality of **profit after gas** (income minus fuel costs only). "
+    "This isolates the effect of variable operating costs without livelihood expenses."
+)
+profit_gas = driver_profit["profit_after_gas"].values
+gini_pg = gini_coefficient(profit_gas)
+top10_pg, bot40_pg = income_shares(profit_gas, 0.10, 0.40)
+
+c1, c2, c3 = st.columns(3)
+c1.metric("Gini Coefficient", f"{gini_pg:.4f}")
+c2.metric("Top 10% Share", f"{top10_pg:.2%}")
+c3.metric("Bottom 40% Share", f"{bot40_pg:.2%}")
+
+fig_lorenz_pg, ax_lorenz_pg = plt.subplots(figsize=(5, 5))
+lorenz_curve(profit_gas, label=f"Profit after Gas (Gini={gini_pg:.3f})", ax=ax_lorenz_pg)
+ax_lorenz_pg.set_title("Lorenz Curve - Profit after Gas")
+ax_lorenz_pg.legend()
+c1, c2, c3 = st.columns([1, 2, 1])
+with c2:
+    st.pyplot(fig_lorenz_pg, use_container_width=False)
+plt.close(fig_lorenz_pg)
+
+# 4.3 Profit Inequality (After All Expenses)
+st.subheader("4.3 Profit Inequality (After All Expenses)")
+st.markdown(
+    "Inequality of **net profit** (income minus gas and livelihood/daily expenses). "
+    "This is the take-home figure and reflects the full cost burden on drivers."
 )
 profits = driver_profit["profit"].values
 gini = gini_coefficient(profits)
 top10, bot40 = income_shares(profits, 0.10, 0.40)
 
 c1, c2, c3 = st.columns(3)
-c1.metric("Gini Coefficient", f"{gini:.4f}")
+c1.metric("Gini Coefficient", f"{gini:.4f}" if not np.isnan(gini) else "Not defined")
 c2.metric("Top 10% Profit Share", f"{top10:.2%}")
 c3.metric("Bottom 40% Profit Share", f"{bot40:.2%}")
 
-# Lorenz Curve
+# Combined Lorenz Curve
 fig_lorenz, ax_lorenz = plt.subplots(figsize=(5, 5))
-lorenz_curve(profits, label=f"Driver Profit (Gini={gini:.3f})", ax=ax_lorenz)
-ax_lorenz.set_title("Lorenz Curve - Driver Profit")
+lorenz_curve(incomes, label=f"Gross Income (Gini={gini_inc:.3f})", ax=ax_lorenz)
+lorenz_curve(profit_gas, label=f"Profit after Gas (Gini={gini_pg:.3f})", ax=ax_lorenz)
+lorenz_curve(profits, label=f"Net Profit (Gini={gini:.3f})", ax=ax_lorenz)
+ax_lorenz.set_title("Lorenz Curves - Income vs Profit Levels")
 ax_lorenz.legend()
 c1, c2, c3 = st.columns([1, 2, 1])
 with c2:
     st.pyplot(fig_lorenz, use_container_width=False)
 plt.close(fig_lorenz)
 
-# 4.2 Surplus Distribution
-st.subheader("4.2 Surplus Distribution")
+# 4.4 Surplus Distribution
+st.subheader("4.4 Surplus Distribution")
 st.markdown(
     "Separate Gini coefficients for consumer and producer surplus reveal whether "
     "inequality stems from **outcome dispersion** (some agents simply have more "
@@ -558,16 +672,17 @@ st.markdown(
 # 5.1 Bargaining Surplus
 st.subheader("5.1 Bargaining Surplus")
 st.markdown(
-    "When Passenger WTP >= Driver ASP, a **zone of possible agreement** exists. "
+    "When Passenger WTP >= Driver Minimum Price, a **zone of possible agreement** exists. "
     "The bargaining surplus is the size of that zone:\n\n"
-    "**Bargaining Surplus = Passenger WTP - Driver ASP**\n\n"
+    "**Bargaining Surplus = Passenger WTP - Driver Minimum Price**\n\n"
     "This is the total value available to be split between driver and passenger "
-    "through negotiation."
+    "through negotiation. The driver minimum price is their absolute floor "
+    "(the lowest fare they would accept)."
 )
-barg = accepted.dropna(subset=["driver_asp", "pax_wtp"]).copy()
-barg = barg[barg["pax_wtp"] >= barg["driver_asp"]].copy()
+barg = accepted.dropna(subset=["driver_min_abs", "pax_wtp"]).copy()
+barg = barg[barg["pax_wtp"] >= barg["driver_min_abs"]].copy()
 if not barg.empty:
-    barg["bargaining_surplus"] = barg["pax_wtp"] - barg["driver_asp"]
+    barg["bargaining_surplus"] = barg["pax_wtp"] - barg["driver_min_abs"]
     c1, c2, c3 = st.columns(3)
     c1.metric("Avg Bargaining Surplus", f"PHP {barg['bargaining_surplus'].mean():,.2f}")
     c2.metric("Total Bargaining Surplus", f"PHP {barg['bargaining_surplus'].sum():,.2f}")
@@ -576,14 +691,14 @@ if not barg.empty:
     # 5.2 Surplus Capture Ratio
     st.subheader("5.2 Surplus Capture Ratio")
     st.markdown(
-        "**Driver Capture Ratio = (Final Price - Driver ASP) / (Passenger WTP - Driver ASP)**\n\n"
+        "**Driver Capture Ratio = (Final Price - Driver Min Price) / (Passenger WTP - Driver Min Price)**\n\n"
         "| Value | Interpretation |\n"
         "|---|---|\n"
         "| Near 1.0 | Driver dominant - fare is close to passenger's maximum |\n"
         "| Near 0.5 | Balanced - surplus is split roughly evenly |\n"
         "| Near 0.0 | Passenger dominant - fare is close to driver's minimum |"
     )
-    barg["driver_capture"] = (barg["final_price"] - barg["driver_asp"]) / barg["bargaining_surplus"]
+    barg["driver_capture"] = (barg["final_price"] - barg["driver_min_abs"]) / barg["bargaining_surplus"]
     barg["driver_capture"] = barg["driver_capture"].clip(0, 1)
 
     cap_mean = barg["driver_capture"].mean()
@@ -596,25 +711,25 @@ if not barg.empty:
                       "Driver Surplus Capture Ratio Distribution",
                       "Capture Ratio (0=Pax dominant, 1=Driver dominant)", color="#f4a261")
 
-    # Scatter: Driver ASP vs Passenger WTP, colored by capture
+    # Scatter: Driver Min Price vs Passenger WTP, colored by capture
     fig_sc, ax_sc = plt.subplots(figsize=(6, 5))
-    sc = ax_sc.scatter(barg["pax_wtp"], barg["driver_asp"],
+    sc = ax_sc.scatter(barg["pax_wtp"], barg["driver_min_abs"],
                        c=barg["driver_capture"], cmap="RdYlGn_r",
                        alpha=0.6, edgecolors="black", linewidths=0.3, s=20)
     plt.colorbar(sc, ax=ax_sc, label="Driver Capture Ratio")
-    lims = [min(barg["pax_wtp"].min(), barg["driver_asp"].min()),
-            max(barg["pax_wtp"].max(), barg["driver_asp"].max())]
+    lims = [min(barg["pax_wtp"].min(), barg["driver_min_abs"].min()),
+            max(barg["pax_wtp"].max(), barg["driver_min_abs"].max())]
     ax_sc.plot(lims, lims, "k--", alpha=0.4, label="Equal line")
     ax_sc.set_xlabel("Passenger WTP (PHP)")
-    ax_sc.set_ylabel("Driver ASP (PHP)")
-    ax_sc.set_title("Bargaining Space: WTP vs Driver ASP")
+    ax_sc.set_ylabel("Driver Minimum Price (PHP)")
+    ax_sc.set_title("Bargaining Space: WTP vs Driver Minimum Price")
     ax_sc.legend()
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         st.pyplot(fig_sc, use_container_width=False)
     plt.close(fig_sc)
 else:
-    st.info("No transactions with Passenger WTP >= Driver ASP found for bargaining analysis.")
+    st.info("No transactions with Passenger WTP >= Driver Minimum Price found for bargaining analysis.")
 
 st.divider()
 
@@ -651,11 +766,11 @@ for hub in sorted(hubs):
     avg_ps = hub_acc["producer_surplus"].mean() if not hub_acc.empty else 0
 
     # Capture ratio for this hub
-    hub_barg = hub_acc.dropna(subset=["driver_asp", "pax_wtp"])
-    hub_barg = hub_barg[hub_barg["pax_wtp"] >= hub_barg["driver_asp"]]
+    hub_barg = hub_acc.dropna(subset=["driver_min_abs", "pax_wtp"])
+    hub_barg = hub_barg[hub_barg["pax_wtp"] >= hub_barg["driver_min_abs"]]
     if not hub_barg.empty:
-        hub_barg_surplus = hub_barg["pax_wtp"] - hub_barg["driver_asp"]
-        hub_capture = ((hub_barg["final_price"] - hub_barg["driver_asp"]) / hub_barg_surplus).clip(0, 1).mean()
+        hub_barg_surplus = hub_barg["pax_wtp"] - hub_barg["driver_min_abs"]
+        hub_capture = ((hub_barg["final_price"] - hub_barg["driver_min_abs"]) / hub_barg_surplus).clip(0, 1).mean()
     else:
         hub_capture = np.nan
 
@@ -786,5 +901,5 @@ else:
                       "Average Driver Profit Across Runs", "PHP", color="#264653")
 
 st.divider()
-st.caption("Measurement framework: descriptive and comparative, not causal. "
-           "See design document for interpretive boundaries.")
+# st.caption("Measurement framework: descriptive and comparative, not causal. "
+        #    "See design document for interpretive boundaries.")

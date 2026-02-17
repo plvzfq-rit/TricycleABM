@@ -53,9 +53,6 @@ class TricycleDispatcher:
                 success = self.tricycleRepository.dispatchTricycle(tricycle_id, passenger, simulationLogger, tick)
                 if success:
                     todaRepository.dequeToda(toda)
-                else:
-                    pass
-                    # simulationLogger.recordRejectedTrip()
             else:
                 transaction = [tricycle_id, passenger.name, getManhattanDistance(getTricycleLocation(tricycle.name), passenger_destination), tick, "reject", 0]
                 simulationLogger.recordTransaction(transaction, [])

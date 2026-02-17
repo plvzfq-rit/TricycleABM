@@ -76,3 +76,6 @@ def hasTricycleParked(tricycle_id: str):
 
 def setTricycleSpeed(tricycle_id: str, speed: float) -> None:
     traci.vehicle.setSpeed(tricycle_id, speed)
+
+def getVehiclesInSimulation():
+    return traci.vehicle.getIDList()

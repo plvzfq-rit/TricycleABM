@@ -220,7 +220,7 @@ for run_idx in range(1, NUM_RUNS + 1):
             rounds_data.append((curr_offer, drv_asp, passenger_asp_abs, turn, 0))
 
             agree = False
-            for i in range(1, 3):
+            for i in range(3):
                 drv_asp_i = round(min_price + (drv_asp - min_price) * (drv_patience ** i), 2)
                 passenger_asp_i = round(max_price - (max_price - passenger_asp_abs) * (pax_patience ** i), 2)
 
@@ -245,7 +245,7 @@ for run_idx in range(1, NUM_RUNS + 1):
                         rounds_data.append((curr_offer, drv_asp_i, passenger_asp_i, "passenger", i))
 
             result = "agree" if agree else "failed"
-            final_price = round(curr_offer, 2) if agree else -1
+            final_price = round(curr_offer, 2) if agree else 0
 
             cur.execute("""
                 INSERT INTO passenger_transactions (

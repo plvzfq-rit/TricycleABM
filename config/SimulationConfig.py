@@ -12,6 +12,7 @@ class SimulationConfig:
     decalFileName = "map.xml"
     routesFileName = "routes.xml"
     gasPricePerLiter = 56.76
+    avgPricePerLiter = 56.76
     lowGasPricePerLiter = 54.8
     highGasPricePerLiter = 61.0
     

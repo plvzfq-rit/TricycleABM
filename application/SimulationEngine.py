@@ -8,6 +8,7 @@ from infrastructure.TricycleDispatcher import TricycleDispatcher
 from infrastructure.TricycleStateManager import TricycleStateManager
 from infrastructure.SimulationLogger import SimulationLogger
 from infrastructure.TodaRepository import TodaRepository
+from utils.TraciUtils import getVehiclesInSimulation
 
 class SimulationEngine:
     def __init__(self, toda_hub_descriptor: TodaHubDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, tricycle_repository: TricycleRepository, tricycle_state_manager: TricycleStateManager, logger: SimulationLogger, duration: int, first_run: bool = True) -> None:
@@ -34,7 +35,14 @@ class SimulationEngine:
             "-n", self.simulationConfig.getNetworkFilePath(),
             "-r", self.simulationConfig.getRoutesFilePath(),
             "-a", additionalFiles,
-            "--lateral-resolution", "2.0"
+            "--lateral-resolution", "2.0",
+            "--collision.action", "none",
+            "--time-to-teleport", "-1",
+            "--no-step-log", "true",
+            "--duration-log.disable", "true",
+            "--no-warnings", "true",
+            "--verbose", "false",
+            "--error-log", "tmp.txt"
         ])
 
     def doMainLoop(self, simulation_duration: int) -> None:
@@ -43,6 +51,10 @@ class SimulationEngine:
         self.todaRepository = TodaRepository()
         
         while self.tick < simulation_duration:
+            vehicles_in_sim = getVehiclesInSimulation()
+            for trike in self.tricycleRepository.getTricycles():
+                if trike.name not in vehicles_in_sim and trike.startTime - self.tick > 1:
+                    trike.kill()
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.todaRepository.manageTodaQueues()
             self.tricycleDispatcher.tryDispatchFromTodaQueues(self.simulationLogger, self.tick, self.todaRepository)
