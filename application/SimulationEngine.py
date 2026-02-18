@@ -51,10 +51,6 @@ class SimulationEngine:
         self.todaRepository = TodaRepository()
         
         while self.tick < simulation_duration:
-            vehicles_in_sim = getVehiclesInSimulation()
-            for trike in self.tricycleRepository.getTricycles():
-                if trike.name not in vehicles_in_sim and trike.startTime - self.tick > 1:
-                    trike.kill()
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.todaRepository.manageTodaQueues()
             self.tricycleDispatcher.tryDispatchFromTodaQueues(self.simulationLogger, self.tick, self.todaRepository)
