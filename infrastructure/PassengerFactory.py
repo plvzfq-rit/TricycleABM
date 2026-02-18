@@ -3,6 +3,7 @@ import random
 from config.SimulationConfig import SimulationConfig
 
 from .SumoRepository import SumoRepository
+from .SimulationLogger import SimulationLogger
 
 from domain.Passenger import Passenger
 from domain.Location import Location, getManhattanDistance
@@ -17,7 +18,7 @@ class PassengerFactory:
         todaPositions: dictionary of Toda hub positions.
         index: integer index for unique passenger naming.
     """
-    def __init__(self, sumo_repository: SumoRepository, simulation_config: SimulationConfig) -> None:
+    def __init__(self, sumo_repository: SumoRepository, simulation_config: SimulationConfig, simulation_logger: SimulationLogger) -> None:
         """Initializes object with elements from SumoRepository and SimulationConfig.
 
         Args:
@@ -32,6 +33,7 @@ class PassengerFactory:
         self.patienceDistribution = simulation_config.getPassengerPatienceDistribution()
         self.aspiredPriceDistribution = simulation_config.getPassengerAspiredPriceDistribution()
         self.sumoRepository = sumo_repository
+        self.simulationLogger = simulation_logger
 
         # Initialize passenger index for unique naming
         self.index = 0
@@ -74,7 +76,7 @@ class PassengerFactory:
         distance = getManhattanDistance(source, destination) / 1000.0  # convert to km
 
         # generate willingness to pay (peso/km times distance in km)
-        willingness_to_pay = self.wtpDistribution(size=1)[0] * distance
+        willingness_to_pay = self.wtpDistribution(size=1) * distance
 
         # create Location object for destination
         destination = Location(destination_edge, position, lane_index)
@@ -82,6 +84,10 @@ class PassengerFactory:
         patience = self.patienceDistribution()
 
         aspiredPrice = self.aspiredPriceDistribution()
+
+        passenger = Passenger(name, willingness_to_pay, patience, aspiredPrice, destination)
+
+        self.simulationLogger.addPassenger(passenger)
         
         # create and return Passenger object
-        return Passenger(name, willingness_to_pay, patience, aspiredPrice, destination)
+        return passenger

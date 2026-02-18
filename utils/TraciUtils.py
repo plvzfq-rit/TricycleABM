@@ -29,10 +29,13 @@ def getListofGasIds() -> list[str]:
     return hub_ids
 
 def getTricycleLocation(tricycle_id: str) -> Location | None:
-    current_edge = traci.vehicle.getRoadID(tricycle_id)
-    current_position = traci.vehicle.getLanePosition(tricycle_id)
-    current_lane = traci.vehicle.getLaneIndex(tricycle_id)
-    return Location(current_edge, current_position, current_lane)
+    try:
+        current_edge = traci.vehicle.getRoadID(tricycle_id)
+        current_position = traci.vehicle.getLanePosition(tricycle_id)
+        current_lane = traci.vehicle.getLaneIndex(tricycle_id)
+        return Location(current_edge, current_position, current_lane)
+    except traci.exceptions.TraCIException:
+        return None
 
 def getTricycleHubEdge(hub_string: str) -> str:
     HUB_EDGE_MAPPING = {
@@ -66,7 +69,13 @@ def removeTricycle(tricycle_id: str) -> None:
     traci.vehicle.remove(tricycle_id)
 
 def hasTricycleParked(tricycle_id: str):
-    return traci.vehicle.isStoppedParking(tricycle_id)
+    try:
+        return traci.vehicle.isStoppedParking(tricycle_id)
+    except traci.exceptions.TraCIException:
+        return False
 
 def setTricycleSpeed(tricycle_id: str, speed: float) -> None:
     traci.vehicle.setSpeed(tricycle_id, speed)
+
+def getVehiclesInSimulation():
+    return traci.vehicle.getIDList()

@@ -11,7 +11,10 @@ class SimulationConfig:
     parkingFileName = "parking.add.xml"
     decalFileName = "map.xml"
     routesFileName = "routes.xml"
-    gasPricePerLiter = 58.9
+    gasPricePerLiter = 56.76
+    avgPricePerLiter = 56.76
+    lowGasPricePerLiter = 54.8
+    highGasPricePerLiter = 61.0
     
     def getAssetDirectory(self) -> str:
         script_dir = Path(__file__).resolve().parent.parent
@@ -36,7 +39,7 @@ class SimulationConfig:
     def getWTPDistribution(self) -> callable:
         shape = 0.7134231299166108
         scale = 38.38513260285555
-        return lambda size=1: round(lognorm.rvs(shape, loc=0, scale=scale, size=size), 2)
+        return lambda size=1: round(lognorm.rvs(shape, loc=0, scale=scale, size=size).item(), 2)
     
     def getTodaPositions(self) -> dict[str, float]:
         return {
@@ -51,8 +54,11 @@ class SimulationConfig:
             "hub8": 57.71
         }
     
+    demandMultiplier = 2.0
+
     def getPeakHourProbabilities(self) -> list[float]:
-        return [0.08284023669, 0.1301775148, 0.1538461538, 0.1301775148, 0.08284023669, 0.07100591716, 0.04733727811, 0.0650887574, 0.03550295858, 0.02366863905, 0.02366863905, 0.04142011834, 0.02366863905, 0.01183431953, 0.005917159763, 0.005917159763, 0.005917159763, 0.005917159763]
+        base = [0.08284023669, 0.1301775148, 0.1538461538, 0.1301775148, 0.08284023669, 0.07100591716, 0.04733727811, 0.0650887574, 0.03550295858, 0.02366863905, 0.02366863905, 0.04142011834, 0.02366863905, 0.01183431953, 0.005917159763, 0.005917159763, 0.005917159763, 0.005917159763]
+        return [p * self.demandMultiplier for p in base]
 
     def getStartTimeDistribution(self) -> callable:
         shape = 0.21442788235989804
@@ -63,8 +69,8 @@ class SimulationConfig:
         START_TIME = 6 #AM
         NORMALIZING_CONSTANT = 6 * MULTIPLICATIVE_CONSTANT
         return lambda size=1: math.floor(max(0, \
-            MULTIPLICATIVE_CONSTANT * 
-            lognorm.rvs(shape, loc=0, scale=scale, size=size) - 
+            MULTIPLICATIVE_CONSTANT *
+            lognorm.rvs(shape, loc=0, scale=scale, size=size).item() -
             NORMALIZING_CONSTANT))
     
     def getEndTimeDistribution(self) -> callable:
@@ -76,8 +82,8 @@ class SimulationConfig:
         MAX_END_TIME = 64800 # 12AM in seconds
         SET_END_TIME = 23 * 60 * 60 - 1 # 11:59:59PM in seconds
         return lambda size=1: math.floor(min(SET_END_TIME, \
-            MAX_END_TIME - MULTIPLICATIVE_CONSTANT * 
-            lognorm.rvs(shape, loc=0, scale=scale, size=size)))
+            MAX_END_TIME - MULTIPLICATIVE_CONSTANT *
+            lognorm.rvs(shape, loc=0, scale=scale, size=size).item()))
     
     def getMaxGasDistribution(self) -> callable:
         import numpy as np
@@ -108,13 +114,13 @@ class SimulationConfig:
     def getDailyExpenseDistribution(self) -> callable:
         shape = 0.5551170551235295
         scale = 375.96181139256873
-        return lambda size=1: round(lognorm.rvs(shape, loc=0, scale=scale, size=size), 2)
+        return lambda size=1: round(lognorm.rvs(shape, loc=0, scale=scale, size=size).item(), 2)
 
     def getFarthestDistanceDistribution(self) -> callable:
         shape = 0.4562970511172417
         scale = 4.119316604349962
         MULTIPLICATIVE_CONSTANT = 1000
-        return lambda size=1: lognorm.rvs(shape, loc=0, scale=scale, size=size) * MULTIPLICATIVE_CONSTANT
+        return lambda size=1: lognorm.rvs(shape, loc=0, scale=scale, size=size).item() * MULTIPLICATIVE_CONSTANT
     
     def getProfitDistribution(self) -> callable:
         prob_zero = 24/37
@@ -145,8 +151,11 @@ class SimulationConfig:
         return patience_distribution
 
     def getTricycleAspiredPriceDistribution(self) -> callable:
-        return lambda size=1: round(np.random.choice([50, 70, 100, 60], size=size, p=[37/54, 9/54, 7/54, 1/54])[0], 2)
+        return lambda size=1: round(np.random.choice([50, 70, 100, 60], size=size, p=[24/37, 6/37, 6/37, 1/37])[0], 2)
 
     def getPassengerAspiredPriceDistribution(self) -> callable:
         
         return lambda size=1: round(lognorm.rvs(0.7234913879629307, loc=0, scale=36.844797800005615, size=size)[0], 2)
+    
+    def getMinimumPriceDistribution(self) -> callable:
+        return lambda size=1: round(np.random.choice([50,40,70,100,150,80], size=size, p=[27/37,3/37, 4/37, 1/37, 1/37, 1/37])[0], 2)
