@@ -5,7 +5,7 @@ from infrastructure.TricycleRepository import TricycleRepository
 from infrastructure.TodaRepository import TodaRepository
 from infrastructure.PassengerFactory import PassengerFactory
 from domain.TricycleState import TricycleState
-from utils.TraciUtils import getTricycleLocation, getTricycleHubEdge
+from utils.TraciUtils import getTricycleLocation, getTricycleHubEdge, getVehiclesInSimulation
 
 import math
 import random
@@ -38,11 +38,6 @@ class TricycleDispatcher:
 
             # Only proceed if tricycle is FREE (physically back in TODA and ready)
             if not tricycle.isFree():
-                continue
-
-            tricycle_location = getTricycleLocation(tricycle_id)
-            if tricycle_location is None:
-                tricycle.kill()
                 continue
                 
             hub_edge = getTricycleHubEdge(tricycle.getHub())
