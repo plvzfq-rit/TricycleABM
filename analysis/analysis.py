@@ -7,6 +7,7 @@ import seaborn as sns
 import sqlite3
 import os
 import sys
+from pathlib import Path
 sys.path.append('../')
 
 from config.SimulationConfig import SimulationConfig
@@ -139,17 +140,9 @@ def income_shares(values, top_pct=0.10, bottom_pct=0.40):
 # ---------------------------------------------------------------------------
 # Database connection
 # ---------------------------------------------------------------------------
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "db", "simulation_logs.db")
-DB_PATH = os.path.normpath(DB_PATH)
-
-if not os.path.isfile(DB_PATH):
-    st.error(f"Database not found at `{DB_PATH}`. Run the simulation first.")
-    st.stop()
-
-
 @st.cache_data(ttl=60)
-def load_data():
-    conn = sqlite3.connect(DB_PATH)
+def load_data(scenario_path):
+    conn = sqlite3.connect(scenario_path)
 
     runs = pd.read_sql("SELECT * FROM runs", conn)
     drivers = pd.read_sql("SELECT * FROM drivers", conn)
@@ -161,16 +154,25 @@ def load_data():
     conn.close()
     return runs, drivers, passengers, transactions, neg_steps, expenses
 
+# ---------------------------------------------------------------------------
+# Sidebar - run selection
+# ---------------------------------------------------------------------------
+scenarios_folder = [scenario for scenario in os.listdir("scenario") if scenario.endswith(".db")]
+scenario_path = st.sidebar.selectbox(
+    "Select scenario",
+    options=scenarios_folder
+)
 
-runs_df, drivers_df, passengers_df, txn_df, neg_df, expenses_df = load_data()
+if scenario_path is None:
+    st.warning("No data found. Load db files in /analysis/scenario.")
+    st.stop()
+
+runs_df, drivers_df, passengers_df, txn_df, neg_df, expenses_df = load_data(os.path.join(Path.cwd(), "scenario", scenario_path))
 
 if txn_df.empty:
     st.warning("No transaction data found. Run the simulation first.")
     st.stop()
 
-# ---------------------------------------------------------------------------
-# Sidebar - run selection
-# ---------------------------------------------------------------------------
 st.sidebar.header("Configuration")
 all_run_ids = sorted(runs_df["id"].unique())
 selected_runs = st.sidebar.multiselect(
