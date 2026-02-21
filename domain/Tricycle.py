@@ -111,8 +111,8 @@ class Tricycle:
     def isGoingToRefuel(self) -> bool:
         return self.state == TricycleState.GOING_TO_REFUEL
     
-    def isRefuelling(self) -> bool:
-        return self.state == TricycleState.REFUELLING
+    # def isRefuelling(self) -> bool:
+    #     return self.state == TricycleState.REFUELLING
     
     def isDead(self) -> bool:
         return self.state == TricycleState.DEAD
@@ -147,20 +147,6 @@ class Tricycle:
     def setLastLocation(self, last_location: Location) -> None:
         self.lastLocation = last_location
 
-    #METHOD FOR GAS CONSUMPTION
-    def consumeGas(self, current_location: Location) -> bool:
-        try:
-            distance_travelled = getManhattanDistance(current_location, self.lastLocation)
-        except:
-            distance_travelled = 0
-            
-        answer = distance_travelled / 1000.0
-        # print(answer)
-        if self.hasRunOutOfGas(answer):
-            return False
-        self.currentGas -= answer / self.gasConsumptionRate
-        return True
-    
     def payForGas(self) -> float:
         self.money -= self.usualGasPayment
         return self.usualGasPayment

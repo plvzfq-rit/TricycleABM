@@ -25,9 +25,6 @@ class TricycleStateManager:
         # TRIYCLE COOLDOWN BEFORE ANOTHER PASSENGER
         tricycle.decrementCooldown()
 
-        # SIMULATE GAS CONSUMPTION
-        self._handleGasConsumption(tricycle)
-
         # LOCATION UPDATE
         if not self._handleLocationUpdate(tricycle):
             return
@@ -67,15 +64,6 @@ class TricycleStateManager:
             return True
         return False
     
-    def _handleGasConsumption(self, tricycle: Tricycle) -> None:
-        if not (
-            tricycle.isFree() or 
-            tricycle.isRefuelling() or 
-            tricycle.isDead() or 
-            tricycle.isGoingToRefuel()
-        ):
-            self.tricycleRepository.simulateGasConsumption(tricycle.getName())
-
     def _handleLocationUpdate(self, tricycle: Tricycle) -> None:
         current_location = getTricycleLocation(tricycle.getName())
         if current_location and not current_location.isInvalid():

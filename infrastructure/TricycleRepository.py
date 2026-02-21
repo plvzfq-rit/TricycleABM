@@ -206,12 +206,6 @@ class TricycleRepository:
     def updateTricycleLocation(self, tricycle_id: str, current_location: Location):
         self.getTricycle(tricycle_id).setLastLocation(current_location)
 
-    #FUNCTIONS FOR GAS CONSUMPTION AND GAS REFUELLING
-    def simulateGasConsumption(self, tricycle_id: str) -> None:
-        tricycle = self.getTricycle(tricycle_id)
-        current_location = getTricycleLocation(tricycle_id)
-        tricycle.consumeGas(current_location)
-    
     def rerouteToGasStation(self,tricycle_id: str) -> None:
 
         tricycle = self.getTricycle(tricycle_id)
