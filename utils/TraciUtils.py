@@ -10,24 +10,6 @@ def getListOfHubIds() -> list[str]:
     #         hub_ids.append(parking_area_id)
     return hub_ids
 
-def getListofGasEdges() -> list[str]:
-    hub_ids = ["E56", "E28"]
-    # parking_area_ids = traci.parkingarea.getIDList()
-    # for gas_station_id in parking_area_ids:
-    #     if gas_station_id.lower().startswith("gas"):
-    #         edge = traci.parkingarea.getLaneID(gas_station_id).split("_")[0]
-    #         hub_ids.append(edge)
-    return hub_ids
-
-def getListofGasIds() -> list[str]:
-    # hub_ids = []
-    # parking_area_ids = traci.parkingarea.getIDList()
-    # for gas_station_id in parking_area_ids:
-    #     if gas_station_id.lower().startswith("gas"):
-    #         hub_ids.append(gas_station_id)
-    hub_ids = ["gas0", "gas1"]
-    return hub_ids
-
 def getTricycleLocation(tricycle_id: str) -> Location | None:
     try:
         current_edge = traci.vehicle.getRoadID(tricycle_id)
@@ -73,6 +55,3 @@ def hasTricycleParked(tricycle_id: str):
         return traci.vehicle.isStoppedParking(tricycle_id)
     except traci.exceptions.TraCIException:
         return False
-
-def setTricycleSpeed(tricycle_id: str, speed: float) -> None:
-    traci.vehicle.setSpeed(tricycle_id, speed)

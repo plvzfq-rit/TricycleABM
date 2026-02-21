@@ -8,7 +8,7 @@ from domain.TricycleState import TricycleState
 
 from .TricycleFactory import TricycleFactory
 from .SumoRepository import SumoRepository
-from utils.TraciUtils import getTricycleHubEdge, getTricycleLocation, getListofGasEdges, getListofGasIds
+from utils.TraciUtils import getTricycleHubEdge, getTricycleLocation
 from config.SimulationConfig import SimulationConfig
 from .SimulationLogger import SimulationLogger
 
@@ -69,9 +69,6 @@ class TricycleRepository:
     def getTricycles(self) -> list[Tricycle]:
         return list(self.tricycles.values())
     
-    def getGoingToRefuelTricycleIds(self) -> list[Tricycle]:
-        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isGoingToRefuel()])
-    
     def getActiveTricycles(self) -> set[Tricycle]:
         return set([tricycle for tricycle in self.tricycles.values() if tricycle.isActive()])
     
@@ -86,7 +83,7 @@ class TricycleRepository:
     
     #Any tricycle literally moving
     def getBusyTricycleIds(self) -> set[str]:
-        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).state not in{ TricycleState.FREE, TricycleState.REFUELLING, TricycleState.DEAD, TricycleState.TO_SPAWN, TricycleState.PARKED}])
+        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).state not in{ TricycleState.FREE, TricycleState.DEAD, TricycleState.TO_SPAWN, TricycleState.PARKED}])
     
     def setTricycleDestination(self, tricycle_id: str, destination: Location) -> None:
         if tricycle_id in self.tricycles.keys():
@@ -218,14 +215,12 @@ class TricycleRepository:
                 if amount + tricycle.currentGas > tricycle.maxGas:
                     amount = tricycle.maxGas - tricycle.currentGas
                     payment = amount * self.simulationConfig.gasPricePerLiter
-            tricycle.money -= payment
             tricycle.currentGas += amount
             self.simulationLogger.addExpenseToLog(tricycle_id, "end_gas", payment, 1080)
 
     def startExpenseAllTricycles(self) -> None:
         for tricycle_id in self.tricycles.keys():
             tricycle = self.getTricycle(tricycle_id)
-            tricycle.money -= tricycle.dailyExpense
             self.simulationLogger.addExpenseToLog(tricycle_id, "daily_expense", tricycle.dailyExpense, 1080)
 
     def changeLogger(self, simulationLogger) -> None:

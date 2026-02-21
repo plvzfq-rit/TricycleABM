@@ -9,7 +9,7 @@ from utils.TraciUtils import getTricycleLocation
 
 
 class Tricycle:
-    def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, gas_threshold: float, usualGasPayment: float, getsAFullTank: bool, farthestDistance: float, dailyExpense: float, patience: float, aspiredPrice: float, minimumPrice: float) -> None:
+    def __init__(self, name: str, hub: str, start_time: int, end_time: int, max_gas: float, gas_consumption_rate: float, usualGasPayment: float, getsAFullTank: bool, farthestDistance: float, dailyExpense: float, patience: float, aspiredPrice: float, minimumPrice: float) -> None:
         self.name = name
         self.hub = hub
         self.startTime = start_time
@@ -17,11 +17,7 @@ class Tricycle:
         self.state = TricycleState.TO_SPAWN
         self.destination = None
         self.lastLocation = None
-        self.maxGas = max_gas
-        self.currentGas = max_gas
         self.gasConsumptionRate = gas_consumption_rate
-        self.gasThreshold = gas_threshold
-        self.money = 0
         self.usualGasPayment = usualGasPayment
         self.getsAFullTank = getsAFullTank
         self.dailyExpense = dailyExpense
@@ -85,19 +81,12 @@ class Tricycle:
         self.destination = None
         self.state = TricycleState.DROPPING_OFF
 
-    def goingToRefuel(self):
-        self.state = TricycleState.GOING_TO_REFUEL
-        return 
-
     def returnToToda(self):
         self.destination = None
         self.state = TricycleState.RETURNING_TO_TODA
 
     def isActive(self):
         return self.state not in [TricycleState.DEAD, TricycleState.TO_SPAWN]
-    
-    def hasRunOutOfGas(self, distance_travelled: float) -> bool:
-        return self.currentGas < (distance_travelled / self.gasConsumptionRate)
     
     def isFree(self) -> bool:
         return self.state == TricycleState.FREE
@@ -107,12 +96,6 @@ class Tricycle:
     
     def isDroppingOff(self) -> bool:
         return self.state == TricycleState.DROPPING_OFF
-    
-    def isGoingToRefuel(self) -> bool:
-        return self.state == TricycleState.GOING_TO_REFUEL
-    
-    # def isRefuelling(self) -> bool:
-    #     return self.state == TricycleState.REFUELLING
     
     def isDead(self) -> bool:
         return self.state == TricycleState.DEAD
@@ -146,10 +129,6 @@ class Tricycle:
 
     def setLastLocation(self, last_location: Location) -> None:
         self.lastLocation = last_location
-
-    def payForGas(self) -> float:
-        self.money -= self.usualGasPayment
-        return self.usualGasPayment
 
     def recordActualStart(self, tick: int) -> None:
         """Record when the tricycle actually spawned into the simulation"""

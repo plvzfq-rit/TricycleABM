@@ -1,6 +1,6 @@
 from domain import Location, Tricycle
 from .TricycleRepository import TricycleRepository
-from utils.TraciUtils import initializeTricycle, getTricycleLocation, returnTricycleToHub, getTricycleHubEdge, removeTricycle, hasTricycleParked, setTricycleSpeed
+from utils.TraciUtils import initializeTricycle, getTricycleLocation, returnTricycleToHub, getTricycleHubEdge, removeTricycle, hasTricycleParked
 from .SimulationLogger import SimulationLogger
 
 class TricycleStateManager:
