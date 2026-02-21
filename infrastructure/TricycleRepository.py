@@ -104,7 +104,7 @@ class TricycleRepository:
 
         if current_edge == dest_edge:
             #print("Failed to assign.")
-            return False
+            return None
         
         distance = traci.simulation.getDistanceRoad(current_edge, 0, dest_edge, 0, isDriving=True)
         driver_patience = tricycle.getPatience()
@@ -127,7 +127,7 @@ class TricycleRepository:
         agree=False
         max_turns = 2
         for i in range(max_turns):
-            driver_asp = round(min_price + (driver_asp - min_price) * (driver_patience ** i), 2)
+            driver_asp = round(max(min_price, driver_asp * driver_patience), 2)
             passenger_asp = round(max_price - (max_price - passenger_asp) * (passenger_patience ** i), 2)
             if turn == driver_sentinel:
                 if curr_offer >= driver_asp:
@@ -150,13 +150,18 @@ class TricycleRepository:
                     first = False
                     turn = driver_sentinel
         
+        # if not agree and random.random() < 0.99:  # 10% chance of agreement even if price expectations aren't met
+        #     curr_offer = driver_asp
+        # else:
+        #     return False
+
         if not agree:
-            return False
+            curr_offer = driver_asp
 
         net = self.sumoService.getNetwork()
         edge = net.getEdge(dest_edge)
         if edge.getLaneNumber() <= 1:
-            return False
+            return None
         try:
             traci.vehicle.setParkingAreaStop(tricycle_id, self.tricycles[tricycle_id].hub, duration=0)
         except:

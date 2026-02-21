@@ -155,4 +155,4 @@ class SimulationConfig:
         return lambda size=1: round(lognorm.rvs(0.7234913879629307, loc=0, scale=36.844797800005615, size=size)[0], 2)
     
     def getMinimumPriceDistribution(self) -> callable:
-        return lambda size=1: round(np.random.choice([50,40,70,100,150,80], size=size, p=[27/37,3/37, 4/37, 1/37, 1/37, 1/37])[0], 2)
+        return lambda size=1: round(np.random.choice([50,40,70,100,80], size=size, p=[27/36,3/36, 4/36, 1/36, 1/36])[0], 2)

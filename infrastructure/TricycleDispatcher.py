@@ -25,6 +25,9 @@ class TricycleDispatcher:
 
         todaQueues = todaRepository.getAllToda()
 
+        todaQueues = list(todaQueues)
+        random.shuffle(todaQueues)
+
         for toda in todaQueues:
             if not todaRepository.canTodaDispatch(toda):
                 continue
@@ -40,10 +43,10 @@ class TricycleDispatcher:
             if not tricycle.isFree():
                 continue
 
-            tricycle_location = getTricycleLocation(tricycle_id)
-            if tricycle_location is None:
-                tricycle.kill()
-                continue
+            # tricycle_location = getTricycleLocation(tricycle_id)
+            # if tricycle_location is None:
+            #    tricycle.kill()
+            #    continue
                 
             hub_edge = getTricycleHubEdge(tricycle.getHub())
             passenger = self.passengerFactory.createRandomPassenger(hub_edge)
@@ -51,7 +54,9 @@ class TricycleDispatcher:
 
             if tricycle.canAcceptDispatch(passenger_destination):
                 success = self.tricycleRepository.dispatchTricycle(tricycle_id, passenger, simulationLogger, tick)
-                if success:
+                if success == None:
+                    pass
+                elif success:
                     simulationLogger.recordAcceptedTrip()
                     # Only remove from queue on successful dispatch
                     todaRepository.dequeToda(toda)
