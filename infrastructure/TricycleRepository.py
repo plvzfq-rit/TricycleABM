@@ -206,54 +206,6 @@ class TricycleRepository:
     def updateTricycleLocation(self, tricycle_id: str, current_location: Location):
         self.getTricycle(tricycle_id).setLastLocation(current_location)
 
-    def rerouteToGasStation(self,tricycle_id: str) -> None:
-
-        tricycle = self.getTricycle(tricycle_id)
-        gasHub_id = self.findClosestGasStation(tricycle_id)
-        gasHub_edge = traci.parkingarea.getLaneID(gasHub_id).split("_")[0]
-
-        hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
-        current_edge = traci.vehicle.getRoadID(tricycle_id)
-
-        to_route = traci.simulation.findRoute(current_edge, gasHub_edge)
-        return_route = traci.simulation.findRoute(gasHub_edge, hub_edge)
-
-        full_route = list(to_route.edges) + list(return_route.edges)[1:]
-
-        traci.vehicle.setRoute(tricycle_id, full_route)
-        try:
-            traci.vehicle.setParkingAreaStop(
-                vehID= tricycle_id,
-                stopID= gasHub_id,
-                duration=2
-            )
-        except Exception:
-            pass
-        return
-    
-    def findClosestGasStation(self, tricycle_id: str) -> str:
-        start_edge = traci.vehicle.getRoadID(tricycle_id)
-        gas_stations_edges = getListofGasEdges()
-        gas_stations = getListofGasIds()
-        nearest_station_edge = min(
-            gas_stations_edges,
-            key=lambda edge_id: traci.simulation.findRoute(start_edge, edge_id).travelTime
-        )
-        for gas_id in gas_stations:
-            parking_lane=traci.parkingarea.getLaneID(gas_id).split("_")[0]
-            if parking_lane == nearest_station_edge:
-                hub_id = gas_id
-                return hub_id
-        return "No Gas Station Found!"
-    
-    def refuelTricycle(self, tricycle_id: str) -> float:
-        tricycle = self.getTricycle(tricycle_id)
-        tricycle.currentGas += tricycle.usualGasPayment / self.simulationConfig.gasPricePerLiter
-        gasPrice = tricycle.payForGas()
-
-        traci.vehicle.setSpeed(tricycle_id, -1)
-        return gasPrice
-    
     def startRefuelAllTricycles(self) -> None:
         for tricycle_id in self.tricycles.keys():
             tricycle = self.getTricycle(tricycle_id)

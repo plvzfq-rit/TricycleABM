@@ -48,14 +48,6 @@ class TricycleStateManager:
         if self._handleDeath(tricycle, current_tick):
             return
 
-        # REFUELING LOGIC
-        if self._handleRefueling(tricycle, current_tick, is_parked):
-            return
-        
-        # OUT OF GAS HANDLING
-        if self._handleOutOfGas(tricycle):
-            return
-        
     def _handleSpawn(self, current_tick: int, tricycle: Tricycle) -> bool:
         if tricycle.shouldSpawn(current_tick):
             initializeTricycle(tricycle.getName(), tricycle.getHub())
@@ -98,25 +90,5 @@ class TricycleStateManager:
             removeTricycle(tricycle.getName())
             tricycle.recordActualEnd(current_tick)
             tricycle.kill()
-            return True
-        return False
-
-    def _handleRefueling(self, tricycle: Tricycle, current_tick: int, is_parked: bool) -> bool:
-        if tricycle.isGoingToRefuel():
-            if not is_parked:
-                self.tricycleRepository.rerouteToGasStation(tricycle.getName())
-                return True
-            if is_parked:
-                gas_amt = self.tricycleRepository.refuelTricycle(tricycle.getName())
-                self.simulationLogger.addExpenseToLog(tricycle.getName(), "midday_gas", gas_amt, current_tick)
-                setTricycleSpeed(tricycle.getName(), 16.67)
-                tricycle.returnToToda()
-                return True
-        return False
-    
-    def _handleOutOfGas(self, tricycle: Tricycle) -> bool:
-        if tricycle.currentGas <= 0:
-            tricycle.goingToRefuel()
-            setTricycleSpeed(tricycle.getName(), 1)
             return True
         return False
