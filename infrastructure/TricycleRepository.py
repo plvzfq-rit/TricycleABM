@@ -203,25 +203,14 @@ class TricycleRepository:
     def updateTricycleLocation(self, tricycle_id: str, current_location: Location):
         self.getTricycle(tricycle_id).setLastLocation(current_location)
 
-    def startRefuelAllTricycles(self) -> None:
+    def startExpenseAllTricycles(self, gas_price: float) -> None:
         for tricycle_id in self.tricycles.keys():
             tricycle = self.getTricycle(tricycle_id)
-            if tricycle.getsAFullTank:
-                amount = tricycle.maxGas - tricycle.currentGas
-                payment = amount * self.simulationConfig.gasPricePerLiter
-            else:
-                amount = tricycle.usualGasPayment / self.simulationConfig.gasPricePerLiter
-                payment = tricycle.usualGasPayment
-                if amount + tricycle.currentGas > tricycle.maxGas:
-                    amount = tricycle.maxGas - tricycle.currentGas
-                    payment = amount * self.simulationConfig.gasPricePerLiter
-            tricycle.currentGas += amount
-            self.simulationLogger.addExpenseToLog(tricycle_id, "end_gas", payment, 1080)
 
-    def startExpenseAllTricycles(self) -> None:
-        for tricycle_id in self.tricycles.keys():
-            tricycle = self.getTricycle(tricycle_id)
-            self.simulationLogger.addExpenseToLog(tricycle_id, "daily_expense", tricycle.dailyExpense, 1080)
+            gas_money = tricycle.dailyDistance / tricycle.gasConsumptionRate * gas_price
+            self.simulationLogger.addExpenseToLog(tricycle_id, "gas", gas_money, 57600)
+
+            self.simulationLogger.addExpenseToLog(tricycle_id, "daily_expense", tricycle.dailyExpense, 57600)
 
     def changeLogger(self, simulationLogger) -> None:
         self.simulationLogger = simulationLogger
