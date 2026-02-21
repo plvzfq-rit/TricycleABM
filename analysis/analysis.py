@@ -184,10 +184,20 @@ selected_runs = st.sidebar.multiselect(
 if not selected_runs:
     selected_runs = all_run_ids
 
+days = sorted(txn_df["day"].unique())
+selected_days = st.sidebar.multiselect(
+    "Select days",
+    options=days,
+    default=days[0],
+    help="Leave empty to include all days"
+)
+if not selected_days:
+    selected_runs = days
+
 # Filter data to selected runs
 drivers = drivers_df[drivers_df["run_id"].isin(selected_runs)].copy()
 passengers = passengers_df[passengers_df["run_id"].isin(selected_runs)].copy()
-txn = txn_df[txn_df["run_id"].isin(selected_runs)].copy()
+txn = txn_df[txn_df["run_id"].isin(selected_runs) & txn_df.day.isin(selected_days)].copy()
 neg = neg_df[neg_df["transaction_id"].isin(txn["id"])].copy()
 expenses = expenses_df[expenses_df["run_id"].isin(selected_runs)].copy()
 
