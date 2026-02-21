@@ -18,8 +18,6 @@ class Tricycle:
         self.destination = None
         self.lastLocation = None
         self.gasConsumptionRate = gas_consumption_rate
-        self.usualGasPayment = usualGasPayment
-        self.getsAFullTank = getsAFullTank
         self.dailyExpense = dailyExpense
         self.farthestDistance = farthestDistance
         self.log = namedtuple("log", ["run_id","trike_id","origin_edge", "dest_edge", "distance", "price","tick", "driver_asp", "passenger_asp"])

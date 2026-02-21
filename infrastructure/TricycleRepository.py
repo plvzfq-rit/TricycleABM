@@ -207,7 +207,7 @@ class TricycleRepository:
         for tricycle_id in self.tricycles.keys():
             tricycle = self.getTricycle(tricycle_id)
 
-            gas_money = tricycle.dailyDistance / tricycle.gasConsumptionRate * gas_price
+            gas_money = tricycle.dailyDistance / 1000 / tricycle.gasConsumptionRate * gas_price
             self.simulationLogger.addExpenseToLog(tricycle_id, "gas", gas_money, 57600)
 
             self.simulationLogger.addExpenseToLog(tricycle_id, "daily_expense", tricycle.dailyExpense, 57600)

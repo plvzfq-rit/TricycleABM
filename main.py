@@ -47,7 +47,7 @@ for i in range(2):
     simulation_loop = SimulationEngine(toda_hub_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_state_manager, logger, duration, first_run=(i == 0))
     simulation_loop.doMainLoop(duration)
     simulation_loop.close()
-    tricycle_repository.startExpenseAllTricycles(simulation_config.getGasPricePerLiter)
+    tricycle_repository.startExpenseAllTricycles(simulation_config.getGasPricePerLiter())
 
 # Close TRACI after all runs are complete
 traci.close()
