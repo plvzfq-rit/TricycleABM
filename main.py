@@ -43,6 +43,7 @@ for i in range(2):
     print(f"running run# {i}...")
     logger = SimulationLogger(i, run_dir)
     tricycle_repository.changeLogger(logger)
+    tricycle_repository.resetAllDailyStats()
     tricycle_state_manager = TricycleStateManager(tricycle_repository, logger)
     simulation_loop = SimulationEngine(toda_hub_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_state_manager, logger, duration, first_run=(i == 0))
     simulation_loop.doMainLoop(duration)

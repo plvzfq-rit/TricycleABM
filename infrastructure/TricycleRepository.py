@@ -282,6 +282,10 @@ class TricycleRepository:
             tricycle.money -= tricycle.dailyExpense
             self.simulationLogger.addExpenseToLog(tricycle_id, "daily_expense", tricycle.dailyExpense, 1080)
 
+    def resetAllDailyStats(self) -> None:
+        for tricycle in self.tricycles.values():
+            tricycle.resetDailyStats()
+
     def changeLogger(self, simulationLogger) -> None:
         self.simulationLogger = simulationLogger
 

@@ -185,6 +185,14 @@ class Tricycle:
         self.dailyIncome += float(price)
         self.dailyDistance += float(distance)
 
+    def resetDailyStats(self) -> None:
+        """Reset daily statistics for a new simulation run"""
+        self.dailyTrips = 0
+        self.dailyIncome = 0.0
+        self.dailyDistance = 0.0
+        self.actualStartTick = None
+        self.actualEndTick = None
+
     def getDailyStats(self) -> dict:
         """Get the daily statistics for this tricycle"""
         return {
