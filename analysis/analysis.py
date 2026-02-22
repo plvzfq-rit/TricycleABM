@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import altair as alt
+import glob
 import os
 import re # For cleaning expense amount
 
@@ -168,6 +168,7 @@ for folder in all_folders:
 
         # --- Process Transactions & Drivers (Income) ---
         # Merge transactions and driver info
+        transaction_df["run_id"] = run_id  # Replace with run_id from folder for consistency
         merged_df = pd.merge(transaction_df, driver_df, on="trike_id", how="left")
 
         # Assign the run_id from the folder
@@ -721,132 +722,152 @@ if has_asp_data:
         st.info("No aspiration price data available in the filtered trips.")
 
 
-#Producer surplus
+#PRODUCER SURPLUS ANALYSIS
 st.divider()
-st.header("Producer Surplus")
-st.write("Producer surplus represents the driver profit (Revenue - Operating Cost) across multiple runs.")
+st.header("Producer Surplus Analysis")
 
-per_day_ps = df_all[['run_id', 'trike_id', 'price']].copy()
-per_day_ps.rename(columns={'price': 'trip_income'}, inplace=True)
+daily_income = (
+    df_all.groupby(['trike_id', 'run_id'])['price']
+    .sum()
+    .reset_index(name='daily_income')
+)
 
-# Sum income per driver per run
-per_day_income = per_day_ps.groupby(['run_id', 'trike_id'])['trip_income'].sum().reset_index(name='daily_income')
-per_day_expenses = df_all_expenses.groupby(['run_id', 'trike_id'])['amount'].sum().reset_index(name='daily_expenses')
+daily_expenses = (
+    df_all_expenses.groupby(['trike_id', 'run_id'])['amount']
+    .sum()
+    .reset_index(name='daily_expenses')
+)
 
-# Merge income and expenses to calculate daily producer surplus
-per_day_surplus = pd.merge(per_day_income, per_day_expenses, on=['run_id', 'trike_id'], how='outer').fillna(0)
+# Merge income and expenses
+daily_summary = pd.merge(daily_income, daily_expenses, on=['trike_id', 'run_id'], how='outer')
+daily_summary.fillna(0, inplace=True)
 
-# Calculate daily producer surplus
-per_day_surplus['daily_producer_surplus'] = per_day_surplus['daily_income'] - per_day_surplus['daily_expenses']
+daily_summary['daily_producer_surplus'] = daily_summary['daily_income'] - daily_summary['daily_expenses']
 
-st.subheader("Per-Day Producer Surplus by Driver")
+# filter
 filter_col1, filter_col2 = st.columns(2)
 with filter_col1:
-    ps_all_drivers = sorted(per_day_surplus['trike_id'].unique())
-    ps_selected_drivers = st.multiselect("Filter by Driver", options=ps_all_drivers, default=[], placeholder="All drivers", key="ps_driver_filter")
-
+    all_drivers = sorted(daily_summary['trike_id'].unique())
+    selected_drivers = st.multiselect("Filter by Driver", options=all_drivers, default=[], placeholder="All drivers", key="producer_driver_filter")
 with filter_col2:
-    ps_all_runs = sorted(per_day_surplus['run_id'].unique()) if 'run_id' in per_day_surplus.columns else []
-    ps_selected_runs = st.multiselect("Filter by Day/Run", options=ps_all_runs, default=[], placeholder="All days", key="ps_run_filter")
+    all_runs = sorted(daily_summary['run_id'].unique())
+    selected_runs = st.multiselect("Filter by Day/Run", options=all_runs, default=[], placeholder="All days", key="producer_run_filter")
 
-filtered_ps = per_day_surplus.copy()
-if ps_selected_drivers:
-    filtered_ps = filtered_ps[filtered_ps['trike_id'].isin(ps_selected_drivers)]
+filtered_summary = daily_summary.copy()
+if selected_drivers:
+    filtered_summary = filtered_summary[filtered_summary['trike_id'].isin(selected_drivers)]
+if selected_runs:
+    filtered_summary = filtered_summary[filtered_summary['run_id'].isin(selected_runs)]
 
-if ps_selected_runs:
-    filtered_ps = filtered_ps[filtered_ps['run_id'].isin(ps_selected_runs)]
+st.subheader("Daily Producer Surplus by Driver and Day")
+st.dataframe(filtered_summary[['trike_id', 'run_id', 'daily_income', 'daily_expenses', 'daily_producer_surplus']].sort_values(by=['run_id', 'trike_id']))
 
-display_cols = ['run_id', 'trike_id', 'daily_income', 'daily_expenses', 'daily_producer_surplus']
-display_cols = [c for c in display_cols if c in filtered_ps.columns]
+#RATIO
 
-st.caption(f"Showing {len(filtered_ps)} of {len(per_day_surplus)} records")
-st.dataframe(filtered_ps[display_cols].sort_values(by=['run_id', 'trike_id']))
+#list of all unique drivers
+all_drivers = df_all['trike_id'].drop_duplicates()
 
-#RATIOS
-st.divider()
-st.header("Relevant Ratios")
-st.write("Drivers are classified per day based on whether their income can cover fuel costs only, or both fuel and daily operating expenses.")
+#compute daily income per driver
+daily_income = (
+    df_all.groupby('trike_id')['price']
+    .sum()
+    .reset_index(name='daily_income')
+)
 
-gas_expenses = df_all_expenses[df_all_expenses['expense_type'] == 'gas'].groupby(['run_id', 'trike_id'])['amount'].sum().reset_index(name='gas_expenses')
-total_expenses = df_all_expenses.groupby(['run_id', 'trike_id'])['amount'].sum().reset_index(name='total_expenses')
+#compute gas expenses per driver
+gas_expenses = (
+    df_all_expenses[df_all_expenses['expense_type'] == 'gas']
+    .groupby('trike_id')['amount']
+    .sum()
+    .reset_index(name='gas_expenses')
+)
 
-daily_income = df_all.groupby(['run_id', 'trike_id'])['price'].sum().reset_index(name='daily_income')
+#compute daily expenses per driver
+daily_expenses = (
+    df_all_expenses.groupby('trike_id')['amount']
+    .sum()
+    .reset_index(name='daily_expenses')
+)
 
-# get all unique drivers
-all_drivers = df_all[['trike_id']].drop_duplicates()
+#Merge into one DataFrame
+viability = all_drivers.copy()
 
-# get all unique runs
-all_runs = df_all[['run_id']].drop_duplicates()
+#Merge income and expenses
+viability = pd.merge(viability, daily_income, on='trike_id', how='left')
+viability = pd.merge(viability, gas_expenses, on='trike_id', how='left')
+viability = pd.merge(viability, daily_expenses, on='trike_id', how='left')
 
-# create a full driver x run grid
-all_driver_runs = all_drivers.assign(key=1).merge(all_runs.assign(key=1), on='key').drop('key', axis=1)
-
-# merge daily income, gas, total expenses
-viability = pd.merge(all_driver_runs, daily_income, on=['run_id', 'trike_id'], how='left')
-viability = pd.merge(viability, gas_expenses, on=['run_id', 'trike_id'], how='left')
-viability = pd.merge(viability, total_expenses, on=['run_id', 'trike_id'], how='left')
-
-# fill missing values
+#fill any missing data values with 0
 viability.fillna(0, inplace=True)
 
-total_daily_expense = viability['gas_expenses'] + viability['daily_expenses']
+#classify each driver
 def classify_driver(row):
-    if row['daily_income'] >= total_daily_expense and total_daily_expense > 0:
+    total_expenses = row['gas_expenses'] + row['daily_expenses']
+
+    if row['daily_income'] >= total_expenses:
         return "Covers All Expenses"
-    elif row['daily_income'] >= row['gas_expenses'] and row['gas_expenses'] > 0:
-        return "Covers Fuel Only"
+    elif row['daily_income'] >= row['gas_expenses']:
+        return "Covers Gas Only"
     else:
         return "Not Viable"
     
 viability['viability_group'] = viability.apply(classify_driver, axis=1)
 
-# desired order
-ordered_groups = ["Covers All Expenses", "Covers Fuel Only", "Not Viable"]
+#Compute counts and proportions
 
-# value_counts with count
-ratio_counts = viability['viability_group'].value_counts().reindex(ordered_groups, fill_value=0).reset_index()
+ordered_groups = ["Covers All Expenses", "Covers Gas Only", "Not Viable"]
+
+#count and proportion
+ratio_counts = (
+    viability['viability_group']
+    .value_counts()
+    .reindex(ordered_groups, fill_value=0)
+    .reset_index()
+)
+
 ratio_counts.columns = ['viability_group', 'count']
 
-# add proportion
 total_drivers = ratio_counts['count'].sum()
 ratio_counts['proportion'] = ratio_counts['count'] / total_drivers
 
-groups = ratio_counts['viability_group']
-ratios = ratio_counts['proportion']
-counts = ratio_counts['count'] 
-
-st.subheader("Driver Viability Ratios")
-
+#Plot data
+st.subheader("Driver Viability Analysis")
 fig, ax = plt.subplots(figsize=(8, 1.8))
+colors = {
+    "Covers All Expenses": "#2a9d8f",
+    "Covers Gas Only": "#e9c46a",
+    "Not Viable": "#e76f51"
+}
 
 left = 0
-for group, value, count in zip(groups, ratios, counts):
+
+for group, row in ratio_counts.iterrows():
+    value = row['proportion']
+    count = row['count']
     ax.barh(
-        y=["Drivers"],
+        y=0,
         width=value,
         left=left,
-        label=group
+        color=colors[row['viability_group']],
+        label=row['viability_group']
     )
-
     if value > 0:
         ax.text(
-            left + value/2,
+            left + value / 2,
             0,
             f"{count}/{total_drivers}",
-            va="center",
-            ha="center",
-            fontsize=9
+            va='center',
+            ha='center',
+            fontsize = 9,
+            color = "white" if row['viability_group'] != "Not Viable" else "black"
         )
-
     left += value
 
 ax.set_xlim(0, 1)
-ax.set_xlabel("Proportion of Drivers")
-ax.set_title("Driver Viability Ratios (Based on Analyzed Runs)")
+ax.set_yticks([])
+ax.set_title("Proportion of Drivers by Viability Group", fontsize=14)
 ax.legend()
-
 st.pyplot(fig)
-
 
 
 
