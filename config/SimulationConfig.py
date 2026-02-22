@@ -90,13 +90,13 @@ class SimulationConfig:
         unique_max_gas = [ 8.        ,  8.6       ,  9.5       ,  9.64      ,  9.70294118,10.        , 10.2       , 10.5       , 10.75      , 12.        ]
         prob_max_gas = [0.05405405, 0.21621622, 0.05405405, 0.27027027, 0.08108108, 0.08108108, 0.02702703, 0.02702703, 0.10810811, 0.08108108]
         return lambda size=1: (np.random.choice(unique_max_gas, size=size, p=prob_max_gas) + np.random.normal(0, 0.1, size=1)).item()
-    
-    def getGasConsumptionDistribution(self) -> callable:
-        import numpy as np
-        import scipy.stats as stats
-        unique_gas_consumption = [33.        , 40.        , 40.25      , 46.21764706, 48.        , 61.4       , 62.5       ]
-        prob_gas_consumption = [0.02702703, 0.48648649, 0.10810811, 0.08108108, 0.05405405, 0.02702703, 0.21621622]
-        return lambda size=1: (np.random.choice(unique_gas_consumption, size=size, p=prob_gas_consumption) + np.random.normal(0, 0.1, size=1)).item()
+     
+    # def getGasConsumptionDistribution(self) -> callable:
+    #     import numpy as np
+    #     import scipy.stats as stats
+    #     unique_gas_consumption = [33.        , 40.        , 40.25      , 46.21764706, 48.        , 61.4       , 62.5       ]
+    #     prob_gas_consumption = [0.02702703, 0.48648649, 0.10810811, 0.08108108, 0.05405405, 0.02702703, 0.21621622]
+    #     return lambda size=1: (np.random.choice(unique_gas_consumption, size=size, p=prob_gas_consumption) + np.random.normal(0, 0.1, size=1)).item()
     
     def getGasPaymentDistribution(self) -> callable:
         import numpy as np

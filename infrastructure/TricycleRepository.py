@@ -8,7 +8,7 @@ from domain.TricycleState import TricycleState
 
 from .TricycleFactory import TricycleFactory
 from .SumoRepository import SumoRepository
-from utils.TraciUtils import getTricycleHubEdge, getTricycleLocation, getListofGasEdges, getListofGasIds
+from utils.TraciUtils import getTricycleHubEdge, getTricycleLocation
 from config.SimulationConfig import SimulationConfig
 from .SimulationLogger import SimulationLogger
 
@@ -69,9 +69,6 @@ class TricycleRepository:
     def getTricycles(self) -> list[Tricycle]:
         return list(self.tricycles.values())
     
-    def getGoingToRefuelTricycleIds(self) -> list[Tricycle]:
-        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isGoingToRefuel()])
-    
     def getActiveTricycles(self) -> set[Tricycle]:
         return set([tricycle for tricycle in self.tricycles.values() if tricycle.isActive()])
     
@@ -86,7 +83,7 @@ class TricycleRepository:
     
     #Any tricycle literally moving
     def getBusyTricycleIds(self) -> set[str]:
-        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).state not in{ TricycleState.FREE, TricycleState.REFUELLING, TricycleState.DEAD, TricycleState.TO_SPAWN, TricycleState.PARKED}])
+        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).state not in{ TricycleState.FREE, TricycleState.DEAD, TricycleState.TO_SPAWN, TricycleState.PARKED}])
     
     def setTricycleDestination(self, tricycle_id: str, destination: Location) -> None:
         if tricycle_id in self.tricycles.keys():
@@ -206,81 +203,14 @@ class TricycleRepository:
     def updateTricycleLocation(self, tricycle_id: str, current_location: Location):
         self.getTricycle(tricycle_id).setLastLocation(current_location)
 
-    #FUNCTIONS FOR GAS CONSUMPTION AND GAS REFUELLING
-    def simulateGasConsumption(self, tricycle_id: str) -> None:
-        tricycle = self.getTricycle(tricycle_id)
-        current_location = getTricycleLocation(tricycle_id)
-        tricycle.consumeGas(current_location)
-    
-    def rerouteToGasStation(self,tricycle_id: str) -> None:
-
-        tricycle = self.getTricycle(tricycle_id)
-        gasHub_id = self.findClosestGasStation(tricycle_id)
-        gasHub_edge = traci.parkingarea.getLaneID(gasHub_id).split("_")[0]
-
-        hub_edge = traci.parkingarea.getLaneID(tricycle.hub).split("_")[0]
-        current_edge = traci.vehicle.getRoadID(tricycle_id)
-
-        to_route = traci.simulation.findRoute(current_edge, gasHub_edge)
-        return_route = traci.simulation.findRoute(gasHub_edge, hub_edge)
-
-        full_route = list(to_route.edges) + list(return_route.edges)[1:]
-
-        traci.vehicle.setRoute(tricycle_id, full_route)
-        try:
-            traci.vehicle.setParkingAreaStop(
-                vehID= tricycle_id,
-                stopID= gasHub_id,
-                duration=2
-            )
-        except Exception:
-            pass
-        return
-    
-    def findClosestGasStation(self, tricycle_id: str) -> str:
-        start_edge = traci.vehicle.getRoadID(tricycle_id)
-        gas_stations_edges = getListofGasEdges()
-        gas_stations = getListofGasIds()
-        nearest_station_edge = min(
-            gas_stations_edges,
-            key=lambda edge_id: traci.simulation.findRoute(start_edge, edge_id).travelTime
-        )
-        for gas_id in gas_stations:
-            parking_lane=traci.parkingarea.getLaneID(gas_id).split("_")[0]
-            if parking_lane == nearest_station_edge:
-                hub_id = gas_id
-                return hub_id
-        return "No Gas Station Found!"
-    
-    def refuelTricycle(self, tricycle_id: str) -> float:
-        tricycle = self.getTricycle(tricycle_id)
-        tricycle.currentGas += tricycle.usualGasPayment / self.simulationConfig.gasPricePerLiter
-        gasPrice = tricycle.payForGas()
-
-        traci.vehicle.setSpeed(tricycle_id, -1)
-        return gasPrice
-    
-    def startRefuelAllTricycles(self) -> None:
+    def startExpenseAllTricycles(self, gas_price: float) -> None:
         for tricycle_id in self.tricycles.keys():
             tricycle = self.getTricycle(tricycle_id)
-            if tricycle.getsAFullTank:
-                amount = tricycle.maxGas - tricycle.currentGas
-                payment = amount * self.simulationConfig.gasPricePerLiter
-            else:
-                amount = tricycle.usualGasPayment / self.simulationConfig.gasPricePerLiter
-                payment = tricycle.usualGasPayment
-                if amount + tricycle.currentGas > tricycle.maxGas:
-                    amount = tricycle.maxGas - tricycle.currentGas
-                    payment = amount * self.simulationConfig.gasPricePerLiter
-            tricycle.money -= payment
-            tricycle.currentGas += amount
-            self.simulationLogger.addExpenseToLog(tricycle_id, "end_gas", payment, 1080)
 
-    def startExpenseAllTricycles(self) -> None:
-        for tricycle_id in self.tricycles.keys():
-            tricycle = self.getTricycle(tricycle_id)
-            tricycle.money -= tricycle.dailyExpense
-            self.simulationLogger.addExpenseToLog(tricycle_id, "daily_expense", tricycle.dailyExpense, 1080)
+            gas_money = tricycle.dailyDistance / 1000 / tricycle.gasConsumptionRate * gas_price
+            self.simulationLogger.addExpenseToLog(tricycle_id, "gas", gas_money, 57600)
+
+            self.simulationLogger.addExpenseToLog(tricycle_id, "daily_expense", tricycle.dailyExpense, 57600)
 
     def resetAllDailyStats(self) -> None:
         for tricycle in self.tricycles.values():
