@@ -214,6 +214,12 @@ class TricycleRepository:
 
     def resetAllDailyStats(self) -> None:
         for tricycle in self.tricycles.values():
+            # Remove surviving vehicles from SUMO before resetting state
+            if not tricycle.isDead():
+                try:
+                    traci.vehicle.remove(tricycle.getName())
+                except traci.exceptions.TraCIException:
+                    pass
             tricycle.resetDailyStats()
 
     def changeLogger(self, simulationLogger) -> None:

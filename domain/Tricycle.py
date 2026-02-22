@@ -155,6 +155,10 @@ class Tricycle:
         self.dailyDistance = 0.0
         self.actualStartTick = None
         self.actualEndTick = None
+        self.state = TricycleState.TO_SPAWN
+        self.destination = None
+        self.lastLocation = None
+        self.cooldownTime = 0
 
     def getDailyStats(self) -> dict:
         """Get the daily statistics for this tricycle"""

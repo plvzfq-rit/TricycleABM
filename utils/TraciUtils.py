@@ -40,7 +40,8 @@ def returnTricycleToHub(tricycle_id: str, hub_string: str) -> None:
 def initializeTricycle(tricycle_id: str, hub_string: str) -> None:
     route_id = f"route_{tricycle_id}"
     hub_edge = getTricycleHubEdge(hub_string)
-    traci.route.add(route_id, [hub_edge])
+    if route_id not in traci.route.getIDList():
+        traci.route.add(route_id, [hub_edge])
     traci.vehicle.add(tricycle_id, route_id, "trike", departLane="free", departPos="free", departSpeed="0")
     # brute force entry
     # traci.vehicle.moveTo(tricycle_id, hub_edge + "_0", 0)
