@@ -977,8 +977,8 @@ ax.plot(lorenz_x, lorenz_y, label="Lorenz Curve")
 ax.plot([0, 1], [0, 1], linestyle="--", label="Perfect Equality")
 
 ax.set_xlabel("Cumulative Share of Drivers")
-ax.set_ylabel("Cumulative Share of Income")
-ax.set_title("Lorenz Curve — Gross Driver Income")
+ax.set_ylabel("Cumulative Share of Profit After Gas Expense")
+ax.set_title("Lorenz Curve — Profit After Gas Expenses")
 ax.legend()
 
 st.pyplot(fig)
@@ -1022,8 +1022,8 @@ ax.plot(lorenz_x, lorenz_y, label="Lorenz Curve")
 ax.plot([0, 1], [0, 1], linestyle="--", label="Perfect Equality")
 
 ax.set_xlabel("Cumulative Share of Drivers")
-ax.set_ylabel("Cumulative Share of Income")
-ax.set_title("Lorenz Curve — Gross Driver Income")
+ax.set_ylabel("Cumulative Share of Net Profit")
+ax.set_title("Lorenz Curve — Profit After All Expenses")
 ax.legend()
 
 st.pyplot(fig)
