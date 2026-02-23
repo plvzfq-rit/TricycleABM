@@ -69,7 +69,6 @@ class SimulationConfig:
         MINUTES_OVER_HOURS = 60
         SECONDS_OVER_MINUTES = 60
         MULTIPLICATIVE_CONSTANT = MINUTES_OVER_HOURS * SECONDS_OVER_MINUTES
-        START_TIME = 6 #AM
         NORMALIZING_CONSTANT = 6 * MULTIPLICATIVE_CONSTANT
         return lambda size=1: math.floor(max(0, \
             MULTIPLICATIVE_CONSTANT *
@@ -90,7 +89,6 @@ class SimulationConfig:
     
     def getMaxGasDistribution(self) -> callable:
         import numpy as np
-        import scipy.stats as stats
         unique_max_gas = [ 8.        ,  8.6       ,  9.5       ,  9.64      ,  9.70294118,10.        , 10.2       , 10.5       , 10.75      , 12.        ]
         prob_max_gas = [0.05405405, 0.21621622, 0.05405405, 0.27027027, 0.08108108, 0.08108108, 0.02702703, 0.02702703, 0.10810811, 0.08108108]
         return lambda size=1: (np.random.choice(unique_max_gas, size=size, p=prob_max_gas) + np.random.normal(0, 0.1, size=1)).item()
@@ -104,7 +102,6 @@ class SimulationConfig:
     
     def getGasPaymentDistribution(self) -> callable:
         import numpy as np
-        import scipy.stats as stats
         unique_gas_payment = [ 50., 100., 110., 120., 125., 150., 200., 300.]
         prob_gas_payment = [0.02702703, 0.21621622, 0.02702703, 0.05405405, 0.02702703, 0.32432432, 0.2972973 , 0.02702703]
         return lambda size=1: (np.random.choice(unique_gas_payment, size=size, p=prob_gas_payment)).item()
@@ -125,10 +122,6 @@ class SimulationConfig:
         MULTIPLICATIVE_CONSTANT = 1000
         return lambda size=1: lognorm.rvs(shape, loc=0, scale=scale, size=size).item() * MULTIPLICATIVE_CONSTANT
     
-    def getProfitDistribution(self) -> callable:
-        prob_zero = 24/37
-        return lambda size=1: 0 if random.random() < 24/37 else np.random.choice([30,10,50,-20,-50,20], size=size, p=[2/13,2/13,3/13,2/13,1/13,3/13])[0]
-
     def getTricyclePatienceDistribution(self) -> callable:
         def patience_distribution(size=1):
             draw = random.random()

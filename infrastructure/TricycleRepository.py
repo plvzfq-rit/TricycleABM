@@ -44,12 +44,6 @@ class TricycleRepository:
         self.tricycleFactory = tricycle_factory
         self.simulationConfig = simulation_config
 
-    def hasActiveTricycles(self) -> bool:
-        for tricycle in self.tricycles.values():
-            if tricycle.isActive():
-                return True
-        return False
-
     def createTricycles(self, number_of_tricycles: int, hub_distribution: dict) -> None:
         # create list of hub tags; each would be assigned to a new tricycle
         hubs = []
@@ -69,21 +63,8 @@ class TricycleRepository:
     def getTricycles(self) -> list[Tricycle]:
         return list(self.tricycles.values())
     
-    def getActiveTricycles(self) -> set[Tricycle]:
-        return set([tricycle for tricycle in self.tricycles.values() if tricycle.isActive()])
-    
-    def getActiveFreeTricycleIds(self) -> set[Tricycle]:
-        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() and not self.getTricycle(tricycle_id).isInCooldown() and self.getTricycle(tricycle_id).isFree()])
-    
-    def getActiveTricycleIds(self) -> set[Tricycle]:
-        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() or self.getTricycle(tricycle_id).isFree()])
-    
     def getTricycleLocation(self, tricycle_id: str) -> Location:
         return getTricycleLocation(tricycle_id)
-    
-    #Any tricycle literally moving
-    def getBusyTricycleIds(self) -> set[str]:
-        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).state not in{ TricycleState.FREE, TricycleState.DEAD, TricycleState.TO_SPAWN, TricycleState.PARKED}])
     
     def setTricycleDestination(self, tricycle_id: str, destination: Location) -> None:
         if tricycle_id in self.tricycles.keys():
@@ -184,24 +165,6 @@ class TricycleRepository:
         #3. refactor simulationLogger.add
         #4. tricycle is in a "trip" state, 
         return True
-
-    def hasTricycleArrived(self, tricycle_id: str) -> bool:
-        return self.getTricycle(tricycle_id).hasArrived()
-    
-    def isTricycleFree(self, tricycle_id: str) -> bool:
-        return self.getTricycle(tricycle_id).isFree()
-
-    def activateTricycle(self, tricycle_id: str):
-        self.getTricycle(tricycle_id).activate()
-
-    def killTricycle(self, tricycle_id: str):
-        self.getTricycle(tricycle_id).kill()
-
-    def redirectTricycleToToda(self, tricycle_id: str):
-        self.getTricycle(tricycle_id).returnToToda()
-
-    def updateTricycleLocation(self, tricycle_id: str, current_location: Location):
-        self.getTricycle(tricycle_id).setLastLocation(current_location)
 
     def startExpenseAllTricycles(self, gas_price: float) -> None:
         for tricycle_id in self.tricycles.keys():

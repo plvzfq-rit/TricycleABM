@@ -40,14 +40,6 @@ class Passenger:
         """
         return self.patience
     
-    def getWillingnessToPay(self) -> float:
-        """Get the willingness to pay of the passenger.
-        
-        Returns:
-            Float representing the passenger's willingness to pay.
-        """
-        return self.willingness_to_pay
-    
     def getAspiredPrice(self) -> float:
         """Get the aspired price of the passenger.
         

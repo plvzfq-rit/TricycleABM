@@ -58,11 +58,3 @@ class TodaRepository:
             queue: TODA ID whose queue is to be dequeued.
         """
         return self.queues[queue].popleft()
-
-    def viewQueue(self, queue) -> str:
-        """Get string representation of the TODA queue.
-
-        Args:
-            queue: TODA ID whose queue is to be viewed.
-        """
-        return f"{queue}: {list(self.queues[queue])}"

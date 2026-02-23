@@ -1,7 +1,6 @@
 import random
 import math
 import numpy as np
-import scipy.stats as stats
 from domain.Tricycle import Tricycle
 
 # Culaba 1% Scientist

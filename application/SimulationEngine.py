@@ -14,7 +14,6 @@ class SimulationEngine:
         self.tick = 0
         self.tricycleRepository = tricycle_repository
         self.tricycleDispatcher = tricycle_dispatcher
-        self.todaHubDescriptor = toda_hub_descriptor
         self.simulationConfig = simulation_config
         self.tricycleStateManager = tricycle_state_manager
         self.simulationLogger = logger

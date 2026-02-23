@@ -7,4 +7,3 @@ class TricycleState(Enum):
     RETURNING_TO_TODA = 5
     DEAD = 6
     TO_SPAWN = 7
-    PARKED = 8

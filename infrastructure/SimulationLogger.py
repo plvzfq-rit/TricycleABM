@@ -97,6 +97,3 @@ class SimulationLogger:
                 writer.writerow(["rejected_trips", self.rejected_trips])
                 total = self.accepted_trips + self.rejected_trips
                 writer.writerow(["total_attempts", total])
-
-    def getDirectory(self):
-        return self.filedirectory
