@@ -731,14 +731,23 @@ if has_asp_data:
         st.info("No aspiration price data available in the filtered trips.")
 
 
-
-
-
-#==========
-#SURPLUS
-#==========
+## ----- PASSENGER SURPLUS -----
 st.divider()
-st.header("Passenger Surplus Analysis")
+st.header("Passenger (Consumer) Surplus")
+st.markdown(
+    "Passenger surplus measures the difference between a passenger's maximum"
+    "willingness to pay (`passenger_asp`) and the final negotiated fare (`price`). "
+    "It represents the economic benefit passengers obtain from successful rides. \n\n"
+
+    "**Computation**: \n"
+    "`Passenger Surplus = passenger_asp - price` \n\n"
+
+    "- **Positive Surplus**: The passenger paid less than their WTP. \n"
+    "- **Negative Surplus**: The passenger paid more than their WTP. \n\n"
+    
+    "This metric captures passenger-side welfare within the negotiated transport "
+    "market and reflects how pricing outcomes compare to passenger valuation."
+)
 
 all_surplus = df_all.copy()
 
@@ -778,15 +787,28 @@ if selected_hubs:
 
 st.dataframe(filtered_summary)
 
-#PRODUCER SURPLUS ANALYSIS
+#----- PRODUCER SURPLUS -----
 st.divider()
-st.header("Producer Surplus Analysis")
+st.header("Driver (Producer) Surplus")
+st.markdown(
+    "Driver surplus measures the difference between the fare received (`price`) "
+    "and the marginal cost of completing the trip (`marginal_cost`). "
+    "It represents the profit drivers obtain from successful rides. \n\n"
+
+    "**Computation**: \n"
+    "`Driver Surplus = price - marginal_cost` \n\n"
+
+    "- **Positive Surplus**: The driver earned more than the cost of completing the trip. \n"
+    "- **Negative Surplus**: The driver earned less than the cost of completing the trip. \n\n"
+    
+    "This metric captures driver-side welfare and profitability within the "
+    "negotiated transport market."
+)
 
 
 GAS_PRICE = config.getGasPricePerLiter()
 GAS_CONSUMPTION = config.getGasConsumption()
 
-# PS = FINAL PRICE - (distance * Gas Consumption * Gas Price)
 # Distance is found in df_all (METERS)
 # gas_price is from config L/PHP
 # gas consumption is from tricycle config is in KM/L
@@ -826,7 +848,7 @@ if selected_drivers:
 if selected_runs:
     filtered_summary = filtered_summary[filtered_summary['run_id'].isin(selected_runs)]
 if selected_hubs:
-    filtered_summary = filtered_summary[filtered_summary['hub_id'].isin(selected_runs)]
+    filtered_summary = filtered_summary[filtered_summary['hub_id'].isin(selected_hubs)]
 
 st.dataframe(filtered_summary)
 
@@ -901,7 +923,15 @@ total_drivers = ratio_counts['count'].sum()
 ratio_counts['proportion'] = ratio_counts['count'] / total_drivers
 
 #Plot data
-st.subheader("Driver Viability Analysis")
+st.divider()
+st.header("Driver Profitability")
+st.markdown(
+    "This section categorizes drivers based on how much they profit from their trips after "
+    "accounting for gas and daily expenses:\n\n"
+    "- **Profitable**: The driver earns enough to cover gas and daily expenses.\n"
+    "- **Break-even**: The driver earns enough to cover gas, but not daily expenses.\n"
+    "- **Not Profitable**: The driver earns less than the cost of gas."
+)
 fig, ax = plt.subplots(figsize=(8, 1.8))
 colors = {
     "Covers All Expenses": "#2a9d8f",
@@ -935,18 +965,24 @@ for group, row in ratio_counts.iterrows():
 
 ax.set_xlim(0, 1)
 ax.set_yticks([])
-ax.set_title("Proportion of Drivers by Viability Group", fontsize=14)
+ax.set_title("Proportion of Drivers by Viability Group", fontsize=10)
 ax.legend()
 st.pyplot(fig)
 
-#INCOME INEQUALITY
+#----- GINI COEFFICIENT -----
 st.divider()
-st.subheader("4.1 Income Inequality (Gross)")
+st.header("Driver Income Inequality — Gini Coefficient")
 st.markdown(
-    "Inequality of **gross income** (total fares collected, before any expenses):\n"
-    "- **Gini coefficient:** 0 = perfect equality, 1 = one driver captures all income.\n"
-    "- **Top 10% / Bottom 40% shares:** Fraction of total income captured by those groups.\n"
-    "- **Lorenz curve:** The further from the diagonal, the greater the inequality."
+    "The Gini coefficient measures how unevenly **gross income** is distributed among drivers. "
+    "It is derived from the Lorenz curve, which plots cumulative share of drivers against cumulative share of gross income. \n\n"
+
+    "**Computation:**\n"
+    "`Gini = Area between line of equality and Lorenz curve / Total area under equality line`\n\n"
+
+    "- **0 → Perfect equality** (all drivers earn the same gross income).\n"
+    "- **1 → Maximum inequality** (one driver earns all the gross income).\n\n"
+    
+    "This metric shows how concentrated gross income is among drivers in the transport market."
 )
 
 #get the income per driver
@@ -987,25 +1023,36 @@ total_income = income_sorted['gross_income'].sum()
 lorenz_y = cumulative_income / total_income
 lorenz_x = np.arange(1, len(lorenz_y) + 1) / len(lorenz_y)
 
-fig, ax = plt.subplots(figsize=(5, 5))
+# Create figure (keep size large for detail)
+fig, ax = plt.subplots(figsize=(6, 6))
 
 # Lorenz curve
-ax.plot(lorenz_x, lorenz_y, label="Lorenz Curve")
+ax.plot(lorenz_x, lorenz_y, color='blue', linewidth=2, label="Lorenz Curve")
 
-# Equality line
-ax.plot([0, 1], [0, 1], linestyle="--", label="Perfect Equality")
+# Line of equality
+ax.plot([0, 1], [0, 1], color='gray', linestyle="--", linewidth=1.5, label="Perfect Equality")
 
-ax.set_xlabel("Cumulative Share of Drivers")
-ax.set_ylabel("Cumulative Share of Income")
-ax.set_title("Lorenz Curve — Gross Driver Income")
-ax.legend()
+# Labels and legend
+ax.set_xlabel("Cumulative Share of Drivers", fontsize=10)
+ax.set_ylabel("Cumulative Share of Income", fontsize=10)
+ax.set_title("Lorenz Curve — Gross Driver Income", fontsize=12)
+ax.legend(fontsize=9)
+ax.grid(True)
+fig.tight_layout()
 
-st.pyplot(fig)
+# Columns to center the graph and control width
+col1, col2, col3 = st.columns([1, 1.5, 1])
+with col2:
+    st.pyplot(fig, use_container_width=False)
 
-st.subheader("4.2 Profit Inequality (After Gas Expenses)")
+st.divider()
+st.header("Driver Income Inequality — After Gas Expenses")
 st.markdown(
-    "Inequality of **profit after gas** (income minus fuel costs only). "
-    "This isolates the effect of variable operating costs without livelihood expenses."
+    "This section shows how **drivers’ income after paying gas expenses** is distributed, "
+    "using the Gini coefficient. \n\n"
+
+    "- Higher values indicate more concentration of post-gas income among fewer drivers.\n"
+    "- Lower values indicate a more even distribution of net income after gas costs."
 )
 
 
@@ -1051,12 +1098,19 @@ ax.set_ylabel("Cumulative Share of Profit After Gas Expense")
 ax.set_title("Lorenz Curve — Profit After Gas Expenses")
 ax.legend()
 
-st.pyplot(fig)
+# Columns to center the graph and control width
+col1, col2, col3 = st.columns([1, 1.5, 1])
+with col2:
+    st.pyplot(fig, use_container_width=False)
 
-st.subheader("4.3 Profit Inequality (After All Expenses)")
+st.divider()
+st.header("Driver Income Inequality — Net Profit")
 st.markdown(
-    "Inequality of **net profit** (income minus gas and livelihood/daily expenses). "
-    "This is the take-home figure and reflects the full cost burden on drivers."
+    "This section shows how **drivers’ net profit** (income minus gas and daily expenses) "
+    "is distributed, using the Gini coefficient. \n\n"
+
+    "- Higher values indicate that net profit is concentrated among a few drivers.\n"
+    "- Lower values indicate a more even distribution of net profit across drivers."
 )
 
 all_expenses = (
@@ -1096,7 +1150,10 @@ ax.set_ylabel("Cumulative Share of Net Profit")
 ax.set_title("Lorenz Curve — Profit After All Expenses")
 ax.legend()
 
-st.pyplot(fig)
+# Columns to center the graph and control width
+col1, col2, col3 = st.columns([1, 1.5, 1])
+with col2:
+    st.pyplot(fig, use_container_width=False)
 
 st.subheader("Profit Inequality Comparison — All Scenarios")
 
@@ -1134,4 +1191,7 @@ ax.set_ylabel("Cumulative Share of Income / Profit")
 ax.set_title("Lorenz Curves — Income and Profit Comparison")
 ax.legend()
 
-st.pyplot(fig)
+# Columns to center the graph and control width
+col1, col2, col3 = st.columns([1, 1.5, 1])
+with col2:
+    st.pyplot(fig, use_container_width=False)
