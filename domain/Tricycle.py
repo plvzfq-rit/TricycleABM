@@ -62,8 +62,6 @@ class Tricycle:
         self.destination = destination
 
     def hasArrived(self, current_location: Location) -> bool:
-        # temporarily removed
-        #self.cooldownTime = math.ceil(-600 * math.log(random.random()))
         return current_location.isNear(self.destination)
     
     def decrementCooldown(self):
@@ -159,7 +157,4 @@ class Tricycle:
     
     def canAcceptDispatch(self, passenger_destination: Location) -> bool:
         """Check if the tricycle can accept a dispatch to the given destination"""
-        # current_location = getTricycleLocation(self.name)
-        # estimated_distance = getManhattanDistance(current_location, passenger_destination)
-        # return self.isFree() and estimated_distance <= self.farthestDistance
         return self.isFree()

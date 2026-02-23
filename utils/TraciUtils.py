@@ -4,10 +4,6 @@ from domain.Location import Location
 
 def getListOfHubIds() -> list[str]:
     hub_ids = ["hub0", "hub1", "hub2", "hub3", "hub4", "hub5", "hub6", "hub7", "hub8"]
-    # parking_area_ids = traci.parkingarea.getIDList()
-    # for parking_area_id in parking_area_ids:
-    #     if parking_area_id[0:3] == "hub":
-    #         hub_ids.append(parking_area_id)
     return hub_ids
 
 def getTricycleLocation(tricycle_id: str) -> Location | None:
@@ -32,7 +28,6 @@ def getTricycleHubEdge(hub_string: str) -> str:
         "hub8": "E23"
     }
     return HUB_EDGE_MAPPING[hub_string]
-    # return traci.parkingarea.getLaneID(hub_string).split("_")[0]
 
 def returnTricycleToHub(tricycle_id: str, hub_string: str) -> None:
     traci.vehicle.setParkingAreaStop(tricycle_id, hub_string, duration=99999)
@@ -43,8 +38,6 @@ def initializeTricycle(tricycle_id: str, hub_string: str) -> None:
     if route_id not in traci.route.getIDList():
         traci.route.add(route_id, [hub_edge])
     traci.vehicle.add(tricycle_id, route_id, "trike", departLane="free", departPos="free", departSpeed="0")
-    # brute force entry
-    # traci.vehicle.moveTo(tricycle_id, hub_edge + "_0", 0)
     traci.vehicle.setSpeed(tricycle_id, 8.33)
     returnTricycleToHub(tricycle_id, hub_string)
 

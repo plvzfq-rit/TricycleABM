@@ -81,7 +81,7 @@ class TricycleRepository:
         current_edge = hub_edge
 
         if current_edge == dest_edge:
-            #print("Failed to assign.")
+            # Failed to assign
             return None
         
         distance = traci.simulation.getDistanceRoad(current_edge, 0, dest_edge, 0, isDriving=True)
@@ -90,7 +90,6 @@ class TricycleRepository:
 
         driver_price_1 = round(driver_matrix(distance, tricycle.getAspiredPrice()), 2)
         driver_price_2 = round(driver_matrix(distance, tricycle.minimumPrice), 2)
-
 
         min_price = min(driver_price_1, driver_price_2)
         driver_asp = max(driver_price_1, driver_price_2)
@@ -128,11 +127,6 @@ class TricycleRepository:
                     first = False
                     turn = driver_sentinel
         
-        # if not agree and random.random() < 0.99:  # 10% chance of agreement even if price expectations aren't met
-        #     curr_offer = driver_asp
-        # else:
-        #     return False
-
         if not agree:
             curr_offer = driver_asp
 

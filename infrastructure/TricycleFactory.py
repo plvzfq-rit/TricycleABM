@@ -3,10 +3,6 @@ import math
 import numpy as np
 from domain.Tricycle import Tricycle
 
-# Culaba 1% Scientist
-# https://www.sciencedirect.com/science/article/pii/S1361920907000624
-GAS_CONSUMPTION_FROM_PAPER = 24.41
-
 class TricycleFactory:
     def __init__(self, simulation_config):
         self.getStartTime = simulation_config.getStartTimeDistribution()
@@ -19,6 +15,7 @@ class TricycleFactory:
         self.getPatience = simulation_config.getTricyclePatienceDistribution()
         self.getAspiredPrice = simulation_config.getTricycleAspiredPriceDistribution()
         self.getMinimumPrice = simulation_config.getMinimumPriceDistribution()
+        self.gasConsumption = simulation_config.getGasConsumption()
     def createRandomTricycle(self, assigned_id: int, assigned_hub: str) -> tuple[str, Tricycle]:
         trike_name = "trike" + str(assigned_id)
         start_time = self.getStartTime()
@@ -26,7 +23,7 @@ class TricycleFactory:
         while end_time <= start_time:
             end_time = self.getEndTime()
         max_gas = self.getMaxGas()
-        gas_consumption = GAS_CONSUMPTION_FROM_PAPER
+        gas_consumption = self.gasConsumption
         usual_gas_payment = self.getGasPayment()
         gets_full_tank = self.getGetsFullTank()
         daily_expense = self.getDailyExpense()
