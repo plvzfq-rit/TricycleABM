@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import glob
+import numpy as np
 import os
 import re # For cleaning expense amount
 
@@ -869,12 +869,161 @@ ax.set_title("Proportion of Drivers by Viability Group", fontsize=14)
 ax.legend()
 st.pyplot(fig)
 
+#INCOME INEQUALITY
+st.divider()
+st.subheader("4.1 Income Inequality (Gross)")
+st.markdown(
+    "Inequality of **gross income** (total fares collected, before any expenses):\n"
+    "- **Gini coefficient:** 0 = perfect equality, 1 = one driver captures all income.\n"
+    "- **Top 10% / Bottom 40% shares:** Fraction of total income captured by those groups.\n"
+    "- **Lorenz curve:** The further from the diagonal, the greater the inequality."
+)
+
+#get the income per driver
+gross_income_per_driver = (
+    df_all.groupby('trike_id', as_index = False)['price']
+    .sum()
+    .rename(columns={'price': 'gross_income'})
+)
+
+#Helper to compute for Gini
+def gini(series):
+    values = np.asarray(series, dtype=float)
+    if values.size == 0:
+        return 0.0
+    
+    values = values - values.min()
+
+    total = values.sum()
+
+    if total == 0:
+        return 0.0
+    
+    values = np.sort(values)
+    n = values.size
+    index = np.arange(1, n + 1)
+    g = np.sum((2 * index - n - 1) * values) / (n * total)
+    return float(g)
+
+gross_gini = gini(gross_income_per_driver['gross_income'])
+st.metric("Gini Coefficient (Gross Income)", f"{gross_gini:.3f}")
+
+#Graphing this out
+income_sorted = gross_income_per_driver.sort_values('gross_income')
+
+cumulative_income = income_sorted['gross_income'].cumsum()
+total_income = income_sorted['gross_income'].sum()
+
+lorenz_y = cumulative_income / total_income
+lorenz_x = np.arange(1, len(lorenz_y) + 1) / len(lorenz_y)
+
+fig, ax = plt.subplots(figsize=(5, 5))
+
+# Lorenz curve
+ax.plot(lorenz_x, lorenz_y, label="Lorenz Curve")
+
+# Equality line
+ax.plot([0, 1], [0, 1], linestyle="--", label="Perfect Equality")
+
+ax.set_xlabel("Cumulative Share of Drivers")
+ax.set_ylabel("Cumulative Share of Income")
+ax.set_title("Lorenz Curve — Gross Driver Income")
+ax.legend()
+
+st.pyplot(fig)
+
+st.subheader("4.2 Profit Inequality (After Gas Expenses)")
+st.markdown(
+    "Inequality of **profit after gas** (income minus fuel costs only). "
+    "This isolates the effect of variable operating costs without livelihood expenses."
+)
 
 
+gas_expenses = df_all_expenses[df_all_expenses['expense_type'] == 'gas']
+
+all_gas_expenses = (
+    gas_expenses.groupby('trike_id')['amount']
+    .sum()
+    .rename('gas_expenses')
+)
 
 
+#Merge gas expense and gross income
+income_and_gas = pd.merge(gross_income_per_driver, all_gas_expenses, on='trike_id', how='left')
 
+income_and_gas['gas_expenses'] = income_and_gas['gas_expenses'].fillna(0)
+income_and_gas['after_gas_profit'] = income_and_gas['gross_income'] - income_and_gas['gas_expenses']
 
+df_profit_after_gas = income_and_gas[['trike_id', 'after_gas_profit']]
 
+profit_after_gas_gini = gini(df_profit_after_gas['after_gas_profit'])
+st.metric("Gini Coefficient (After gas expenses)", f"{profit_after_gas_gini:.3f}")
 
+#Graphing this out
+income_sorted = df_profit_after_gas.sort_values('after_gas_profit')
 
+cumulative_profit = income_sorted['after_gas_profit'].cumsum()
+total_profit = income_sorted['after_gas_profit'].sum()
+
+lorenz_y = cumulative_profit / total_profit
+lorenz_x = np.arange(1, len(lorenz_y) + 1) / len(lorenz_y)
+
+fig, ax = plt.subplots(figsize=(5, 5))
+
+# Lorenz curve
+ax.plot(lorenz_x, lorenz_y, label="Lorenz Curve")
+
+# Equality line
+ax.plot([0, 1], [0, 1], linestyle="--", label="Perfect Equality")
+
+ax.set_xlabel("Cumulative Share of Drivers")
+ax.set_ylabel("Cumulative Share of Income")
+ax.set_title("Lorenz Curve — Gross Driver Income")
+ax.legend()
+
+st.pyplot(fig)
+
+st.subheader("4.3 Profit Inequality (After All Expenses)")
+st.markdown(
+    "Inequality of **net profit** (income minus gas and livelihood/daily expenses). "
+    "This is the take-home figure and reflects the full cost burden on drivers."
+)
+
+all_expenses = (
+    df_all_expenses.groupby('trike_id')['amount']
+    .sum()
+    .rename('all_expenses')
+)
+
+profit = pd.merge(gross_income_per_driver, all_expenses, on='trike_id', how='left')
+profit['all_expenses'] = profit['all_expenses'].fillna(0)
+profit['profit'] = profit['gross_income'] - profit['all_expenses']
+
+profit = profit[['trike_id', 'profit']]
+
+profit_gini = gini(profit['profit'])
+st.metric("Gini Coefficient (After all expenses)", f"{profit_gini:.3f}")
+
+#Graphing this out
+profit_sorted = profit.sort_values('profit')
+
+cumulative_profit = profit_sorted['profit'].cumsum()
+total_profit = profit_sorted['profit'].sum()
+
+lorenz_y = cumulative_profit / total_profit
+lorenz_x = np.arange(1, len(lorenz_y) + 1) / len(lorenz_y)
+
+fig, ax = plt.subplots(figsize=(5, 5))
+
+# Lorenz curve
+ax.plot(lorenz_x, lorenz_y, label="Lorenz Curve")
+
+# Equality line
+ax.plot([0, 1], [0, 1], linestyle="--", label="Perfect Equality")
+
+ax.set_xlabel("Cumulative Share of Drivers")
+ax.set_ylabel("Cumulative Share of Income")
+ax.set_title("Lorenz Curve — Gross Driver Income")
+ax.legend()
+
+st.pyplot(fig)
