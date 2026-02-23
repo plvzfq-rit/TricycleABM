@@ -6,6 +6,15 @@ import numpy as np
 import os
 import re # For cleaning expense amount
 
+import sys
+
+# Add project root to Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from config.SimulationConfig import SimulationConfig
+
+config = SimulationConfig()
+
 # Set page config for a wider layout
 st.set_page_config(layout="wide")
 
@@ -773,41 +782,53 @@ st.dataframe(filtered_summary)
 st.divider()
 st.header("Producer Surplus Analysis")
 
-daily_income = (
-    df_all.groupby(['trike_id', 'run_id'])['price']
-    .sum()
-    .reset_index(name='daily_income')
-)
 
-daily_expenses = (
-    df_all_expenses.groupby(['trike_id', 'run_id'])['amount']
-    .sum()
-    .reset_index(name='daily_expenses')
-)
+GAS_PRICE = config.getGasPricePerLiter()
+GAS_CONSUMPTION = config.getGasConsumption()
 
-# Merge income and expenses
-daily_summary = pd.merge(daily_income, daily_expenses, on=['trike_id', 'run_id'], how='outer')
-daily_summary.fillna(0, inplace=True)
+# PS = FINAL PRICE - (distance * Gas Consumption * Gas Price)
+# Distance is found in df_all (METERS)
+# gas_price is from config L/PHP
+# gas consumption is from tricycle config is in KM/L
 
-daily_summary['daily_producer_surplus'] = daily_summary['daily_income'] - daily_summary['daily_expenses']
+trip_expenses = df_all.copy()
+trip_expenses['marginal_cost'] = (trip_expenses['distance'] * GAS_PRICE) / (1000 * GAS_CONSUMPTION)
+trip_expenses['producer_surplus'] = trip_expenses['price'] - trip_expenses['marginal_cost']
 
-# filter
-filter_col1, filter_col2 = st.columns(2)
+trip_expenses = trip_expenses[['trike_id', 'run_id', 'hub_id', 'producer_surplus']]
+
+
+c1, c2, c3 = st.columns(3)
+
+ps_total = trip_expenses['producer_surplus'].sum()
+ps_average = trip_expenses['producer_surplus'].mean()
+ps_median = trip_expenses['producer_surplus'].median()
+c1.metric("Total Producer Surplus", f"PHP {ps_total:,.2f}")
+c2.metric("Avg Producer Surplus / Driver", f"PHP {ps_average:,.2f}")
+c3.metric("Median Producer Surplus", f"PHP {ps_median:,.2f}")
+
+
+#FILTERS
+filter_col1, filter_col2, filter_col3 = st.columns(3)
 with filter_col1:
-    all_drivers = sorted(daily_summary['trike_id'].unique())
+    all_drivers = sorted(trip_expenses['trike_id'].unique())
     selected_drivers = st.multiselect("Filter by Driver", options=all_drivers, default=[], placeholder="All drivers", key="producer_driver_filter")
 with filter_col2:
-    all_runs = sorted(daily_summary['run_id'].unique())
+    all_runs = sorted(trip_expenses['run_id'].unique())
     selected_runs = st.multiselect("Filter by Day/Run", options=all_runs, default=[], placeholder="All days", key="producer_run_filter")
+with filter_col3:
+    all_hubs = sorted(trip_expenses['hub_id'].unique())
+    selected_hubs = st.multiselect("Filter by TODA Hub", options=all_hubs, default=[], placeholder="All hubs", key="producer_hub_filter")
 
-filtered_summary = daily_summary.copy()
+filtered_summary = trip_expenses.copy()
 if selected_drivers:
     filtered_summary = filtered_summary[filtered_summary['trike_id'].isin(selected_drivers)]
 if selected_runs:
     filtered_summary = filtered_summary[filtered_summary['run_id'].isin(selected_runs)]
+if selected_hubs:
+    filtered_summary = filtered_summary[filtered_summary['hub_id'].isin(selected_runs)]
 
-st.subheader("Daily Producer Surplus by Driver and Day")
-st.dataframe(filtered_summary[['trike_id', 'run_id', 'daily_income', 'daily_expenses', 'daily_producer_surplus']].sort_values(by=['run_id', 'trike_id']))
+st.dataframe(filtered_summary)
 
 #==========
 #RATIO
