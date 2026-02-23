@@ -722,6 +722,53 @@ if has_asp_data:
         st.info("No aspiration price data available in the filtered trips.")
 
 
+
+
+
+#==========
+#SURPLUS
+#==========
+st.divider()
+st.header("Passenger Surplus Analysis")
+
+all_surplus = df_all.copy()
+
+#Creating columns for the surplus
+all_surplus['passenger_surplus'] = all_surplus['passenger_asp'] - all_surplus['price'] 
+
+all_surplus = all_surplus[['trike_id', 'run_id', 'hub_id', 'passenger_surplus']]
+
+cs_total = all_surplus['passenger_surplus'].sum()
+cs_average = all_surplus['passenger_surplus'].mean()
+cd_median = all_surplus['passenger_surplus'].median()
+
+c1, c2, c3 = st.columns(3)
+c1.metric("Total Consumer Surplus", f"PHP {cs_total:,.2f}")
+c2.metric("Avg Consumer Surplus / Passenger", f"PHP {cs_average:,.2f}")
+c3.metric("Median Consumer Surplus", f"PHP {cd_median:,.2f}")
+
+#FILTERS
+filter_col1, filter_col2, filter_col3 = st.columns(3)
+with filter_col1:
+    all_drivers = sorted(all_surplus['trike_id'].unique())
+    selected_drivers = st.multiselect("Filter by Driver", options=all_drivers, default=[], placeholder="All drivers", key="consumer_driver_filter")
+with filter_col2:
+    all_runs = sorted(all_surplus['run_id'].unique())
+    selected_runs = st.multiselect("Filter by Day/Run", options=all_runs, default=[], placeholder="All days", key="consumer_run_filter")
+with filter_col3:
+    all_hubs = sorted(all_surplus['hub_id'].unique())
+    selected_hubs = st.multiselect("Filter by TODA Hub", options=all_hubs, default=[], placeholder="All hubs", key="consumer_hub_filter")
+
+filtered_summary = all_surplus.copy()
+if selected_drivers:
+    filtered_summary = filtered_summary[filtered_summary['trike_id'].isin(selected_drivers)]
+if selected_runs:
+    filtered_summary = filtered_summary[filtered_summary['run_id'].isin(selected_runs)]
+if selected_hubs:
+    filtered_summary = filtered_summary[filtered_summary['hub_id'].isin(selected_runs)]
+
+st.dataframe(filtered_summary)
+
 #PRODUCER SURPLUS ANALYSIS
 st.divider()
 st.header("Producer Surplus Analysis")
@@ -762,7 +809,9 @@ if selected_runs:
 st.subheader("Daily Producer Surplus by Driver and Day")
 st.dataframe(filtered_summary[['trike_id', 'run_id', 'daily_income', 'daily_expenses', 'daily_producer_surplus']].sort_values(by=['run_id', 'trike_id']))
 
+#==========
 #RATIO
+#==========
 
 #list of all unique drivers
 all_drivers = df_all['trike_id'].drop_duplicates()
@@ -1024,6 +1073,44 @@ ax.plot([0, 1], [0, 1], linestyle="--", label="Perfect Equality")
 ax.set_xlabel("Cumulative Share of Drivers")
 ax.set_ylabel("Cumulative Share of Net Profit")
 ax.set_title("Lorenz Curve — Profit After All Expenses")
+ax.legend()
+
+st.pyplot(fig)
+
+st.subheader("Profit Inequality Comparison — All Scenarios")
+
+
+# Helper to compute Lorenz curve
+def lorenz_curve(data_series):
+    sorted_series = data_series.sort_values()
+    cumulative = sorted_series.cumsum()
+    total = sorted_series.sum()
+    lorenz_y = cumulative / total
+    lorenz_x = np.arange(1, len(lorenz_y) + 1) / len(lorenz_y)
+    return lorenz_x, lorenz_y
+
+# Prepare the datasets
+datasets = [
+    (gross_income_per_driver['gross_income'], "Gross Income", "Cumulative Share of Income", gini(gross_income_per_driver['gross_income'])),
+    (df_profit_after_gas['after_gas_profit'], "Profit After Gas", "Cumulative Share of Profit After Gas", gini(df_profit_after_gas['after_gas_profit'])),
+    (profit['profit'], "Profit After All Expenses", "Cumulative Share of Net Profit", gini(profit['profit']))
+]
+
+# Create single figure
+fig, ax = plt.subplots(figsize=(7, 7))
+
+colors = ['blue', 'orange', 'green']  # One color per dataset
+
+for (data, label, ylabel, gini_value), color in zip(datasets, colors):
+    x, y = lorenz_curve(data)
+    ax.plot(x, y, label=f"{label} (Gini: {gini_value:.3f})", color=color)
+
+# Equality line
+ax.plot([0, 1], [0, 1], linestyle="--", color='black', label="Perfect Equality")
+
+ax.set_xlabel("Cumulative Share of Drivers")
+ax.set_ylabel("Cumulative Share of Income / Profit")
+ax.set_title("Lorenz Curves — Income and Profit Comparison")
 ax.legend()
 
 st.pyplot(fig)
