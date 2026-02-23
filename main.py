@@ -21,6 +21,7 @@ parking_file_path = simulation_config.getParkingFilePath()
 sumo_repository = SumoRepository(network_file_path)
 toda_hub_descriptor = parseParkingAreaFile(parking_file_path)
 
+number_of_runs = 10
 duration = 57600
 
 # PHASE 3: INITIALIZING TRICYCLE REPOSITORY
@@ -39,7 +40,7 @@ timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 # os.makedirs(f"{timestamp}", exist_ok=True)
 run_dir = os.path.join(".", timestamp)
 
-for i in range(2):
+for i in range(number_of_runs):
     print(f"running run# {i}...")
     logger = SimulationLogger(i, run_dir)
     tricycle_repository.changeLogger(logger)
