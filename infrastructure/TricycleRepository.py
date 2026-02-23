@@ -35,7 +35,7 @@ def driver_matrix(given, base_price=50):
     return value
 
 def manila_matrix(given):
-    return 16 if given < 1000 else 16 + 5 * math.ceil((given - 1000) / 500)
+    return 16 if given <= 1000 else 16 + 5 * math.ceil((given - 1000) / 500)
 
 class TricycleRepository:
     def __init__(self, sumo_service: SumoRepository, tricycle_factory: TricycleFactory,simulation_config: SimulationConfig):
