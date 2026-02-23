@@ -1,7 +1,6 @@
 
 import os
 
-# os.dup2(os.open(os.devnull, os.O_WRONLY), 2)
 from utils import *
 from domain import *
 from infrastructure import *
@@ -12,7 +11,6 @@ from datetime import datetime
 import traci
 
 # PHASE 1: INITIALIZING THE MAP ENVIRONMENT
-
 simulation_config = SimulationConfig()
 
 # PHASE 2: INITIALIZING SERVICES
@@ -36,8 +34,7 @@ tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_factory,
 
 timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-# os.makedirs(f"{timestamp}", exist_ok=True)
-run_dir = os.path.join(".", timestamp)
+run_dir = os.path.join(".", "analysis", timestamp)
 
 for i in range(number_of_runs):
     print(f"running run# {i}...")

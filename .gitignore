@@ -213,3 +213,6 @@ assets/
 logs/
 
 test.py
+
+analysis/*
+!analysis/analysis.py
