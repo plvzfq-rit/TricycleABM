@@ -1195,3 +1195,5 @@ ax.legend()
 col1, col2, col3 = st.columns([1, 1.5, 1])
 with col2:
     st.pyplot(fig, use_container_width=False)
+
+
