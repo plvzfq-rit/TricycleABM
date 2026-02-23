@@ -14,6 +14,7 @@ class SimulationConfig:
     gasPricePerLiter = 58.9
     lowGasPerLiter = 54.8
     highGasPerLiter = 61.0
+    GAS_CONSUMPTION_FROM_PAPER = 24.41
     
     def getAssetDirectory(self) -> str:
         script_dir = Path(__file__).resolve().parent.parent
@@ -34,6 +35,9 @@ class SimulationConfig:
     
     def getGasPricePerLiter(self) -> float:
         return float(self.gasPricePerLiter)
+    
+    def getGasConsumption(self) -> float:
+        return float(self.GAS_CONSUMPTION_FROM_PAPER)
     
     def getWTPDistribution(self) -> callable:
         shape = 0.7134231299166108
