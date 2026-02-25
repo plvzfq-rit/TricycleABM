@@ -42,8 +42,8 @@ class SimulationLogger:
         self.rejected_trips = 0
 
     #include the driver's willingness to sell and passenger's willingness to pay
-    def add(self, run_id: str, taxi_id: str, origin_edge: str, dest_edge: str, distance: float, price: float, tick:int, driver_asp: float, passenger_asp: float) -> None:
-        row = [run_id, taxi_id, origin_edge, dest_edge, distance, price, tick, driver_asp, passenger_asp]
+    def add(self, run_id: str, taxi_id: str, origin_edge: str, dest_edge: str, distance: float, price: float, tick:int, driver_asp: float, passenger_asp: float, base_price: str, init_driver_asp: str, init_passenger_asp: str) -> None:
+        row = [run_id, taxi_id, origin_edge, dest_edge, distance, price, tick, driver_asp, passenger_asp, base_price, init_driver_asp, init_passenger_asp]
         with self._lock:
             with open(self.transactions_filename, mode="a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)

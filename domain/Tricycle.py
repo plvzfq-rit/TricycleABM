@@ -20,7 +20,7 @@ class Tricycle:
         self.gasConsumptionRate = gas_consumption_rate
         self.dailyExpense = dailyExpense
         self.farthestDistance = farthestDistance
-        self.log = namedtuple("log", ["run_id","trike_id","origin_edge", "dest_edge", "distance", "price","tick", "driver_asp", "passenger_asp"])
+        self.log = namedtuple("log", ["run_id","trike_id","origin_edge", "dest_edge", "distance", "price","tick", "driver_asp", "passenger_asp", "base_price", "init_driver_asp", "init_passenger_asp"])
         self.currentLog = None
         self.cooldownTime = 0
         self.patience = patience
@@ -43,11 +43,14 @@ class Tricycle:
     def getAspiredPrice(self) -> float:
         return self.aspiredPrice
     
+    def getState(self) -> TricycleState:
+        return self.state
+    
     #Need to include the Driver's willingness to sell and Passenger's willingness to pay
     def recordLog(
-            self, run_id:str, trike_id: str, origin_edge: str, dest_edge:str, distance:str, price:str, tick:str, driver_asp: str, passenger_asp: str
+            self, run_id:str, trike_id: str, origin_edge: str, dest_edge:str, distance:str, price:str, tick:str, driver_asp: str, passenger_asp: str, base_price: str, init_driver_asp: str, init_passenger_asp: str
             ) -> None:
-        self.currentLog = self.log(run_id, trike_id, origin_edge, dest_edge, distance, price, tick, driver_asp, passenger_asp)
+        self.currentLog = self.log(run_id, trike_id, origin_edge, dest_edge, distance, price, tick, driver_asp, passenger_asp, base_price, init_driver_asp, init_passenger_asp)
     
     def activate(self) -> None:
         self.state = TricycleState.FREE
@@ -62,7 +65,12 @@ class Tricycle:
         self.destination = destination
 
     def hasArrived(self, current_location: Location) -> bool:
+        # temporarily removed
+        #self.cooldownTime = math.ceil(-600 * math.log(random.random()))
         return current_location.isNear(self.destination)
+    
+    def isInCooldown(self):
+        return self.cooldownTime == 0
     
     def decrementCooldown(self):
         self.cooldownTime = max(self.cooldownTime - 1, 0)
@@ -75,6 +83,9 @@ class Tricycle:
         self.destination = None
         self.state = TricycleState.RETURNING_TO_TODA
 
+    def isActive(self):
+        return self.state not in [TricycleState.DEAD, TricycleState.TO_SPAWN]
+    
     def isFree(self) -> bool:
         return self.state == TricycleState.FREE
     
@@ -101,6 +112,9 @@ class Tricycle:
 
     def shouldDie(self, time: int) -> bool:
         return self.endTime == time and self.state != TricycleState.DEAD
+    
+    def shouldReturnToToda(self, current_location) -> bool:
+        return self.hasArrived(current_location) and self.state == TricycleState.HAS_PASSENGER
     
     def getHub(self) -> str:
         return self.hub
@@ -157,4 +171,7 @@ class Tricycle:
     
     def canAcceptDispatch(self, passenger_destination: Location) -> bool:
         """Check if the tricycle can accept a dispatch to the given destination"""
+        # current_location = getTricycleLocation(self.name)
+        # estimated_distance = getManhattanDistance(current_location, passenger_destination)
+        # return self.isFree() and estimated_distance <= self.farthestDistance
         return self.isFree()

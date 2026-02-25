@@ -35,7 +35,7 @@ def driver_matrix(given, base_price=50):
     return value
 
 def manila_matrix(given):
-    return 16 if given <= 1000 else 16 + 5 * math.ceil((given - 1000) / 500)
+    return 16 if given < 1000 else 16 + 5 * math.ceil((given - 1000) / 500)
 
 class TricycleRepository:
     def __init__(self, sumo_service: SumoRepository, tricycle_factory: TricycleFactory,simulation_config: SimulationConfig):
@@ -43,6 +43,12 @@ class TricycleRepository:
         self.sumoService = sumo_service
         self.tricycleFactory = tricycle_factory
         self.simulationConfig = simulation_config
+
+    def hasActiveTricycles(self) -> bool:
+        for tricycle in self.tricycles.values():
+            if tricycle.isActive():
+                return True
+        return False
 
     def createTricycles(self, number_of_tricycles: int, hub_distribution: dict) -> None:
         # create list of hub tags; each would be assigned to a new tricycle
@@ -63,25 +69,35 @@ class TricycleRepository:
     def getTricycles(self) -> list[Tricycle]:
         return list(self.tricycles.values())
     
+    def getActiveTricycles(self) -> set[Tricycle]:
+        return set([tricycle for tricycle in self.tricycles.values() if tricycle.isActive()])
+    
+    def getActiveFreeTricycleIds(self) -> set[Tricycle]:
+        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() and not self.getTricycle(tricycle_id).isInCooldown() and self.getTricycle(tricycle_id).isFree()])
+    
+    def getActiveTricycleIds(self) -> set[Tricycle]:
+        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).isActive() or self.getTricycle(tricycle_id).isFree()])
+    
     def getTricycleLocation(self, tricycle_id: str) -> Location:
         return getTricycleLocation(tricycle_id)
+    
+    #Any tricycle literally moving
+    def getBusyTricycleIds(self) -> set[str]:
+        return set([tricycle_id for tricycle_id in self.tricycles.keys() if self.getTricycle(tricycle_id).state not in{ TricycleState.FREE, TricycleState.DEAD, TricycleState.TO_SPAWN, TricycleState.PARKED}])
     
     def setTricycleDestination(self, tricycle_id: str, destination: Location) -> None:
         if tricycle_id in self.tricycles.keys():
             self.getTricycle(tricycle_id).setDestination(destination)
     
-    #TODO: Refactor this!!
     def dispatchTricycle(self, tricycle_id: str, passenger: Passenger, simulationLogger, tick) -> bool:
         tricycle = self.tricycles[tricycle_id]
         destination = passenger.destination
         
-
         hub_edge = getTricycleHubEdge(tricycle.getHub())
         dest_edge = destination.edge
         current_edge = hub_edge
 
         if current_edge == dest_edge:
-            # Failed to assign
             return None
         
         distance = traci.simulation.getDistanceRoad(current_edge, 0, dest_edge, 0, isDriving=True)
@@ -91,12 +107,17 @@ class TricycleRepository:
         driver_price_1 = round(driver_matrix(distance, tricycle.getAspiredPrice()), 2)
         driver_price_2 = round(driver_matrix(distance, tricycle.minimumPrice), 2)
 
+
         min_price = min(driver_price_1, driver_price_2)
-        driver_asp = max(driver_price_1, driver_price_2)
-        
+        init_driver_asp = max(driver_price_1, driver_price_2)
+        driver_asp = init_driver_asp
         max_price= round(passenger.willingness_to_pay * distance / 1000, 2)
-        passenger_asp = round(passenger.getAspiredPrice() * distance / 1000, 2)
-        curr_offer = round(driver_matrix(distance, 50), 2)
+        init_passenger_asp = round(passenger.getAspiredPrice() * distance / 1000, 2)
+        passenger_asp = init_passenger_asp
+
+        base_price = round(manila_matrix(distance), 2)
+        curr_offer = base_price
+
         driver_sentinel = 0
         passenger_sentinel = 1
         turn = driver_sentinel if random.random() < 0.5 else passenger_sentinel
@@ -126,7 +147,7 @@ class TricycleRepository:
                     curr_offer = passenger_asp
                     first = False
                     turn = driver_sentinel
-        
+
         if not agree:
             curr_offer = driver_asp
 
@@ -145,20 +166,32 @@ class TricycleRepository:
         full_route = list(to_route.edges) + list(return_route.edges)[1:]
 
         traci.vehicle.setRoute(tricycle_id, full_route)
-
         traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=passenger.destination.lane, pos=destination.position, duration=60)
 
         self.getTricycle(tricycle_id).acceptPassenger(destination)
         self.setTricycleDestination(tricycle_id, destination)
 
-        #need to include in the call the WTS and WTP 
-        tricycle.recordLog("run002", str(tricycle_id), str(hub_edge), str(dest_edge), str(distance), str(curr_offer), str(tick), str(driver_asp), str(passenger_asp))
+        tricycle.recordLog("run002", str(tricycle_id), str(hub_edge), str(dest_edge), str(distance), str(curr_offer), str(tick), str(driver_asp), str(passenger_asp), str(base_price), str(init_driver_asp), str(init_passenger_asp))
 
-        #1. create a trip object
-        #2. make a record
-        #3. refactor simulationLogger.add
-        #4. tricycle is in a "trip" state, 
         return True
+
+    def hasTricycleArrived(self, tricycle_id: str) -> bool:
+        return self.getTricycle(tricycle_id).hasArrived()
+    
+    def isTricycleFree(self, tricycle_id: str) -> bool:
+        return self.getTricycle(tricycle_id).isFree()
+
+    def activateTricycle(self, tricycle_id: str):
+        self.getTricycle(tricycle_id).activate()
+
+    def killTricycle(self, tricycle_id: str):
+        self.getTricycle(tricycle_id).kill()
+
+    def redirectTricycleToToda(self, tricycle_id: str):
+        self.getTricycle(tricycle_id).returnToToda()
+
+    def updateTricycleLocation(self, tricycle_id: str, current_location: Location):
+        self.getTricycle(tricycle_id).setLastLocation(current_location)
 
     def startExpenseAllTricycles(self, gas_price: float) -> None:
         for tricycle_id in self.tricycles.keys():
