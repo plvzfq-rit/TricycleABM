@@ -22,7 +22,7 @@ class SimulationLogger:
         self.expenses_filename = os.path.join(run_dir, f"expenses.csv")
 
         # Define headers
-        self.headers = ["run_id", "trike_id", "origin_edge", "dest_edge", "distance", "price", "tick", "driver_asp", "passenger_asp"]
+        self.headers = ["run_id", "trike_id", "origin_edge", "dest_edge", "distance", "price", "tick", "driver_asp", "passenger_asp", "base_price", "init_driver_asp", "init_passenger_asp"]
 
         if not os.path.exists(self.transactions_filename):
             with open(self.transactions_filename, mode="w", newline="", encoding="utf-8") as f:

@@ -567,7 +567,7 @@ st.header("Trip-Level Analytics (Based on Analyzed Runs)")
 
 # --- Clean up columns ---
 # Select and reorder relevant columns for display
-trip_display_cols = ['run_id', 'trike_id', 'hub_id', 'origin_edge', 'dest_edge', 'distance', 'price', 'tick', 'driver_asp', 'passenger_asp']
+trip_display_cols = ['run_id', 'trike_id', 'hub_id', 'origin_edge', 'dest_edge', 'distance', 'price', 'tick', 'driver_asp', 'passenger_asp', 'base_price', 'init_driver_asp', 'init_passenger_asp']
 # Handle potential duplicate columns from merge (run_id_x, run_id_y)
 if 'run_id_x' in df_all.columns:
     df_all['run_id'] = df_all['run_id_x']
@@ -652,6 +652,8 @@ with col_a:
 
 # --- Aspiration Price (Bargaining) Analytics ---
 has_asp_data = 'driver_asp' in df_all.columns and 'passenger_asp' in df_all.columns
+has_init_asp_data = 'init_driver_asp' in df_all.columns and 'init_passenger_asp' in df_all.columns
+has_base_price = 'base_price' in df_all.columns
 
 if has_asp_data:
     st.divider()
@@ -727,6 +729,66 @@ if has_asp_data:
         col_sc1, col_sc2, col_sc3 = st.columns([1, 2, 1])
         with col_sc2:
             st.pyplot(fig_scatter, use_container_width=False)
+        # --- Base Price Analytics ---
+        if has_base_price:
+            st.subheader("Base Price (Manila Matrix) Distribution")
+            base_price_data = asp_data.dropna(subset=['base_price'])
+            if not base_price_data.empty:
+                plot_distribution_with_stats(
+                    base_price_data,
+                    'base_price',
+                    "Distribution of Base Prices (Manila Matrix)",
+                    "Base Price (PHP)",
+                    color="#264653"
+                )
+
+                col_bp1, col_bp2, col_bp3 = st.columns(3)
+                col_bp1.metric("Avg Base Price", f"PHP {base_price_data['base_price'].mean():,.2f}")
+                col_bp2.metric("Avg Agreed vs Base", f"PHP {(base_price_data['price'] - base_price_data['base_price']).mean():,.2f}")
+                col_bp3.metric("Avg Markup over Base", f"{((base_price_data['price'] / base_price_data['base_price'] - 1) * 100).mean():,.1f}%")
+
+        # --- Initial Aspiration Price Analytics ---
+        if has_init_asp_data:
+            st.subheader("Initial vs Final Aspiration Prices")
+            init_asp_data = asp_data.dropna(subset=['init_driver_asp', 'init_passenger_asp'])
+            if not init_asp_data.empty:
+                init_asp_data['driver_asp_change'] = init_asp_data['driver_asp'] - init_asp_data['init_driver_asp']
+                init_asp_data['passenger_asp_change'] = init_asp_data['passenger_asp'] - init_asp_data['init_passenger_asp']
+                init_asp_data['init_asp_gap'] = init_asp_data['init_driver_asp'] - init_asp_data['init_passenger_asp']
+
+                col_i1, col_i2, col_i3, col_i4 = st.columns(4)
+                col_i1.metric("Avg Init Driver ASP", f"PHP {init_asp_data['init_driver_asp'].mean():,.2f}")
+                col_i2.metric("Avg Init Passenger ASP", f"PHP {init_asp_data['init_passenger_asp'].mean():,.2f}")
+                col_i3.metric("Avg Driver ASP Change", f"PHP {init_asp_data['driver_asp_change'].mean():,.2f}")
+                col_i4.metric("Avg Passenger ASP Change", f"PHP {init_asp_data['passenger_asp_change'].mean():,.2f}")
+
+                st.subheader("Initial Driver Aspiration Price Distribution")
+                plot_distribution_with_stats(
+                    init_asp_data,
+                    'init_driver_asp',
+                    "Distribution of Initial Driver Aspiration Prices",
+                    "Init Driver ASP (PHP)",
+                    color="#e9c46a"
+                )
+
+                st.subheader("Initial Passenger Aspiration Price Distribution")
+                plot_distribution_with_stats(
+                    init_asp_data,
+                    'init_passenger_asp',
+                    "Distribution of Initial Passenger Aspiration Prices",
+                    "Init Passenger ASP (PHP)",
+                    color="#606c38"
+                )
+
+                st.subheader("Initial Bargaining Gap Distribution")
+                plot_distribution_with_stats(
+                    init_asp_data,
+                    'init_asp_gap',
+                    "Distribution of Initial Bargaining Gap (Init Driver ASP - Init Passenger ASP)",
+                    "Init Gap (PHP)",
+                    color="#bc6c25"
+                )
+
     else:
         st.info("No aspiration price data available in the filtered trips.")
 
