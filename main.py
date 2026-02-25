@@ -22,10 +22,13 @@ toda_hub_descriptor = parseParkingAreaFile(parking_file_path)
 number_of_runs = 10
 number_of_days = 1
 duration = 57600
+run_name = "default"
+
+startTime = datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # PHASE 3: INITIALIZING TRICYCLE REPOSITORY
 
-for i in range(number_of_runs):
+for run in range(number_of_runs):
     tricycle_factory = TricycleFactory(simulation_config)
     tricycle_repository = TricycleRepository(sumo_repository, tricycle_factory, simulation_config)
 
@@ -35,20 +38,22 @@ for i in range(number_of_runs):
     # PHASE 5: INITIALIZING OTHER SERVICES
     tricycle_dispatcher = TricycleDispatcher(tricycle_repository, passenger_factory, simulation_config)
 
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    run_dir = os.path.join(".", "analysis", run_name)
 
-    run_dir = os.path.join(".", "analysis", timestamp)
-
-    for i in range(number_of_days):
-        print(f"running day# {i + 1}...")
-        logger = SimulationLogger(i, run_dir)
+    for day in range(number_of_days):
+        print(f"running run# {run + 1}, day# {day + 1}...")
+        logger = SimulationLogger(run, run_dir)
         tricycle_repository.changeLogger(logger)
         tricycle_repository.resetAllDailyStats()
         tricycle_state_manager = TricycleStateManager(tricycle_repository, logger)
-        simulation_loop = SimulationEngine(toda_hub_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_state_manager, logger, duration, first_run=(i == 0))
+        simulation_loop = SimulationEngine(toda_hub_descriptor, simulation_config, tricycle_dispatcher, tricycle_repository, tricycle_state_manager, logger, duration, first_run=(day == 0))
         simulation_loop.doMainLoop(duration)
         simulation_loop.close()
         tricycle_repository.startExpenseAllTricycles(simulation_config.getGasPricePerLiter())
 
     # Close TRACI after all runs are complete
     traci.close()
+
+print("All runs completed.")
+print("start time: ", startTime)
+print("end time: ", datetime.now().strftime("%Y%m%d-%H%M%S"))

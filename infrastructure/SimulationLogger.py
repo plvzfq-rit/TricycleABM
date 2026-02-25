@@ -1,7 +1,6 @@
 import csv
 import os
 import threading
-from datetime import datetime
 
 class SimulationLogger:
     def __init__(self, sim_count: int, log_dir: str = "analysis"):
@@ -9,10 +8,7 @@ class SimulationLogger:
         Creates a CSV logger with filename:
         SIMCOUNT_TIMESTAMP/transactions.csv
         """
-        # Use current time as timestamp
-        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-
-        run_dir = os.path.join(log_dir, f"{sim_count}_{timestamp}")
+        run_dir = os.path.join(log_dir, str(sim_count))
         os.makedirs(run_dir, exist_ok=True)
 
         # Construct filename

@@ -30,7 +30,10 @@ def getTricycleHubEdge(hub_string: str) -> str:
     return HUB_EDGE_MAPPING[hub_string]
 
 def returnTricycleToHub(tricycle_id: str, hub_string: str) -> None:
-    traci.vehicle.setParkingAreaStop(tricycle_id, hub_string, duration=99999)
+    try:
+        traci.vehicle.setParkingAreaStop(tricycle_id, hub_string, duration=99999)
+    except traci.exceptions.TraCIException:
+        pass
 
 def initializeTricycle(tricycle_id: str, hub_string: str) -> None:
     route_id = f"route_{tricycle_id}"
@@ -42,7 +45,10 @@ def initializeTricycle(tricycle_id: str, hub_string: str) -> None:
     returnTricycleToHub(tricycle_id, hub_string)
 
 def removeTricycle(tricycle_id: str) -> None:
-    traci.vehicle.remove(tricycle_id)
+    try:
+        traci.vehicle.remove(tricycle_id)
+    except traci.exceptions.TraCIException:
+        pass
 
 def hasTricycleParked(tricycle_id: str):
     try:

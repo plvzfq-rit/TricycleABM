@@ -165,8 +165,11 @@ class TricycleRepository:
 
         full_route = list(to_route.edges) + list(return_route.edges)[1:]
 
-        traci.vehicle.setRoute(tricycle_id, full_route)
-        traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=passenger.destination.lane, pos=destination.position, duration=60)
+        try:
+            traci.vehicle.setRoute(tricycle_id, full_route)
+            traci.vehicle.setStop(tricycle_id, dest_edge, laneIndex=passenger.destination.lane, pos=destination.position, duration=60)
+        except traci.exceptions.TraCIException:
+            return None
 
         self.getTricycle(tricycle_id).acceptPassenger(destination)
         self.setTricycleDestination(tricycle_id, destination)
