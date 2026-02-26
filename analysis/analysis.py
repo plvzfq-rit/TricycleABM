@@ -303,7 +303,12 @@ daily_gini = []
 for run in all_run_ids:
     run_transactions = df_all[df_all['run_id'] == run]
     run_income = run_transactions.groupby('trike_id')['price'].sum()
-    daily_gini.append({'run_id': run, 'gini_gross_income': gini(run_income)})
+    run_fixed_income = run_transactions.groupby('trike_id')['base_price'].sum()
+    daily_gini.append({
+        'run_id': run,
+        'gini_gross_income': gini(run_income),
+        'gini_fixed_income': gini(run_fixed_income),
+    })
 
 daily_gini_df = pd.DataFrame(daily_gini)
 daily_summary = pd.merge(daily_summary, daily_gini_df, on='run_id', how='left')
@@ -459,15 +464,29 @@ st.pyplot(fig_avg, use_container_width=True)
 
 # --- A4: Gini coefficient per day ---
 st.subheader("Income Inequality (Gini) Across Days")
-fig_gini, ax_gini = plt.subplots(figsize=(10, 4))
-ax_gini.plot(daily_summary['run_id'], daily_summary['gini_gross_income'], marker='o', color='#e76f51', linewidth=2)
-ax_gini.set_xlabel("Day (Run ID)")
-ax_gini.set_ylabel("Gini Coefficient")
-ax_gini.set_title("Gini Coefficient (Gross Income) Per Day")
-ax_gini.set_ylim(0, max(0.5, daily_summary['gini_gross_income'].max() * 1.2))
-ax_gini.tick_params(axis='x', rotation=45)
-fig_gini.tight_layout()
-st.pyplot(fig_gini, use_container_width=True)
+col_gini1, col_gini2 = st.columns(2)
+
+with col_gini1:
+    fig_gini, ax_gini = plt.subplots(figsize=(6, 4))
+    ax_gini.plot(daily_summary['run_id'], daily_summary['gini_gross_income'], marker='o', color='#e76f51', linewidth=2)
+    ax_gini.set_xlabel("Day (Run ID)")
+    ax_gini.set_ylabel("Gini Coefficient")
+    ax_gini.set_title("Gini Coefficient (Gross Income) Per Day")
+    ax_gini.set_ylim(0, max(0.5, daily_summary['gini_gross_income'].max() * 1.2))
+    ax_gini.tick_params(axis='x', rotation=45)
+    fig_gini.tight_layout()
+    st.pyplot(fig_gini, use_container_width=True)
+
+with col_gini2:
+    fig_gini_fixed, ax_gini_fixed = plt.subplots(figsize=(6, 4))
+    ax_gini_fixed.plot(daily_summary['run_id'], daily_summary['gini_fixed_income'], marker='o', color='#2a9d8f', linewidth=2)
+    ax_gini_fixed.set_xlabel("Day (Run ID)")
+    ax_gini_fixed.set_ylabel("Gini Coefficient")
+    ax_gini_fixed.set_title("Gini Coefficient (Fixed Income) Per Day")
+    ax_gini_fixed.set_ylim(0, max(0.5, daily_summary['gini_fixed_income'].max() * 1.2))
+    ax_gini_fixed.tick_params(axis='x', rotation=45)
+    fig_gini_fixed.tight_layout()
+    st.pyplot(fig_gini_fixed, use_container_width=True)
 
 # --- A5: Consumer & Producer surplus per day ---
 if has_asp_data:
@@ -510,7 +529,7 @@ st.pyplot(fig_prof, use_container_width=True)
 st.subheader("Daily Summary Table")
 display_cols = ['run_id', 'total_trips', 'total_income', 'total_fixed_income', 'total_expenses',
                 'total_profit', 'total_fixed_profit', 'total_distance', 'active_drivers',
-                'avg_trips_per_driver', 'avg_income_per_driver', 'avg_profit_per_driver', 'gini_gross_income']
+                'avg_trips_per_driver', 'avg_income_per_driver', 'avg_profit_per_driver', 'gini_gross_income', 'gini_fixed_income']
 if has_trip_summary and 'acceptance_rate' in daily_summary.columns:
     display_cols.extend(['accepted_trips', 'rejected_trips', 'acceptance_rate'])
 display_cols = [c for c in display_cols if c in daily_summary.columns]
@@ -953,37 +972,84 @@ day_inequality.fillna(0, inplace=True)
 day_inequality['after_gas_profit'] = day_inequality['gross_income'] - day_inequality['gas_expenses']
 day_inequality['net_profit'] = day_inequality['gross_income'] - day_inequality['all_expenses']
 
+# Fixed income variants
+if has_base_price:
+    day_fixed_income = day_transactions.groupby('trike_id')['base_price'].sum().reset_index(name='fixed_gross_income')
+    day_inequality = pd.merge(day_inequality, day_fixed_income, on='trike_id', how='left')
+    day_inequality['fixed_gross_income'] = day_inequality['fixed_gross_income'].fillna(0)
+    day_inequality['fixed_after_gas_profit'] = day_inequality['fixed_gross_income'] - day_inequality['gas_expenses']
+    day_inequality['fixed_net_profit'] = day_inequality['fixed_gross_income'] - day_inequality['all_expenses']
+
 gini_gross = gini(day_inequality['gross_income'])
 gini_after_gas = gini(day_inequality['after_gas_profit'])
 gini_net = gini(day_inequality['net_profit'])
 
+if has_base_price:
+    gini_fixed_gross = gini(day_inequality['fixed_gross_income'])
+    gini_fixed_after_gas = gini(day_inequality['fixed_after_gas_profit'])
+    gini_fixed_net = gini(day_inequality['fixed_net_profit'])
+
+st.markdown("**Negotiated Income**")
 col_g1, col_g2, col_g3 = st.columns(3)
 col_g1.metric("Gini (Gross Income)", f"{gini_gross:.3f}")
 col_g2.metric("Gini (After Gas)", f"{gini_after_gas:.3f}")
 col_g3.metric("Gini (Net Profit)", f"{gini_net:.3f}")
 
-# Combined Lorenz curves
-fig_lorenz, ax_lorenz = plt.subplots(figsize=(7, 7))
+if has_base_price:
+    st.markdown("**Fixed Income (Base Price)**")
+    col_fg1, col_fg2, col_fg3 = st.columns(3)
+    col_fg1.metric("Gini (Gross Income)", f"{gini_fixed_gross:.3f}")
+    col_fg2.metric("Gini (After Gas)", f"{gini_fixed_after_gas:.3f}")
+    col_fg3.metric("Gini (Net Profit)", f"{gini_fixed_net:.3f}")
 
-datasets_lorenz = [
-    (day_inequality['gross_income'], "Gross Income", gini_gross),
-    (day_inequality['after_gas_profit'], "After Gas", gini_after_gas),
-    (day_inequality['net_profit'], "Net Profit", gini_net),
-]
+# Combined Lorenz curves side by side
+col_lorenz1, col_lorenz2 = st.columns(2)
 
-colors_lorenz = ['blue', 'orange', 'green']
+with col_lorenz1:
+    fig_lorenz, ax_lorenz = plt.subplots(figsize=(6, 6))
 
-for (data, label, g_val), color in zip(datasets_lorenz, colors_lorenz):
-    if data.sum() > 0:
-        x, y = lorenz_curve(data)
-        ax_lorenz.plot(x, y, label=f"{label} (Gini: {g_val:.3f})", color=color)
+    datasets_lorenz = [
+        (day_inequality['gross_income'], "Gross Income", gini_gross),
+        (day_inequality['after_gas_profit'], "After Gas", gini_after_gas),
+        (day_inequality['net_profit'], "Net Profit", gini_net),
+    ]
 
-ax_lorenz.plot([0, 1], [0, 1], linestyle="--", color='black', label="Perfect Equality")
-ax_lorenz.set_xlabel("Cumulative Share of Drivers")
-ax_lorenz.set_ylabel("Cumulative Share of Income / Profit")
-ax_lorenz.set_title(f"Lorenz Curves — Day {selected_day}")
-ax_lorenz.legend()
-ax_lorenz.grid(True)
-fig_lorenz.tight_layout()
+    colors_lorenz = ['blue', 'orange', 'green']
 
-st.pyplot(fig_lorenz, use_container_width=True)
+    for (data, label, g_val), color in zip(datasets_lorenz, colors_lorenz):
+        if data.sum() > 0:
+            x, y = lorenz_curve(data)
+            ax_lorenz.plot(x, y, label=f"{label} (Gini: {g_val:.3f})", color=color)
+
+    ax_lorenz.plot([0, 1], [0, 1], linestyle="--", color='black', label="Perfect Equality")
+    ax_lorenz.set_xlabel("Cumulative Share of Drivers")
+    ax_lorenz.set_ylabel("Cumulative Share of Income / Profit")
+    ax_lorenz.set_title(f"Lorenz Curves (Negotiated) — Day {selected_day}")
+    ax_lorenz.legend()
+    ax_lorenz.grid(True)
+    fig_lorenz.tight_layout()
+    st.pyplot(fig_lorenz, use_container_width=True)
+
+with col_lorenz2:
+    if has_base_price:
+        fig_lorenz_f, ax_lorenz_f = plt.subplots(figsize=(6, 6))
+
+        datasets_lorenz_f = [
+            (day_inequality['fixed_gross_income'], "Gross Income", gini_fixed_gross),
+            (day_inequality['fixed_after_gas_profit'], "After Gas", gini_fixed_after_gas),
+            (day_inequality['fixed_net_profit'], "Net Profit", gini_fixed_net),
+        ]
+
+        for (data, label, g_val), color in zip(datasets_lorenz_f, colors_lorenz):
+            if data.sum() > 0:
+                x, y = lorenz_curve(data)
+                ax_lorenz_f.plot(x, y, label=f"{label} (Gini: {g_val:.3f})", color=color)
+
+        ax_lorenz_f.plot([0, 1], [0, 1], linestyle="--", color='black', label="Perfect Equality")
+        ax_lorenz_f.set_xlabel("Cumulative Share of Drivers")
+        ax_lorenz_f.set_ylabel("Cumulative Share of Income / Profit")
+        ax_lorenz_f.set_title(f"Lorenz Curves (Fixed) — Day {selected_day}")
+        ax_lorenz_f.legend()
+        ax_lorenz_f.grid(True)
+        fig_lorenz_f.tight_layout()
+        st.pyplot(fig_lorenz_f, use_container_width=True)
