@@ -32,6 +32,7 @@ class Tricycle:
         # Per-day statistics
         self.dailyTrips = 0
         self.dailyIncome = 0.0
+        self.dailyFixedIncome = 0.0
         self.dailyDistance = 0.0
 
     def __str__(self) -> str:
@@ -142,16 +143,18 @@ class Tricycle:
             return 0
         return self.actualEndTick - self.actualStartTick
 
-    def recordTrip(self, distance, price) -> None:
+    def recordTrip(self, distance, price, base_price) -> None:
         """Record a completed trip for daily statistics"""
         self.dailyTrips += 1
         self.dailyIncome += float(price)
+        self.dailyFixedIncome += float(base_price)
         self.dailyDistance += float(distance)
 
     def resetDailyStats(self) -> None:
         """Reset daily statistics for a new simulation run"""
         self.dailyTrips = 0
         self.dailyIncome = 0.0
+        self.dailyFixedIncome = 0.0
         self.dailyDistance = 0.0
         self.actualStartTick = None
         self.actualEndTick = None
@@ -165,6 +168,7 @@ class Tricycle:
         return {
             'trips': self.dailyTrips,
             'income': self.dailyIncome,
+            'fixed_income': self.dailyFixedIncome,
             'distance': self.dailyDistance,
             'actual_duration': self.getActualDuration()
         }

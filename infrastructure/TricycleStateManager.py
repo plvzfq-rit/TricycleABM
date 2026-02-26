@@ -68,7 +68,7 @@ class TricycleStateManager:
             tricycle.dropOff()
             self.simulationLogger.add(*tricycle.currentLog)
             # Record trip stats for per-day tracking
-            tricycle.recordTrip(tricycle.currentLog.distance, tricycle.currentLog.price)
+            tricycle.recordTrip(tricycle.currentLog.distance, tricycle.currentLog.price, tricycle.currentLog.base_price)
             return True
         return False
     

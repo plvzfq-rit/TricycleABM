@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import os
-import re # For cleaning expense amount
+import re
 
 import sys
 
@@ -35,7 +35,7 @@ def extract_amount(amount_str):
         return amount_str
     if not isinstance(amount_str, str):
         return pd.NA
-    
+
     match = AMOUNT_REGEX.search(amount_str)
     if match:
         return float(match.group(0))
@@ -50,21 +50,20 @@ def plot_distribution_with_stats(data, x_col, title, xlabel, ylabel="Count", col
         return
 
     fig, ax = plt.subplots(figsize=(6, 4))
-    
+
     # Plot histogram with KDE
     sns.histplot(data=data, x=x_col, bins=bins, color=color, kde=True, ax=ax, edgecolor="black")
-    
+
     # Calculate stats
     mean_val = data[x_col].mean()
     median_val = data[x_col].median()
     std_val = data[x_col].std()
-    
+
     # Mode calculation (approximate for continuous data)
     try:
-        # Rounding to 2 decimals to find a meaningful mode in float data
         mode_series = data[x_col].round(2).mode()
         if len(mode_series) > 0:
-            mode_val = mode_series[0] # Take the first mode if multiple
+            mode_val = mode_series[0]
             mode_str = f"{mode_val:,.2f}"
         else:
             mode_str = "N/A"
@@ -78,15 +77,13 @@ def plot_distribution_with_stats(data, x_col, title, xlabel, ylabel="Count", col
         f"Mode: {mode_str}\n"
         f"Std Dev: {std_val:,.2f}"
     )
-    
-    # Add text box to the plot (top right corner usually works well)
-    # transform=ax.transAxes uses relative coordinates (0 to 1)
+
     ax.text(
-        0.95, 0.95, 
-        stats_text, 
-        transform=ax.transAxes, 
-        fontsize=10, 
-        verticalalignment='top', 
+        0.95, 0.95,
+        stats_text,
+        transform=ax.transAxes,
+        fontsize=10,
+        verticalalignment='top',
         horizontalalignment='right',
         bbox=dict(boxstyle='round', facecolor='white', alpha=0.8)
     )
@@ -94,36 +91,82 @@ def plot_distribution_with_stats(data, x_col, title, xlabel, ylabel="Count", col
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.pyplot(fig, use_container_width=False)
+
+    fig.tight_layout()
+    st.pyplot(fig, use_container_width=True)
 
 
-## --- NEW: Sidebar Configuration ---
+def ticks_to_time(ticks):
+    """Convert simulation ticks to time format (starting at 06:00)"""
+    if pd.isna(ticks) or ticks is None:
+        return "N/A"
+    ticks = int(ticks)
+    hours = (ticks // 3600) + 6
+    minutes = (ticks % 3600) // 60
+    seconds = ticks % 60
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+def ticks_to_hours(ticks):
+    """Convert ticks to hours (for duration display)"""
+    if pd.isna(ticks) or ticks is None:
+        return 0
+    return ticks / 3600
+
+def gini(series):
+    """Compute Gini coefficient from a series of values."""
+    values = np.asarray(series, dtype=float)
+    if values.size == 0:
+        return 0.0
+    values = values - values.min()
+    total = values.sum()
+    if total == 0:
+        return 0.0
+    values = np.sort(values)
+    n = values.size
+    index = np.arange(1, n + 1)
+    g = np.sum((2 * index - n - 1) * values) / (n * total)
+    return float(g)
+
+def lorenz_curve(data_series):
+    """Compute Lorenz curve coordinates."""
+    sorted_series = data_series.sort_values()
+    cumulative = sorted_series.cumsum()
+    total = sorted_series.sum()
+    lorenz_y = cumulative / total
+    lorenz_x = np.arange(1, len(lorenz_y) + 1) / len(lorenz_y)
+    return lorenz_x, lorenz_y
+
+def classify_driver(row):
+    """Classify driver viability based on income vs expenses."""
+    total_expenses = row['gas_expenses'] + row['daily_expenses']
+    if row['daily_income'] >= total_expenses:
+        return "Covers All Expenses"
+    elif row['daily_income'] >= row['gas_expenses']:
+        return "Covers Gas Only"
+    else:
+        return "Not Viable"
+
+
+## --- Sidebar Configuration ---
 st.sidebar.header("Analysis Configuration")
 
-# 1. Select Log Directory
-# Find all directories that match the expected pattern
 existing_logs = [
     d for d in os.listdir(".")
     if os.path.isdir(os.path.join(".", d))
 ]
 
 if not existing_logs:
-    st.error("No log directories (e.g., 'logs', 'log1') found. Please check your folder structure.")
+    st.error("No log directories found. Please check your folder structure.")
     st.stop()
 
 LOG_DIRECTORY = st.sidebar.selectbox(
     "Select Log Directory to Analyze",
     options=existing_logs,
-    index=0 # Default to the first one found
+    index=0
 )
 
-# 2. Select number of runs to skip
 all_folders = []
 if os.path.isdir(LOG_DIRECTORY):
-    # Get all items, then filter for directories (which are the sim runs)
     try:
         all_items = sorted(os.listdir(LOG_DIRECTORY))
         all_folders = [item for item in all_items if os.path.isdir(os.path.join(LOG_DIRECTORY, item))]
@@ -138,23 +181,19 @@ else:
 
 df_all_list = []
 df_expenses_list = []
-df_drivers_list = []  # Store driver info for per-day stats
-df_trip_summary_list = []  # Store trip acceptance/rejection summaries
+df_drivers_list = []
+df_trip_summary_list = []
 
 sim_count = 0
 
-# USES THE FILTERED LIST 'folders_to_process'
 for folder in all_folders:
     folder_path = os.path.join(LOG_DIRECTORY, folder)
-    
-    # Use folder name as the run_id for consistency
-    run_id = folder 
-    
+    run_id = folder
+
     drivers_file = os.path.join(folder_path, "drivers.csv")
     transactions_file = os.path.join(folder_path, "transactions.csv")
     expenses_file = os.path.join(folder_path, "expenses.csv")
 
-    # Check if all required files exist before trying to read
     if not os.path.exists(drivers_file):
         st.warning(f"Skipping folder {folder}: drivers.csv not found.")
         continue
@@ -166,34 +205,23 @@ for folder in all_folders:
         continue
 
     try:
-        # Load all files for this run
         driver_df = pd.read_csv(drivers_file)
         transaction_df = pd.read_csv(transactions_file)
         expenses_df = pd.read_csv(expenses_file)
 
-        # Add run_id to driver_df for per-day tracking
         driver_df["run_id"] = run_id
         df_drivers_list.append(driver_df)
 
-        # --- Process Transactions & Drivers (Income) ---
-        # Merge transactions and driver info
-        transaction_df["run_id"] = run_id  # Replace with run_id from folder for consistency
+        transaction_df["run_id"] = run_id
         merged_df = pd.merge(transaction_df, driver_df, on="trike_id", how="left")
-
-        # Assign the run_id from the folder
         merged_df["run_id"] = run_id
         df_all_list.append(merged_df)
 
-        # --- Process Expenses ---
         expenses_df["run_id"] = run_id
-        
-        # Clean the 'amount' column using the helper function
         expenses_df["amount"] = expenses_df["amount"].apply(extract_amount)
-        # Clean expenses *before* calculating run-level profit
-        expenses_df.dropna(subset=['amount'], inplace=True) 
+        expenses_df.dropna(subset=['amount'], inplace=True)
         df_expenses_list.append(expenses_df)
 
-        # Load trip summary if available
         trip_summary_file = os.path.join(folder_path, "trip_summary.csv")
         if os.path.exists(trip_summary_file):
             summary_df = pd.read_csv(trip_summary_file)
@@ -205,519 +233,542 @@ for folder in all_folders:
     except Exception as e:
         st.error(f"Error processing folder {folder}: {e}")
 
-# Exit if no data was loaded
 if sim_count == 0:
-    st.warning(f"No simulation data was successfully loaded. Check the 'logs' directory and file contents, or adjust the 'skip' value.")
+    st.warning("No simulation data was successfully loaded. Check the log directory and file contents.")
     st.stop()
-    
-# Concatenate all data from all runs
+
 df_all = pd.concat(df_all_list, ignore_index=True)
 df_all_expenses = pd.concat(df_expenses_list, ignore_index=True)
 df_all_drivers = pd.concat(df_drivers_list, ignore_index=True) if df_drivers_list else pd.DataFrame()
 
-# Drop any rows where expense amount could not be parsed
 df_all_expenses.dropna(subset=['amount'], inplace=True)
 
-## --- NEW DRIVER-CENTRIC ANALYSIS ---
-
-# 1. Total Income per driver (grouped by trike_id)
-income_by_driver = df_all.groupby('trike_id')['price'].sum().reset_index().rename(columns={'price': 'total_income'})
-
-# 2. Total Expenses per driver (grouped by trike_id)
-expenses_by_driver = df_all_expenses.groupby('trike_id')['amount'].sum().reset_index().rename(columns={'amount': 'total_expenses'})
-
-# 3. Daily Income Variance per driver (Corrected)
-# Calculate daily income for each driver in each run first
-daily_income_per_run = df_all.groupby(['trike_id', 'run_id'])['price'].sum().reset_index()
-
-# Now calculate the variance of these daily totals for each driver
-variance_by_driver = daily_income_per_run.groupby('trike_id')['price'].var().reset_index().rename(columns={'price': 'income_variance'}).fillna(0)
-
-# 4. Trip Count per driver (grouped by trike_id)
-trip_count_by_driver = df_all.groupby('trike_id').size().reset_index(name='total_trip_count')
-
-# 5. Combine all driver stats
-# Use 'outer' merge to include drivers with income but no expenses, or vice-versa
-driver_stats = pd.merge(income_by_driver, expenses_by_driver, on='trike_id', how='outer')
-driver_stats = pd.merge(driver_stats, variance_by_driver, on='trike_id', how='outer')
-driver_stats = pd.merge(driver_stats, trip_count_by_driver, on='trike_id', how='outer')
-
-# Fill with 0 for any NaNs resulting from the outer merge
-driver_stats.fillna(0, inplace=True)
-
-# 6. Calculate Total Profit
-driver_stats['total_profit'] = driver_stats['total_income'] - driver_stats['total_expenses']
-
-# --- NEW: Daily Averages & 30-Day Projections ---
-# sim_count is now the number of *processed* runs
-if sim_count > 0:
-    driver_stats['avg_daily_income'] = driver_stats['total_income'] / sim_count
-    driver_stats['avg_daily_expenses'] = driver_stats['total_expenses'] / sim_count
-    driver_stats['avg_daily_profit'] = driver_stats['total_profit'] / sim_count
-    driver_stats['avg_daily_trips'] = driver_stats['total_trip_count'] / sim_count
-    
-    driver_stats['projected_30day_income'] = driver_stats['avg_daily_income'] * 30
-    driver_stats['projected_30day_profit'] = driver_stats['avg_daily_profit'] * 30
-else:
-     # Avoid division by zero, though we stop earlier if sim_count is 0
-     for col in ['avg_daily_income', 'avg_daily_expenses', 'avg_daily_profit', 'avg_daily_trips', 'projected_30day_income', 'projected_30day_profit']:
-         driver_stats[col] = 0
-
-# Reorder columns for clarity
-driver_stats = driver_stats[[
-    'trike_id', 
-    'avg_daily_profit',
-    'projected_30day_profit',
-    'avg_daily_income',
-    'projected_30day_income',
-    'avg_daily_expenses',
-    'avg_daily_trips',
-    'total_profit', 
-    'total_income', 
-    'total_expenses', 
-    'income_variance', 
-    'total_trip_count'
-]]
-
-
-## --- STREAMLIT APP LAYOUT ---
-
-st.title(f"Tricycle Simulation Analysis: {LOG_DIRECTORY}")
-st.divider()
-
-# --- Global Metrics ---
-st.header("Overall Simulation Metrics (Based on Analyzed Runs)")
-col1, col2, col3 = st.columns(3)
-col1.metric("Total Trips", f"{len(df_all):,}")
-col2.metric("Total Distance", f"{df_all['distance'].sum():,.0f} m")
-col3.metric("Total Income", f"PHP {df_all['price'].sum():,.2f}")
-col1.metric("Total Expenses", f"PHP {df_all_expenses['amount'].sum():,.2f}")
-col2.metric("Total Profit", f"PHP {(df_all['price'].sum() - df_all_expenses['amount'].sum()):,.2f}")
-
-# --- Trip Acceptance/Rejection Summary ---
-if df_trip_summary_list:
-    df_trip_summary = pd.concat(df_trip_summary_list, ignore_index=True)
-    # Pivot so each metric becomes a column per run
-    summary_pivot = df_trip_summary.pivot(index='run_id', columns='metric', values='count').reset_index()
-
-    if 'accepted_trips' in summary_pivot.columns and 'rejected_trips' in summary_pivot.columns:
-        total_accepted = int(summary_pivot['accepted_trips'].sum())
-        total_rejected = int(summary_pivot['rejected_trips'].sum())
-        total_attempts = total_accepted + total_rejected
-        acceptance_rate = (total_accepted / total_attempts * 100) if total_attempts > 0 else 0
-
-        st.subheader("Trip Dispatch Outcomes")
-        col_t1, col_t2, col_t3, col_t4 = st.columns(4)
-        col_t1.metric("Total Attempts", f"{total_attempts:,}")
-        col_t2.metric("Accepted Trips", f"{total_accepted:,}")
-        col_t3.metric("Rejected Trips", f"{total_rejected:,}")
-        col_t4.metric("Acceptance Rate", f"{acceptance_rate:.1f}%")
-
-        # Per-day breakdown
-        if 'total_attempts' not in summary_pivot.columns:
-            summary_pivot['total_attempts'] = summary_pivot['accepted_trips'] + summary_pivot['rejected_trips']
-        summary_pivot['acceptance_rate'] = (summary_pivot['accepted_trips'] / summary_pivot['total_attempts'] * 100).round(1)
-        st.dataframe(summary_pivot[['run_id', 'accepted_trips', 'rejected_trips', 'total_attempts', 'acceptance_rate']].sort_values('run_id'))
-
-st.divider()
-
-# --- Per-Day Summary (Overall Daily Stats) ---
-st.header("Per-Day Overall Summary")
-st.write("Aggregate statistics for each simulation day/run.")
-
-# Calculate per-day aggregates from transactions
-daily_trips = df_all.groupby('run_id').agg({
-    'price': ['sum', 'count'],
-    'distance': 'sum'
-}).reset_index()
-daily_trips.columns = ['run_id', 'total_income', 'total_trips', 'total_distance']
-
-# Calculate per-day expenses
-daily_expenses = df_all_expenses.groupby('run_id')['amount'].sum().reset_index()
-daily_expenses.columns = ['run_id', 'total_expenses']
-
-# Calculate per-day driver count
-daily_drivers = df_all_drivers.groupby('run_id')['trike_id'].nunique().reset_index()
-daily_drivers.columns = ['run_id', 'active_drivers']
-
-# Merge all daily stats
-daily_summary = pd.merge(daily_trips, daily_expenses, on='run_id', how='left')
-daily_summary = pd.merge(daily_summary, daily_drivers, on='run_id', how='left')
-daily_summary.fillna(0, inplace=True)
-
-# Calculate derived metrics
-daily_summary['total_profit'] = daily_summary['total_income'] - daily_summary['total_expenses']
-daily_summary['avg_income_per_driver'] = daily_summary['total_income'] / daily_summary['active_drivers']
-daily_summary['avg_trips_per_driver'] = daily_summary['total_trips'] / daily_summary['active_drivers']
-daily_summary['avg_distance_per_driver'] = daily_summary['total_distance'] / daily_summary['active_drivers']
-
-# Reorder columns
-daily_summary = daily_summary[[
-    'run_id',
-    'total_trips',
-    'total_income',
-    'total_expenses',
-    'total_profit',
-    'total_distance',
-    'active_drivers',
-    'avg_trips_per_driver',
-    'avg_income_per_driver',
-    'avg_distance_per_driver'
-]]
-
-st.dataframe(daily_summary.sort_values(by='run_id'))
-
-# Summary statistics across all days
-st.subheader("Cross-Day Statistics")
-col_s1, col_s2, col_s3, col_s4 = st.columns(4)
-col_s1.metric("Avg Daily Trips", f"{daily_summary['total_trips'].mean():,.1f}")
-col_s2.metric("Avg Daily Income", f"PHP {daily_summary['total_income'].mean():,.2f}")
-col_s3.metric("Avg Daily Expenses", f"PHP {daily_summary['total_expenses'].mean():,.2f}")
-col_s4.metric("Avg Daily Profit", f"PHP {daily_summary['total_profit'].mean():,.2f}")
-
-col_s5, col_s6, col_s7, col_s8 = st.columns(4)
-col_s5.metric("Std Dev Daily Profit", f"PHP {daily_summary['total_profit'].std():,.2f}")
-col_s6.metric("Min Daily Profit", f"PHP {daily_summary['total_profit'].min():,.2f}")
-col_s7.metric("Max Daily Profit", f"PHP {daily_summary['total_profit'].max():,.2f}")
-col_s8.metric("Avg Active Drivers", f"{daily_summary['active_drivers'].mean():,.1f}")
-
-st.divider()
-
-# --- Driver Analytics (New Section) ---
-st.header("Driver-Level Analytics (Based on Analyzed Runs)")
-st.write(f"Summary of driver performance, averaged over **{sim_count}** simulation run(s). 'Trike ID' is the consistent identifier across all runs.")
-st.dataframe(driver_stats.sort_values(by='avg_daily_profit', ascending=False))
-
-st.subheader("Driver Average Daily Profit Distribution")
-plot_distribution_with_stats(
-    driver_stats, 
-    'avg_daily_profit', 
-    "Distribution of Driver Average Daily Profits",
-    "Average Daily Profit (PHP)",
-    color="#2a9d8f"
-)
-
-st.subheader("Driver Daily Income Variance Distribution")
-# Filter out extreme outliers for a better plot
-q99 = driver_stats['income_variance'].quantile(0.99)
-if q99 > 0:
-    plot_data = driver_stats[driver_stats['income_variance'] < q99]
-else:
-    plot_data = driver_stats # Show all if q99 is 0
-
-plot_distribution_with_stats(
-    plot_data, 
-    'income_variance', 
-    "Distribution of Driver Income Variance (Daily Totals, capped at 99th percentile)",
-    "Daily Income Variance",
-    color="#e76f51"
-)
-
-st.divider()
-
-# --- Per-Day Driver Statistics (New Section) ---
-st.header("Per-Day Driver Statistics")
-
-# Helper function to convert ticks to HH:MM:SS format
-def ticks_to_time(ticks):
-    """Convert simulation ticks to time format (starting at 06:00)"""
-    if pd.isna(ticks) or ticks is None:
-        return "N/A"
-    ticks = int(ticks)
-    hours = (ticks // 3600) + 6  # Simulation starts at 6 AM
-    minutes = (ticks % 3600) // 60
-    seconds = ticks % 60
-    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-
-def ticks_to_hours(ticks):
-    """Convert ticks to hours (for duration display)"""
-    if pd.isna(ticks) or ticks is None:
-        return 0
-    return ticks / 3600
-
-# Check if new columns exist in the driver data
-has_duration_data = not df_all_drivers.empty and 'actual_duration' in df_all_drivers.columns
-
-if has_duration_data:
-    st.write("This section shows per-day (per-run) statistics for each driver, including actual time spent in the simulation.")
-
-    # Create a summary with formatted times
-    per_day_stats = df_all_drivers.copy()
-
-    # Format time columns if they exist
-    if 'actual_start_tick' in per_day_stats.columns:
-        per_day_stats['start_time'] = per_day_stats['actual_start_tick'].apply(ticks_to_time)
-    if 'actual_end_tick' in per_day_stats.columns:
-        per_day_stats['end_time'] = per_day_stats['actual_end_tick'].apply(ticks_to_time)
-    if 'actual_duration' in per_day_stats.columns:
-        per_day_stats['duration_hours'] = per_day_stats['actual_duration'].apply(ticks_to_hours)
-
-    # Select columns to display
-    display_cols = ['trike_id', 'run_id', 'hub_id']
-    if 'start_time' in per_day_stats.columns:
-        display_cols.append('start_time')
-    if 'end_time' in per_day_stats.columns:
-        display_cols.append('end_time')
-    if 'duration_hours' in per_day_stats.columns:
-        display_cols.append('duration_hours')
-    if 'daily_trips' in per_day_stats.columns:
-        display_cols.append('daily_trips')
-    if 'daily_income' in per_day_stats.columns:
-        display_cols.append('daily_income')
-    if 'daily_distance' in per_day_stats.columns:
-        display_cols.append('daily_distance')
-
-    # Filter available columns
-    display_cols = [c for c in display_cols if c in per_day_stats.columns]
-
-    st.subheader("Per-Day Driver Details")
-
-    # --- Filters ---
-    filter_col1, filter_col2, filter_col3 = st.columns(3)
-
-    with filter_col1:
-        all_drivers = sorted(per_day_stats['trike_id'].unique())
-        selected_drivers = st.multiselect("Filter by Driver", options=all_drivers, default=[], placeholder="All drivers")
-
-    with filter_col2:
-        all_runs = sorted(per_day_stats['run_id'].unique())
-        selected_runs = st.multiselect("Filter by Day/Run", options=all_runs, default=[], placeholder="All days")
-
-    with filter_col3:
-        all_hubs = sorted(per_day_stats['hub_id'].unique())
-        selected_hubs = st.multiselect("Filter by Hub", options=all_hubs, default=[], placeholder="All hubs")
-
-    # Apply filters
-    filtered_stats = per_day_stats.copy()
-    if selected_drivers:
-        filtered_stats = filtered_stats[filtered_stats['trike_id'].isin(selected_drivers)]
-    if selected_runs:
-        filtered_stats = filtered_stats[filtered_stats['run_id'].isin(selected_runs)]
-    if selected_hubs:
-        filtered_stats = filtered_stats[filtered_stats['hub_id'].isin(selected_hubs)]
-
-    st.caption(f"Showing {len(filtered_stats)} of {len(per_day_stats)} records")
-    st.dataframe(filtered_stats[display_cols].sort_values(by=['run_id', 'trike_id']))
-
-    # Summary statistics for duration (uses filtered data)
-    if 'actual_duration' in filtered_stats.columns and len(filtered_stats) > 0:
-        st.subheader("Driver Duration Statistics (Filtered)")
-        col_d1, col_d2, col_d3, col_d4 = st.columns(4)
-
-        avg_duration_hours = filtered_stats['actual_duration'].mean() / 3600
-        min_duration_hours = filtered_stats['actual_duration'].min() / 3600
-        max_duration_hours = filtered_stats['actual_duration'].max() / 3600
-        std_duration_hours = filtered_stats['actual_duration'].std() / 3600
-
-        col_d1.metric("Avg Duration", f"{avg_duration_hours:.2f} hrs")
-        col_d2.metric("Min Duration", f"{min_duration_hours:.2f} hrs")
-        col_d3.metric("Max Duration", f"{max_duration_hours:.2f} hrs")
-        col_d4.metric("Std Dev", f"{std_duration_hours:.2f} hrs")
-
-        # Distribution of driver durations
-        st.subheader("Driver Duration Distribution")
-        filtered_stats['duration_hours_plot'] = filtered_stats['actual_duration'] / 3600
-        plot_distribution_with_stats(
-            filtered_stats,
-            'duration_hours_plot',
-            "Distribution of Driver Time in Simulation",
-            "Duration (hours)",
-            color="#264653"
-        )
-
-    # Per-day income and trips if available (uses filtered data)
-    if 'daily_income' in filtered_stats.columns and 'daily_trips' in filtered_stats.columns and len(filtered_stats) > 0:
-        st.subheader("Per-Day Performance Summary (Filtered)")
-        col_p1, col_p2, col_p3 = st.columns(3)
-
-        avg_daily_trips = filtered_stats['daily_trips'].mean()
-        avg_daily_income = filtered_stats['daily_income'].mean()
-        avg_daily_distance = filtered_stats['daily_distance'].mean() if 'daily_distance' in filtered_stats.columns else 0
-
-        col_p1.metric("Avg Trips per Driver/Day", f"{avg_daily_trips:.1f}")
-        col_p2.metric("Avg Income per Driver/Day", f"PHP {avg_daily_income:,.2f}")
-        col_p3.metric("Avg Distance per Driver/Day", f"{avg_daily_distance:,.0f} m")
-
-        # Income per hour analysis
-        if 'actual_duration' in filtered_stats.columns:
-            filtered_stats['income_per_hour'] = filtered_stats.apply(
-                lambda x: x['daily_income'] / (x['actual_duration'] / 3600) if x['actual_duration'] > 0 else 0,
-                axis=1
-            )
-            st.subheader("Income per Hour Distribution")
-            plot_distribution_with_stats(
-                filtered_stats[filtered_stats['income_per_hour'] > 0],
-                'income_per_hour',
-                "Distribution of Driver Income per Hour",
-                "Income per Hour (PHP)",
-                color="#e9c46a"
-            )
-
-            avg_income_per_hour = filtered_stats['income_per_hour'].mean()
-            st.metric("Average Income per Hour", f"PHP {avg_income_per_hour:,.2f}")
-
-else:
-    st.info("Per-day driver statistics (duration, daily trips, daily income) are not available in the current data. "
-            "Run the simulation again to generate this data.")
-
-st.divider()
-
-# --- Trip-Level Analytics (Original Section) ---
-st.header("Trip-Level Analytics (Based on Analyzed Runs)")
-
-# --- Clean up columns ---
-# Select and reorder relevant columns for display
-trip_display_cols = ['run_id', 'trike_id', 'hub_id', 'origin_edge', 'dest_edge', 'distance', 'price', 'tick', 'driver_asp', 'passenger_asp', 'base_price', 'init_driver_asp', 'init_passenger_asp']
-# Handle potential duplicate columns from merge (run_id_x, run_id_y)
+# Handle potential duplicate columns from merge
 if 'run_id_x' in df_all.columns:
     df_all['run_id'] = df_all['run_id_x']
 if 'run_id_y' in df_all.columns and 'run_id' not in df_all.columns:
     df_all['run_id'] = df_all['run_id_y']
-# Filter to only existing columns
-trip_display_cols = [c for c in trip_display_cols if c in df_all.columns]
 
-# --- Filters ---
-trip_filter_col1, trip_filter_col2, trip_filter_col3, trip_filter_col4 = st.columns(4)
+# Config values for surplus calculations
+GAS_PRICE = config.getGasPricePerLiter()
+GAS_CONSUMPTION = config.getGasConsumption()
 
-with trip_filter_col1:
-    trip_all_drivers = sorted(df_all['trike_id'].unique())
-    trip_selected_drivers = st.multiselect("Filter by Driver", options=trip_all_drivers, default=[], placeholder="All drivers", key="trip_driver_filter")
-
-with trip_filter_col2:
-    trip_all_runs = sorted(df_all['run_id'].unique()) if 'run_id' in df_all.columns else []
-    trip_selected_runs = st.multiselect("Filter by Day/Run", options=trip_all_runs, default=[], placeholder="All days", key="trip_run_filter")
-
-with trip_filter_col3:
-    if 'hub_id' in df_all.columns:
-        trip_all_hubs = sorted(df_all['hub_id'].dropna().unique())
-        trip_selected_hubs = st.multiselect("Filter by Hub", options=trip_all_hubs, default=[], placeholder="All hubs", key="trip_hub_filter")
-    else:
-        trip_selected_hubs = []
-
-with trip_filter_col4:
-    row_limit = st.selectbox("Rows to display", options=[20, 50, 100, 250, 500, "All"], index=0, key="trip_row_limit")
-
-# Apply filters
-filtered_trips = df_all.copy()
-if trip_selected_drivers:
-    filtered_trips = filtered_trips[filtered_trips['trike_id'].isin(trip_selected_drivers)]
-if trip_selected_runs and 'run_id' in filtered_trips.columns:
-    filtered_trips = filtered_trips[filtered_trips['run_id'].isin(trip_selected_runs)]
-if trip_selected_hubs and 'hub_id' in filtered_trips.columns:
-    filtered_trips = filtered_trips[filtered_trips['hub_id'].isin(trip_selected_hubs)]
-
-# Apply row limit
-if row_limit == "All":
-    display_trips = filtered_trips[trip_display_cols].sort_values(by=['run_id', 'tick'] if 'run_id' in trip_display_cols else ['tick'])
-else:
-    display_trips = filtered_trips[trip_display_cols].sort_values(by=['run_id', 'tick'] if 'run_id' in trip_display_cols else ['tick']).head(row_limit)
-
-st.caption(f"Showing {len(display_trips)} of {len(filtered_trips)} filtered trips ({len(df_all)} total)")
-st.dataframe(display_trips)
-
-# Create columns for the plots
-col_a = st.columns(1)[0]
-
-with col_a:
-    # Show histogram of trip distances
-    st.subheader("Trip Distance Distribution")
-    plot_distribution_with_stats(
-        df_all, 
-        'distance', 
-        "Trip Distance Distribution",
-        "Distance (meters)",
-        color="skyblue"
-    
-    )
-
-     # Show histogram of trip prices
-    st.subheader("Trip Price Distribution")
-    plot_distribution_with_stats(
-        df_all, 
-        'price', 
-        "Trip Price Distribution",
-        "Price (PHP)",
-        color="lightgreen"
-    )
-    
-    # histogram of tick
-    st.subheader("Trips Over Time (by Tick)")
-    plot_distribution_with_stats(
-        df_all,
-        'tick',
-        "Trips Over Time",
-        "Tick",
-        color="violet"
-    )
-
-# --- Aspiration Price (Bargaining) Analytics ---
+# Feature flags
+has_duration_data = not df_all_drivers.empty and 'actual_duration' in df_all_drivers.columns
 has_asp_data = 'driver_asp' in df_all.columns and 'passenger_asp' in df_all.columns
 has_init_asp_data = 'init_driver_asp' in df_all.columns and 'init_passenger_asp' in df_all.columns
 has_base_price = 'base_price' in df_all.columns
+has_fixed_income = not df_all_drivers.empty and 'fixed_income' in df_all_drivers.columns
+has_trip_summary = len(df_trip_summary_list) > 0
 
+if has_trip_summary:
+    df_trip_summary = pd.concat(df_trip_summary_list, ignore_index=True)
+    summary_pivot = df_trip_summary.pivot(index='run_id', columns='metric', values='count').reset_index()
+
+all_run_ids = sorted(df_all['run_id'].unique())
+
+## --- PRECOMPUTE DAILY SUMMARY ---
+
+daily_trips = df_all.groupby('run_id').agg({
+    'price': ['sum', 'count'],
+    'base_price': 'sum',
+    'distance': 'sum'
+}).reset_index()
+daily_trips.columns = ['run_id', 'total_income', 'total_trips', 'total_fixed_income', 'total_distance']
+
+daily_expenses_agg = df_all_expenses.groupby('run_id')['amount'].sum().reset_index()
+daily_expenses_agg.columns = ['run_id', 'total_expenses']
+
+daily_drivers_agg = df_all_drivers.groupby('run_id')['trike_id'].nunique().reset_index()
+daily_drivers_agg.columns = ['run_id', 'active_drivers']
+
+daily_summary = pd.merge(daily_trips, daily_expenses_agg, on='run_id', how='left')
+daily_summary = pd.merge(daily_summary, daily_drivers_agg, on='run_id', how='left')
+daily_summary.fillna(0, inplace=True)
+
+daily_summary['total_profit'] = daily_summary['total_income'] - daily_summary['total_expenses']
+daily_summary['total_fixed_profit'] = daily_summary['total_fixed_income'] - daily_summary['total_expenses']
+daily_summary['avg_income_per_driver'] = daily_summary['total_income'] / daily_summary['active_drivers'].replace(0, np.nan)
+daily_summary['avg_fixed_income_per_driver'] = daily_summary['total_fixed_income'] / daily_summary['active_drivers'].replace(0, np.nan)
+daily_summary['avg_trips_per_driver'] = daily_summary['total_trips'] / daily_summary['active_drivers'].replace(0, np.nan)
+daily_summary['avg_profit_per_driver'] = daily_summary['total_profit'] / daily_summary['active_drivers'].replace(0, np.nan)
+daily_summary['avg_fixed_income_per_driver'] = daily_summary['total_fixed_income'] / daily_summary['active_drivers'].replace(0, np.nan)
+daily_summary['avg_fixed_profit_per_driver'] = daily_summary['total_fixed_profit'] / daily_summary['active_drivers'].replace(0, np.nan)
+
+daily_summary = daily_summary.sort_values('run_id').reset_index(drop=True)
+
+## --- PRECOMPUTE PER-DAY GINI ---
+
+daily_gini = []
+for run in all_run_ids:
+    run_transactions = df_all[df_all['run_id'] == run]
+    run_income = run_transactions.groupby('trike_id')['price'].sum()
+    daily_gini.append({'run_id': run, 'gini_gross_income': gini(run_income)})
+
+daily_gini_df = pd.DataFrame(daily_gini)
+daily_summary = pd.merge(daily_summary, daily_gini_df, on='run_id', how='left')
+
+## --- PRECOMPUTE PER-DAY SURPLUS ---
+
+# Consumer surplus
+df_all['passenger_surplus'] = df_all['passenger_asp'] - df_all['price'] if has_asp_data else np.nan
+# Producer surplus
+df_all['marginal_cost'] = (df_all['distance'] * GAS_PRICE) / (1000 * GAS_CONSUMPTION)
+df_all['producer_surplus'] = df_all['price'] - df_all['marginal_cost']
+
+daily_surplus = df_all.groupby('run_id').agg(
+    avg_consumer_surplus=('passenger_surplus', 'mean'),
+    avg_producer_surplus=('producer_surplus', 'mean'),
+).reset_index()
+daily_summary = pd.merge(daily_summary, daily_surplus, on='run_id', how='left')
+
+## --- PRECOMPUTE PER-DAY TRIP DISPATCH ---
+
+if has_trip_summary and 'accepted_trips' in summary_pivot.columns and 'rejected_trips' in summary_pivot.columns:
+    summary_pivot['total_attempts'] = summary_pivot['accepted_trips'] + summary_pivot['rejected_trips']
+    summary_pivot['acceptance_rate'] = (summary_pivot['accepted_trips'] / summary_pivot['total_attempts'] * 100).round(1)
+    daily_summary = pd.merge(daily_summary, summary_pivot[['run_id', 'accepted_trips', 'rejected_trips', 'total_attempts', 'acceptance_rate']], on='run_id', how='left')
+
+## --- PRECOMPUTE PER-DAY PROFITABILITY ---
+
+daily_profitability = []
+for run in all_run_ids:
+    run_transactions = df_all[df_all['run_id'] == run]
+    run_expenses = df_all_expenses[df_all_expenses['run_id'] == run]
+
+    run_income = run_transactions.groupby('trike_id')['price'].sum().reset_index(name='daily_income')
+    run_fixed_income = run_transactions.groupby('trike_id')['base_price'].sum().reset_index(name='daily_income') if has_base_price else None
+    run_gas = run_expenses[run_expenses['expense_type'] == 'gas'].groupby('trike_id')['amount'].sum().reset_index(name='gas_expenses')
+    run_all_exp = run_expenses.groupby('trike_id')['amount'].sum().reset_index(name='daily_expenses')
+
+    run_drivers = run_transactions['trike_id'].drop_duplicates()
+
+    # Negotiated income profitability
+    viability = run_drivers.to_frame()
+    viability = pd.merge(viability, run_income, on='trike_id', how='left')
+    viability = pd.merge(viability, run_gas, on='trike_id', how='left')
+    viability = pd.merge(viability, run_all_exp, on='trike_id', how='left')
+    viability.fillna(0, inplace=True)
+    viability['viability_group'] = viability.apply(classify_driver, axis=1)
+
+    ordered_groups = ["Covers All Expenses", "Covers Gas Only", "Not Viable"]
+    counts = viability['viability_group'].value_counts().reindex(ordered_groups, fill_value=0)
+    total = counts.sum()
+
+    row_data = {
+        'run_id': run,
+        'covers_all': counts.get("Covers All Expenses", 0),
+        'covers_gas': counts.get("Covers Gas Only", 0),
+        'not_viable': counts.get("Not Viable", 0),
+        'total_drivers': total,
+        'pct_covers_all': (counts.get("Covers All Expenses", 0) / total * 100) if total > 0 else 0,
+        'pct_covers_gas': (counts.get("Covers Gas Only", 0) / total * 100) if total > 0 else 0,
+        'pct_not_viable': (counts.get("Not Viable", 0) / total * 100) if total > 0 else 0,
+    }
+
+    # Fixed income profitability
+    if run_fixed_income is not None:
+        viability_fixed = run_drivers.to_frame()
+        viability_fixed = pd.merge(viability_fixed, run_fixed_income, on='trike_id', how='left')
+        viability_fixed = pd.merge(viability_fixed, run_gas, on='trike_id', how='left')
+        viability_fixed = pd.merge(viability_fixed, run_all_exp, on='trike_id', how='left')
+        viability_fixed.fillna(0, inplace=True)
+        viability_fixed['viability_group'] = viability_fixed.apply(classify_driver, axis=1)
+
+        counts_fixed = viability_fixed['viability_group'].value_counts().reindex(ordered_groups, fill_value=0)
+        row_data['fixed_covers_all'] = counts_fixed.get("Covers All Expenses", 0)
+        row_data['fixed_covers_gas'] = counts_fixed.get("Covers Gas Only", 0)
+        row_data['fixed_not_viable'] = counts_fixed.get("Not Viable", 0)
+        row_data['fixed_pct_covers_all'] = (counts_fixed.get("Covers All Expenses", 0) / total * 100) if total > 0 else 0
+        row_data['fixed_pct_covers_gas'] = (counts_fixed.get("Covers Gas Only", 0) / total * 100) if total > 0 else 0
+        row_data['fixed_pct_not_viable'] = (counts_fixed.get("Not Viable", 0) / total * 100) if total > 0 else 0
+
+    daily_profitability.append(row_data)
+
+daily_profitability_df = pd.DataFrame(daily_profitability)
+
+
+## ============================================================
+## STREAMLIT APP LAYOUT
+## ============================================================
+
+st.title(f"Tricycle Simulation Analysis: {LOG_DIRECTORY}")
+st.caption(f"Analyzing **{sim_count}** simulation day(s)")
+st.divider()
+
+## ============================================================
+## SECTION A: CROSS-DAY COMPARISON OVERVIEW
+## ============================================================
+
+st.header("Cross-Day Comparison")
+
+income_mode_cross = st.radio(
+    "Income type",
+    options=["Negotiated Income", "Fixed Income (Base Price)"],
+    horizontal=True,
+    key="cross_day_income_toggle"
+)
+use_fixed_cross = income_mode_cross == "Fixed Income (Base Price)"
+
+cross_income_col = 'total_fixed_income' if use_fixed_cross else 'total_income'
+cross_profit_col = 'total_fixed_profit' if use_fixed_cross else 'total_profit'
+cross_avg_income_col = 'avg_fixed_income_per_driver' if use_fixed_cross else 'avg_income_per_driver'
+cross_avg_profit_col = 'avg_fixed_profit_per_driver' if use_fixed_cross else 'avg_profit_per_driver'
+cross_label = "Fixed" if use_fixed_cross else "Negotiated"
+
+# --- A1: Income, Expenses, Profit trend ---
+st.subheader(f"Income, Expenses & Profit Across Days ({cross_label})")
+fig_trend, ax_trend = plt.subplots(figsize=(10, 5))
+ax_trend.plot(daily_summary['run_id'], daily_summary[cross_income_col], marker='o', label='Total Income', color='#2a9d8f')
+ax_trend.plot(daily_summary['run_id'], daily_summary['total_expenses'], marker='s', label='Total Expenses', color='#e76f51')
+ax_trend.plot(daily_summary['run_id'], daily_summary[cross_profit_col], marker='^', label='Total Profit', color='#264653')
+ax_trend.set_xlabel("Day (Run ID)")
+ax_trend.set_ylabel("PHP")
+ax_trend.set_title(f"Daily {cross_label} Income, Expenses & Profit")
+ax_trend.legend()
+ax_trend.tick_params(axis='x', rotation=45)
+fig_trend.tight_layout()
+st.pyplot(fig_trend, use_container_width=True)
+
+# --- A2: Trip count and acceptance rate ---
+st.subheader("Trip Count Across Days")
+fig_trips, ax_trips = plt.subplots(figsize=(10, 4))
+ax_trips.bar(daily_summary['run_id'], daily_summary['total_trips'], color='#2a9d8f', alpha=0.8, label='Total Trips')
+ax_trips.set_xlabel("Day (Run ID)")
+ax_trips.set_ylabel("Trip Count")
+ax_trips.set_title("Trips Per Day")
+ax_trips.tick_params(axis='x', rotation=45)
+
+ax_trips.legend()
+
+fig_trips.tight_layout()
+st.pyplot(fig_trips, use_container_width=True)
+
+# --- A3: Average driver income & profit per day ---
+st.subheader(f"Average Driver Income & Profit Per Day ({cross_label})")
+fig_avg, ax_avg = plt.subplots(figsize=(10, 4))
+ax_avg.plot(daily_summary['run_id'], daily_summary[cross_avg_income_col], marker='o', label='Avg Income/Driver', color='#2a9d8f')
+ax_avg.plot(daily_summary['run_id'], daily_summary[cross_avg_profit_col], marker='s', label='Avg Profit/Driver', color='#264653')
+ax_avg.set_xlabel("Day (Run ID)")
+ax_avg.set_ylabel("PHP")
+ax_avg.set_title(f"Average Driver {cross_label} Income & Profit Per Day")
+ax_avg.legend()
+ax_avg.tick_params(axis='x', rotation=45)
+fig_avg.tight_layout()
+st.pyplot(fig_avg, use_container_width=True)
+
+# --- A4: Gini coefficient per day ---
+st.subheader("Income Inequality (Gini) Across Days")
+fig_gini, ax_gini = plt.subplots(figsize=(10, 4))
+ax_gini.plot(daily_summary['run_id'], daily_summary['gini_gross_income'], marker='o', color='#e76f51', linewidth=2)
+ax_gini.set_xlabel("Day (Run ID)")
+ax_gini.set_ylabel("Gini Coefficient")
+ax_gini.set_title("Gini Coefficient (Gross Income) Per Day")
+ax_gini.set_ylim(0, max(0.5, daily_summary['gini_gross_income'].max() * 1.2))
+ax_gini.tick_params(axis='x', rotation=45)
+fig_gini.tight_layout()
+st.pyplot(fig_gini, use_container_width=True)
+
+# --- A5: Consumer & Producer surplus per day ---
 if has_asp_data:
-    st.divider()
-    st.header("Bargaining Analytics (Driver & Passenger Aspiration Prices)")
+    st.subheader("Average Surplus Across Days")
+    fig_surplus, ax_surplus = plt.subplots(figsize=(10, 4))
+    ax_surplus.plot(daily_summary['run_id'], daily_summary['avg_consumer_surplus'], marker='o', label='Avg Consumer Surplus', color='#2a9d8f')
+    ax_surplus.plot(daily_summary['run_id'], daily_summary['avg_producer_surplus'], marker='s', label='Avg Producer Surplus', color='#e76f51')
+    ax_surplus.set_xlabel("Day (Run ID)")
+    ax_surplus.set_ylabel("PHP")
+    ax_surplus.set_title("Average Consumer & Producer Surplus Per Day")
+    ax_surplus.legend()
+    ax_surplus.tick_params(axis='x', rotation=45)
+    fig_surplus.tight_layout()
+    st.pyplot(fig_surplus, use_container_width=True)
+
+# --- A6: Driver profitability proportions per day ---
+st.subheader(f"Driver Profitability Across Days ({cross_label})")
+
+prof_prefix = 'fixed_' if use_fixed_cross and 'fixed_pct_covers_all' in daily_profitability_df.columns else ''
+prof_pct_all = f'{prof_prefix}pct_covers_all'
+prof_pct_gas = f'{prof_prefix}pct_covers_gas'
+prof_pct_nv = f'{prof_prefix}pct_not_viable'
+
+fig_prof, ax_prof = plt.subplots(figsize=(10, 4))
+ax_prof.bar(daily_profitability_df['run_id'], daily_profitability_df[prof_pct_all], label='Covers All Expenses', color='#2a9d8f')
+ax_prof.bar(daily_profitability_df['run_id'], daily_profitability_df[prof_pct_gas], bottom=daily_profitability_df[prof_pct_all], label='Covers Gas Only', color='#e9c46a')
+ax_prof.bar(daily_profitability_df['run_id'], daily_profitability_df[prof_pct_nv],
+            bottom=daily_profitability_df[prof_pct_all] + daily_profitability_df[prof_pct_gas],
+            label='Not Viable', color='#e76f51')
+ax_prof.set_xlabel("Day (Run ID)")
+ax_prof.set_ylabel("% of Drivers")
+ax_prof.set_title(f"Driver Profitability Classification Per Day ({cross_label})")
+ax_prof.legend()
+ax_prof.set_ylim(0, 105)
+ax_prof.tick_params(axis='x', rotation=45)
+fig_prof.tight_layout()
+st.pyplot(fig_prof, use_container_width=True)
+
+# --- Daily summary table ---
+st.subheader("Daily Summary Table")
+display_cols = ['run_id', 'total_trips', 'total_income', 'total_fixed_income', 'total_expenses',
+                'total_profit', 'total_fixed_profit', 'total_distance', 'active_drivers',
+                'avg_trips_per_driver', 'avg_income_per_driver', 'avg_profit_per_driver', 'gini_gross_income']
+if has_trip_summary and 'acceptance_rate' in daily_summary.columns:
+    display_cols.extend(['accepted_trips', 'rejected_trips', 'acceptance_rate'])
+display_cols = [c for c in display_cols if c in daily_summary.columns]
+st.dataframe(daily_summary[display_cols])
+
+st.divider()
+
+## ============================================================
+## SECTION B: PER-DAY DEEP DIVE
+## ============================================================
+
+st.header("Daily View")
+
+selected_day = st.selectbox("Select Day", options=all_run_ids, index=0, key="day_selector")
+
+# Filter data for selected day
+day_transactions = df_all[df_all['run_id'] == selected_day]
+day_expenses = df_all_expenses[df_all_expenses['run_id'] == selected_day]
+day_drivers = df_all_drivers[df_all_drivers['run_id'] == selected_day] if not df_all_drivers.empty else pd.DataFrame()
+day_summary_row = daily_summary[daily_summary['run_id'] == selected_day]
+
+## --- B1: Day Summary Metrics ---
+st.subheader(f"Day {selected_day} — Summary")
+
+if not day_summary_row.empty:
+    row = day_summary_row.iloc[0]
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.metric("Total Trips", f"{int(row['total_trips']):,}")
+    col2.metric("Active Drivers", f"{int(row['active_drivers']):,}")
+
+    col_n1, col_n2, col_n3, col_n4, col_n5 = st.columns(5)
+    col_n1.metric("Total Income (Negotiated)", f"PHP {row['total_income']:,.2f}")
+    col_n2.metric("Total Profit (Negotiated)", f"PHP {row['total_profit']:,.2f}")
+    col_n3.metric("Total Expenses", f"PHP {row['total_expenses']:,.2f}")
+
+
+    col_b1, col_b2, col_b3, col_b4, col_b5 = st.columns(5)
+    col_b1.metric("Total Income (Base Price)", f"PHP {row['total_fixed_income']:,.2f}")
+    col_b2.metric("Total Profit (Base Price)", f"PHP {row['total_fixed_profit']:,.2f}")
+    profit_diff = row['total_profit'] - row['total_fixed_profit']
+    col_b3.metric("Profit Difference (Neg. - Base)", f"PHP {profit_diff:,.2f}")
+
+## --- B2: Driver Ranking Table ---
+st.subheader(f"Day {selected_day} — Driver Rankings")
+st.markdown(
+    "Each driver's income, expenses, and profit for this day. "
+    "**Fixed income** represents what each driver would earn under the regulated fare matrix "
+    "(base price), without any bargaining adjustments."
+)
+
+day_driver_income = day_transactions.groupby('trike_id')['price'].sum().reset_index(name='income')
+day_driver_fixed = day_transactions.groupby('trike_id')['base_price'].sum().reset_index(name='fixed_income') if has_base_price else pd.DataFrame()
+day_driver_expenses = day_expenses.groupby('trike_id')['amount'].sum().reset_index(name='expenses')
+day_driver_trips = day_transactions.groupby('trike_id').size().reset_index(name='trips')
+day_driver_distance = day_transactions.groupby('trike_id')['distance'].sum().reset_index(name='total_distance')
+
+day_driver_table = day_driver_income.copy()
+if not day_driver_fixed.empty:
+    day_driver_table = pd.merge(day_driver_table, day_driver_fixed, on='trike_id', how='left')
+day_driver_table = pd.merge(day_driver_table, day_driver_expenses, on='trike_id', how='left')
+day_driver_table = pd.merge(day_driver_table, day_driver_trips, on='trike_id', how='left')
+day_driver_table = pd.merge(day_driver_table, day_driver_distance, on='trike_id', how='left')
+day_driver_table.fillna(0, inplace=True)
+day_driver_table['profit'] = day_driver_table['income'] - day_driver_table['expenses']
+
+# Add duration info if available
+if has_duration_data and not day_drivers.empty:
+    duration_cols = ['trike_id']
+    if 'actual_duration' in day_drivers.columns:
+        day_drivers_copy = day_drivers.copy()
+        day_drivers_copy['duration_hours'] = day_drivers_copy['actual_duration'].apply(ticks_to_hours)
+        duration_cols.append('duration_hours')
+    if 'actual_start_tick' in day_drivers.columns:
+        day_drivers_copy['start_time'] = day_drivers_copy['actual_start_tick'].apply(ticks_to_time)
+        duration_cols.append('start_time')
+    if 'actual_end_tick' in day_drivers.columns:
+        day_drivers_copy['end_time'] = day_drivers_copy['actual_end_tick'].apply(ticks_to_time)
+        duration_cols.append('end_time')
+    duration_cols = [c for c in duration_cols if c in day_drivers_copy.columns]
+    day_driver_table = pd.merge(day_driver_table, day_drivers_copy[duration_cols], on='trike_id', how='left')
+
+st.dataframe(day_driver_table.sort_values('profit', ascending=False))
+
+## --- B3: Driver Income/Profit Distributions ---
+st.subheader(f"Day {selected_day} — Driver Distributions")
+
+col_d1, col_d2 = st.columns(2)
+
+with col_d1:
+    if not day_driver_table.empty:
+        fig_inc, ax_inc = plt.subplots(figsize=(6, 4))
+        sns.histplot(data=day_driver_table, x='income', bins=20, color='#2a9d8f', kde=True, ax=ax_inc, edgecolor='black')
+        ax_inc.set_title("Driver Income Distribution")
+        ax_inc.set_xlabel("Income (PHP)")
+        ax_inc.set_ylabel("Count")
+        st.pyplot(fig_inc, use_container_width=True)
+
+with col_d2:
+    if not day_driver_table.empty and 'fixed_income' in day_driver_table.columns:
+        fig_fi, ax_fi = plt.subplots(figsize=(6, 4))
+        sns.histplot(data=day_driver_table, x='fixed_income', bins=20, color='#e9c46a', kde=True, ax=ax_fi, edgecolor='black')
+        ax_fi.set_title("Driver Fixed Income Distribution")
+        ax_fi.set_xlabel("Fixed Income (PHP)")
+        ax_fi.set_ylabel("Count")
+        st.pyplot(fig_fi, use_container_width=True)
+
+col_d3, col_d4 = st.columns(2)
+
+with col_d3:
+    if not day_driver_table.empty:
+        fig_prof_d, ax_prof_d = plt.subplots(figsize=(6, 4))
+        sns.histplot(data=day_driver_table, x='profit', bins=20, color='#264653', kde=True, ax=ax_prof_d, edgecolor='black')
+        ax_prof_d.set_title("Driver Profit Distribution")
+        ax_prof_d.set_xlabel("Profit (PHP)")
+        ax_prof_d.set_ylabel("Count")
+        st.pyplot(fig_prof_d, use_container_width=True)
+
+with col_d4:
+    if not day_driver_table.empty and 'fixed_income' in day_driver_table.columns:
+        day_driver_table['fixed_profit'] = day_driver_table['fixed_income'] - day_driver_table['expenses']
+        fig_fp, ax_fp = plt.subplots(figsize=(6, 4))
+        sns.histplot(data=day_driver_table, x='fixed_profit', bins=20, color='#bc6c25', kde=True, ax=ax_fp, edgecolor='black')
+        ax_fp.set_title("Driver Fixed Profit Distribution")
+        ax_fp.set_xlabel("Fixed Profit (PHP)")
+        ax_fp.set_ylabel("Count")
+        st.pyplot(fig_fp, use_container_width=True)
+
+if has_duration_data and not day_drivers.empty and 'actual_duration' in day_drivers.columns:
+    col_dur1, col_dur2 = st.columns(2)
+    day_drivers_plot = day_drivers.copy()
+    day_drivers_plot['duration_hours_plot'] = day_drivers_plot['actual_duration'] / 3600
+
+    with col_dur1:
+        fig_dur, ax_dur = plt.subplots(figsize=(6, 4))
+        sns.histplot(data=day_drivers_plot, x='duration_hours_plot', bins=20, color='#264653', kde=True, ax=ax_dur, edgecolor='black')
+        ax_dur.set_title("Driver Duration Distribution")
+        ax_dur.set_xlabel("Duration (hours)")
+        ax_dur.set_ylabel("Count")
+        st.pyplot(fig_dur, use_container_width=True)
+
+    with col_dur2:
+        if 'daily_income' in day_drivers_plot.columns:
+            day_drivers_plot['income_per_hour'] = day_drivers_plot.apply(
+                lambda x: x['daily_income'] / (x['actual_duration'] / 3600) if x['actual_duration'] > 0 else 0,
+                axis=1
+            )
+            iph_data = day_drivers_plot[day_drivers_plot['income_per_hour'] > 0]
+            if not iph_data.empty:
+                fig_iph, ax_iph = plt.subplots(figsize=(6, 4))
+                sns.histplot(data=iph_data, x='income_per_hour', bins=20, color='#e9c46a', kde=True, ax=ax_iph, edgecolor='black')
+                ax_iph.set_title("Income per Hour Distribution")
+                ax_iph.set_xlabel("Income per Hour (PHP)")
+                ax_iph.set_ylabel("Count")
+                st.pyplot(fig_iph, use_container_width=True)
+
+## --- B4: Trip-Level Analytics ---
+st.subheader(f"Day {selected_day} — Trip-Level Analytics")
+
+trip_display_cols = ['trike_id', 'hub_id', 'origin_edge', 'dest_edge', 'distance', 'price', 'tick',
+                     'driver_asp', 'passenger_asp', 'base_price', 'init_driver_asp', 'init_passenger_asp']
+trip_display_cols = [c for c in trip_display_cols if c in day_transactions.columns]
+
+# Filters
+trip_filter_col1, trip_filter_col2, trip_filter_col3 = st.columns(3)
+
+with trip_filter_col1:
+    trip_day_drivers = sorted(day_transactions['trike_id'].unique())
+    trip_sel_drivers = st.multiselect("Filter by Driver", options=trip_day_drivers, default=[], placeholder="All drivers", key="trip_driver_filter")
+
+with trip_filter_col2:
+    if 'hub_id' in day_transactions.columns:
+        trip_day_hubs = sorted(day_transactions['hub_id'].dropna().unique())
+        trip_sel_hubs = st.multiselect("Filter by Hub", options=trip_day_hubs, default=[], placeholder="All hubs", key="trip_hub_filter")
+    else:
+        trip_sel_hubs = []
+
+with trip_filter_col3:
+    row_limit = st.selectbox("Rows to display", options=[20, 50, 100, 250, 500, "All"], index=0, key="trip_row_limit")
+
+filtered_day_trips = day_transactions.copy()
+if trip_sel_drivers:
+    filtered_day_trips = filtered_day_trips[filtered_day_trips['trike_id'].isin(trip_sel_drivers)]
+if trip_sel_hubs and 'hub_id' in filtered_day_trips.columns:
+    filtered_day_trips = filtered_day_trips[filtered_day_trips['hub_id'].isin(trip_sel_hubs)]
+
+if row_limit == "All":
+    display_trips = filtered_day_trips[trip_display_cols].sort_values(by='tick')
+else:
+    display_trips = filtered_day_trips[trip_display_cols].sort_values(by='tick').head(row_limit)
+
+st.caption(f"Showing {len(display_trips)} of {len(filtered_day_trips)} filtered trips ({len(day_transactions)} total for this day)")
+st.dataframe(display_trips)
+
+# Trip distribution graphs
+col_t1, col_t2 = st.columns(2)
+
+with col_t1:
+    plot_distribution_with_stats(
+        day_transactions, 'price',
+        "Trip Price Distribution (Negotiated)", "Price (PHP)",
+        color="skyblue"
+    )
+
+with col_t2:
+    plot_distribution_with_stats(
+        day_transactions, 'base_price',
+        "Trip Price Distribution (Base Price)", "Price (PHP)",
+        color="lightgreen"
+    )
+
+col_t1, col_t2 = st.columns(2)
+
+with col_t1:
+    plot_distribution_with_stats(
+        day_transactions, 'distance',
+        "Trip Distance Distribution", "Distance (meters)",
+        color="skyblue"
+    )
+
+with col_t2:
+    plot_distribution_with_stats(
+        day_transactions, 'tick',
+        "Trips Over Time (by Tick)", "Tick",
+        color="violet"
+    )
+
+## --- B5: Bargaining Analytics ---
+if has_asp_data:
+    st.subheader(f"Day {selected_day} — Bargaining Analytics")
     st.write("Aspiration prices represent the driver's willingness-to-sell and the passenger's willingness-to-pay during fare negotiation.")
 
-    # Filter out rows where ASP data might be missing
-    asp_data = filtered_trips.dropna(subset=['driver_asp', 'passenger_asp']).copy()
+    asp_data = day_transactions.dropna(subset=['driver_asp', 'passenger_asp']).copy()
 
     if not asp_data.empty:
-        # Bargaining gap: difference between what driver wants and what passenger offers
         asp_data['asp_gap'] = asp_data['driver_asp'] - asp_data['passenger_asp']
-        asp_data['asp_midpoint'] = (asp_data['driver_asp'] + asp_data['passenger_asp']) / 2
 
-        # Summary metrics
         col_b1, col_b2, col_b3, col_b4 = st.columns(4)
         col_b1.metric("Avg Driver ASP", f"PHP {asp_data['driver_asp'].mean():,.2f}")
         col_b2.metric("Avg Passenger ASP", f"PHP {asp_data['passenger_asp'].mean():,.2f}")
         col_b3.metric("Avg Agreed Price", f"PHP {asp_data['price'].mean():,.2f}")
         col_b4.metric("Avg Bargaining Gap", f"PHP {asp_data['asp_gap'].mean():,.2f}")
 
-        # Distribution plots
-        st.subheader("Driver Aspiration Price Distribution")
-        plot_distribution_with_stats(
-            asp_data,
-            'driver_asp',
-            "Distribution of Driver Aspiration Prices",
-            "Driver ASP (PHP)",
-            color="#e76f51"
-        )
+        col_asp1, col_asp2 = st.columns(2)
+        with col_asp1:
+            plot_distribution_with_stats(asp_data, 'driver_asp', "Driver ASP Distribution", "Driver ASP (PHP)", color="#e76f51")
+        with col_asp2:
+            plot_distribution_with_stats(asp_data, 'passenger_asp', "Passenger ASP Distribution", "Passenger ASP (PHP)", color="#2a9d8f")
 
-        st.subheader("Passenger Aspiration Price Distribution")
-        plot_distribution_with_stats(
-            asp_data,
-            'passenger_asp',
-            "Distribution of Passenger Aspiration Prices",
-            "Passenger ASP (PHP)",
-            color="#2a9d8f"
-        )
+        plot_distribution_with_stats(asp_data, 'asp_gap', "Bargaining Gap Distribution", "Gap (PHP)", color="#f4a261")
 
-        st.subheader("Bargaining Gap Distribution (Driver ASP - Passenger ASP)")
-        plot_distribution_with_stats(
-            asp_data,
-            'asp_gap',
-            "Distribution of Bargaining Gap",
-            "Gap (PHP)",
-            color="#f4a261"
-        )
-
-        # Scatter: Driver ASP vs Passenger ASP, colored by agreed price
-        st.subheader("Driver ASP vs Passenger ASP")
+        # Scatter: Driver ASP vs Passenger ASP
         fig_scatter, ax_scatter = plt.subplots(figsize=(6, 5))
         scatter = ax_scatter.scatter(
-            asp_data['passenger_asp'],
-            asp_data['driver_asp'],
-            c=asp_data['price'],
-            cmap='viridis',
-            alpha=0.6,
-            edgecolors='black',
-            linewidths=0.3,
-            s=20
+            asp_data['passenger_asp'], asp_data['driver_asp'],
+            c=asp_data['price'], cmap='viridis', alpha=0.6,
+            edgecolors='black', linewidths=0.3, s=20
         )
         plt.colorbar(scatter, ax=ax_scatter, label='Agreed Price (PHP)')
-        # Add diagonal reference line
         asp_min = min(asp_data['passenger_asp'].min(), asp_data['driver_asp'].min())
         asp_max = max(asp_data['passenger_asp'].max(), asp_data['driver_asp'].max())
         ax_scatter.plot([asp_min, asp_max], [asp_min, asp_max], 'r--', alpha=0.5, label='Equal ASP line')
@@ -725,31 +776,19 @@ if has_asp_data:
         ax_scatter.set_ylabel("Driver ASP (PHP)")
         ax_scatter.set_title("Driver vs Passenger Aspiration Prices")
         ax_scatter.legend()
+        fig_scatter.tight_layout()
+        st.pyplot(fig_scatter, use_container_width=True)
 
-        col_sc1, col_sc2, col_sc3 = st.columns([1, 2, 1])
-        with col_sc2:
-            st.pyplot(fig_scatter, use_container_width=False)
-        # --- Base Price Analytics ---
         if has_base_price:
-            st.subheader("Base Price (Manila Matrix) Distribution")
             base_price_data = asp_data.dropna(subset=['base_price'])
             if not base_price_data.empty:
-                plot_distribution_with_stats(
-                    base_price_data,
-                    'base_price',
-                    "Distribution of Base Prices (Manila Matrix)",
-                    "Base Price (PHP)",
-                    color="#264653"
-                )
-
+                plot_distribution_with_stats(base_price_data, 'base_price', "Base Price Distribution", "Base Price (PHP)", color="#264653")
                 col_bp1, col_bp2, col_bp3 = st.columns(3)
                 col_bp1.metric("Avg Base Price", f"PHP {base_price_data['base_price'].mean():,.2f}")
                 col_bp2.metric("Avg Agreed vs Base", f"PHP {(base_price_data['price'] - base_price_data['base_price']).mean():,.2f}")
                 col_bp3.metric("Avg Markup over Base", f"{((base_price_data['price'] / base_price_data['base_price'] - 1) * 100).mean():,.1f}%")
 
-        # --- Initial Aspiration Price Analytics ---
         if has_init_asp_data:
-            st.subheader("Initial vs Final Aspiration Prices")
             init_asp_data = asp_data.dropna(subset=['init_driver_asp', 'init_passenger_asp'])
             if not init_asp_data.empty:
                 init_asp_data['driver_asp_change'] = init_asp_data['driver_asp'] - init_asp_data['init_driver_asp']
@@ -762,42 +801,21 @@ if has_asp_data:
                 col_i3.metric("Avg Driver ASP Change", f"PHP {init_asp_data['driver_asp_change'].mean():,.2f}")
                 col_i4.metric("Avg Passenger ASP Change", f"PHP {init_asp_data['passenger_asp_change'].mean():,.2f}")
 
-                st.subheader("Initial Driver Aspiration Price Distribution")
-                plot_distribution_with_stats(
-                    init_asp_data,
-                    'init_driver_asp',
-                    "Distribution of Initial Driver Aspiration Prices",
-                    "Init Driver ASP (PHP)",
-                    color="#e9c46a"
-                )
+                col_init1, col_init2 = st.columns(2)
+                with col_init1:
+                    plot_distribution_with_stats(init_asp_data, 'init_driver_asp', "Initial Driver ASP Distribution", "Init Driver ASP (PHP)", color="#e9c46a")
+                with col_init2:
+                    plot_distribution_with_stats(init_asp_data, 'init_passenger_asp', "Initial Passenger ASP Distribution", "Init Passenger ASP (PHP)", color="#606c38")
 
-                st.subheader("Initial Passenger Aspiration Price Distribution")
-                plot_distribution_with_stats(
-                    init_asp_data,
-                    'init_passenger_asp',
-                    "Distribution of Initial Passenger Aspiration Prices",
-                    "Init Passenger ASP (PHP)",
-                    color="#606c38"
-                )
-
-                st.subheader("Initial Bargaining Gap Distribution")
-                plot_distribution_with_stats(
-                    init_asp_data,
-                    'init_asp_gap',
-                    "Distribution of Initial Bargaining Gap (Init Driver ASP - Init Passenger ASP)",
-                    "Init Gap (PHP)",
-                    color="#bc6c25"
-                )
-
+                plot_distribution_with_stats(init_asp_data, 'init_asp_gap', "Initial Bargaining Gap Distribution", "Init Gap (PHP)", color="#bc6c25")
     else:
-        st.info("No aspiration price data available in the filtered trips.")
+        st.info("No aspiration price data available for this day.")
 
+## --- B6: Surplus ---
+st.subheader(f"Day {selected_day} — Surplus")
 
-## ----- PASSENGER SURPLUS -----
-st.divider()
-st.header("Passenger (Consumer) Surplus")
 st.markdown(
-    "Passenger surplus measures the difference between a passenger's maximum"
+    "**Passenger (Consumer) Surplus** measures the difference between a passenger's maximum "
     "willingness to pay (`passenger_asp`) and the final negotiated fare (`price`). "
     "It represents the economic benefit passengers obtain from successful rides. \n\n"
 
@@ -806,54 +824,8 @@ st.markdown(
 
     "- **Positive Surplus**: The passenger paid less than their WTP. \n"
     "- **Negative Surplus**: The passenger paid more than their WTP. \n\n"
-    
-    "This metric captures passenger-side welfare within the negotiated transport "
-    "market and reflects how pricing outcomes compare to passenger valuation."
-)
 
-all_surplus = df_all.copy()
-
-#Creating columns for the surplus
-all_surplus['passenger_surplus'] = all_surplus['passenger_asp'] - all_surplus['price'] 
-
-all_surplus = all_surplus[['trike_id', 'run_id', 'hub_id', 'passenger_surplus']]
-
-cs_total = all_surplus['passenger_surplus'].sum()
-cs_average = all_surplus['passenger_surplus'].mean()
-cd_median = all_surplus['passenger_surplus'].median()
-
-c1, c2, c3 = st.columns(3)
-c1.metric("Total Consumer Surplus", f"PHP {cs_total:,.2f}")
-c2.metric("Avg Consumer Surplus / Passenger", f"PHP {cs_average:,.2f}")
-c3.metric("Median Consumer Surplus", f"PHP {cd_median:,.2f}")
-
-#FILTERS
-filter_col1, filter_col2, filter_col3 = st.columns(3)
-with filter_col1:
-    all_drivers = sorted(all_surplus['trike_id'].unique())
-    selected_drivers = st.multiselect("Filter by Driver", options=all_drivers, default=[], placeholder="All drivers", key="consumer_driver_filter")
-with filter_col2:
-    all_runs = sorted(all_surplus['run_id'].unique())
-    selected_runs = st.multiselect("Filter by Day/Run", options=all_runs, default=[], placeholder="All days", key="consumer_run_filter")
-with filter_col3:
-    all_hubs = sorted(all_surplus['hub_id'].unique())
-    selected_hubs = st.multiselect("Filter by TODA Hub", options=all_hubs, default=[], placeholder="All hubs", key="consumer_hub_filter")
-
-filtered_summary = all_surplus.copy()
-if selected_drivers:
-    filtered_summary = filtered_summary[filtered_summary['trike_id'].isin(selected_drivers)]
-if selected_runs:
-    filtered_summary = filtered_summary[filtered_summary['run_id'].isin(selected_runs)]
-if selected_hubs:
-    filtered_summary = filtered_summary[filtered_summary['hub_id'].isin(selected_runs)]
-
-st.dataframe(filtered_summary)
-
-#----- PRODUCER SURPLUS -----
-st.divider()
-st.header("Driver (Producer) Surplus")
-st.markdown(
-    "Driver surplus measures the difference between the fare received (`price`) "
+    "**Driver (Producer) Surplus** measures the difference between the fare received (`price`) "
     "and the marginal cost of completing the trip (`marginal_cost`). "
     "It represents the profit drivers obtain from successful rides. \n\n"
 
@@ -861,132 +833,44 @@ st.markdown(
     "`Driver Surplus = price - marginal_cost` \n\n"
 
     "- **Positive Surplus**: The driver earned more than the cost of completing the trip. \n"
-    "- **Negative Surplus**: The driver earned less than the cost of completing the trip. \n\n"
-    
-    "This metric captures driver-side welfare and profitability within the "
-    "negotiated transport market."
+    "- **Negative Surplus**: The driver earned less than the cost of completing the trip."
 )
 
+day_with_surplus = day_transactions.copy()
 
-GAS_PRICE = config.getGasPricePerLiter()
-GAS_CONSUMPTION = config.getGasConsumption()
+# Consumer surplus
+if has_asp_data:
+    day_with_surplus['passenger_surplus'] = day_with_surplus['passenger_asp'] - day_with_surplus['price']
+    cs_total = day_with_surplus['passenger_surplus'].sum()
+    cs_avg = day_with_surplus['passenger_surplus'].mean()
+    cs_median = day_with_surplus['passenger_surplus'].median()
 
-# Distance is found in df_all (METERS)
-# gas_price is from config L/PHP
-# gas consumption is from tricycle config is in KM/L
+    col_cs1, col_cs2, col_cs3 = st.columns(3)
+    col_cs1.metric("Total Consumer Surplus", f"PHP {cs_total:,.2f}")
+    col_cs2.metric("Avg Consumer Surplus", f"PHP {cs_avg:,.2f}")
+    col_cs3.metric("Median Consumer Surplus", f"PHP {cs_median:,.2f}")
 
-trip_expenses = df_all.copy()
-trip_expenses['marginal_cost'] = (trip_expenses['distance'] * GAS_PRICE) / (1000 * GAS_CONSUMPTION)
-trip_expenses['producer_surplus'] = trip_expenses['price'] - trip_expenses['marginal_cost']
+    plot_distribution_with_stats(day_with_surplus.dropna(subset=['passenger_surplus']), 'passenger_surplus',
+                                 "Consumer Surplus Distribution", "Consumer Surplus (PHP)", color="#2a9d8f")
 
-trip_expenses = trip_expenses[['trike_id', 'run_id', 'hub_id', 'producer_surplus']]
+# Producer surplus
+day_with_surplus['marginal_cost'] = (day_with_surplus['distance'] * GAS_PRICE) / (1000 * GAS_CONSUMPTION)
+day_with_surplus['producer_surplus'] = day_with_surplus['price'] - day_with_surplus['marginal_cost']
 
+ps_total = day_with_surplus['producer_surplus'].sum()
+ps_avg = day_with_surplus['producer_surplus'].mean()
+ps_median = day_with_surplus['producer_surplus'].median()
 
-c1, c2, c3 = st.columns(3)
+col_ps1, col_ps2, col_ps3 = st.columns(3)
+col_ps1.metric("Total Producer Surplus", f"PHP {ps_total:,.2f}")
+col_ps2.metric("Avg Producer Surplus", f"PHP {ps_avg:,.2f}")
+col_ps3.metric("Median Producer Surplus", f"PHP {ps_median:,.2f}")
 
-ps_total = trip_expenses['producer_surplus'].sum()
-ps_average = trip_expenses['producer_surplus'].mean()
-ps_median = trip_expenses['producer_surplus'].median()
-c1.metric("Total Producer Surplus", f"PHP {ps_total:,.2f}")
-c2.metric("Avg Producer Surplus / Driver", f"PHP {ps_average:,.2f}")
-c3.metric("Median Producer Surplus", f"PHP {ps_median:,.2f}")
+plot_distribution_with_stats(day_with_surplus, 'producer_surplus',
+                             "Producer Surplus Distribution", "Producer Surplus (PHP)", color="#e76f51")
 
-
-#FILTERS
-filter_col1, filter_col2, filter_col3 = st.columns(3)
-with filter_col1:
-    all_drivers = sorted(trip_expenses['trike_id'].unique())
-    selected_drivers = st.multiselect("Filter by Driver", options=all_drivers, default=[], placeholder="All drivers", key="producer_driver_filter")
-with filter_col2:
-    all_runs = sorted(trip_expenses['run_id'].unique())
-    selected_runs = st.multiselect("Filter by Day/Run", options=all_runs, default=[], placeholder="All days", key="producer_run_filter")
-with filter_col3:
-    all_hubs = sorted(trip_expenses['hub_id'].unique())
-    selected_hubs = st.multiselect("Filter by TODA Hub", options=all_hubs, default=[], placeholder="All hubs", key="producer_hub_filter")
-
-filtered_summary = trip_expenses.copy()
-if selected_drivers:
-    filtered_summary = filtered_summary[filtered_summary['trike_id'].isin(selected_drivers)]
-if selected_runs:
-    filtered_summary = filtered_summary[filtered_summary['run_id'].isin(selected_runs)]
-if selected_hubs:
-    filtered_summary = filtered_summary[filtered_summary['hub_id'].isin(selected_hubs)]
-
-st.dataframe(filtered_summary)
-
-#==========
-#RATIO
-#==========
-
-#list of all unique drivers
-all_drivers = df_all['trike_id'].drop_duplicates()
-
-#compute daily income per driver
-daily_income = (
-    df_all.groupby('trike_id')['price']
-    .sum()
-    .reset_index(name='daily_income')
-)
-
-#compute gas expenses per driver
-gas_expenses = (
-    df_all_expenses[df_all_expenses['expense_type'] == 'gas']
-    .groupby('trike_id')['amount']
-    .sum()
-    .reset_index(name='gas_expenses')
-)
-
-#compute daily expenses per driver
-daily_expenses = (
-    df_all_expenses.groupby('trike_id')['amount']
-    .sum()
-    .reset_index(name='daily_expenses')
-)
-
-#Merge into one DataFrame
-viability = all_drivers.copy()
-
-#Merge income and expenses
-viability = pd.merge(viability, daily_income, on='trike_id', how='left')
-viability = pd.merge(viability, gas_expenses, on='trike_id', how='left')
-viability = pd.merge(viability, daily_expenses, on='trike_id', how='left')
-
-#fill any missing data values with 0
-viability.fillna(0, inplace=True)
-
-#classify each driver
-def classify_driver(row):
-    total_expenses = row['gas_expenses'] + row['daily_expenses']
-
-    if row['daily_income'] >= total_expenses:
-        return "Covers All Expenses"
-    elif row['daily_income'] >= row['gas_expenses']:
-        return "Covers Gas Only"
-    else:
-        return "Not Viable"
-    
-viability['viability_group'] = viability.apply(classify_driver, axis=1)
-
-#Compute counts and proportions
-
-ordered_groups = ["Covers All Expenses", "Covers Gas Only", "Not Viable"]
-
-#count and proportion
-ratio_counts = (
-    viability['viability_group']
-    .value_counts()
-    .reindex(ordered_groups, fill_value=0)
-    .reset_index()
-)
-
-ratio_counts.columns = ['viability_group', 'count']
-
-total_drivers = ratio_counts['count'].sum()
-ratio_counts['proportion'] = ratio_counts['count'] / total_drivers
-
-#Plot data
-st.divider()
-st.header("Driver Profitability")
+## --- B7: Profitability Classification ---
+st.subheader(f"Day {selected_day} — Driver Profitability")
 st.markdown(
     "This section categorizes drivers based on how much they profit from their trips after "
     "accounting for gas and daily expenses:\n\n"
@@ -994,268 +878,112 @@ st.markdown(
     "- **Break-even**: The driver earns enough to cover gas, but not daily expenses.\n"
     "- **Not Profitable**: The driver earns less than the cost of gas."
 )
-fig, ax = plt.subplots(figsize=(8, 1.8))
-colors = {
-    "Covers All Expenses": "#2a9d8f",
-    "Covers Gas Only": "#e9c46a",
-    "Not Viable": "#e76f51"
-}
 
-left = 0
+income_mode_prof = st.radio(
+    "Income type",
+    options=["Negotiated Income", "Fixed Income (Base Price)"],
+    horizontal=True,
+    key="perday_prof_income_toggle"
+)
+use_fixed_prof = income_mode_prof == "Fixed Income (Base Price)"
 
-for group, row in ratio_counts.iterrows():
-    value = row['proportion']
-    count = row['count']
-    ax.barh(
-        y=0,
-        width=value,
-        left=left,
-        color=colors[row['viability_group']],
-        label=row['viability_group']
-    )
-    if value > 0:
-        ax.text(
-            left + value / 2,
-            0,
-            f"{count}/{total_drivers}",
-            va='center',
-            ha='center',
-            fontsize = 9,
-            color = "white" if row['viability_group'] != "Not Viable" else "black"
-        )
-    left += value
+day_prof = daily_profitability_df[daily_profitability_df['run_id'] == selected_day]
+if not day_prof.empty:
+    prof_row = day_prof.iloc[0]
+    total_d = int(prof_row['total_drivers'])
 
-ax.set_xlim(0, 1)
-ax.set_yticks([])
-ax.set_title("Proportion of Drivers by Viability Group", fontsize=10)
-ax.legend()
-st.pyplot(fig)
+    day_prof_prefix = 'fixed_' if use_fixed_prof and 'fixed_covers_all' in prof_row.index else ''
 
-#----- GINI COEFFICIENT -----
-st.divider()
-st.header("Driver Income Inequality — Gini Coefficient")
+    fig_viab, ax_viab = plt.subplots(figsize=(8, 1.8))
+    colors_viab = {
+        "Covers All Expenses": "#2a9d8f",
+        "Covers Gas Only": "#e9c46a",
+        "Not Viable": "#e76f51"
+    }
+
+    left = 0
+    for group, count_key, pct_key in [
+        ("Covers All Expenses", f'{day_prof_prefix}covers_all', f'{day_prof_prefix}pct_covers_all'),
+        ("Covers Gas Only", f'{day_prof_prefix}covers_gas', f'{day_prof_prefix}pct_covers_gas'),
+        ("Not Viable", f'{day_prof_prefix}not_viable', f'{day_prof_prefix}pct_not_viable'),
+    ]:
+        pct = prof_row[pct_key] / 100
+        count = int(prof_row[count_key])
+        ax_viab.barh(0, pct, left=left, color=colors_viab[group], label=group)
+        if pct > 0:
+            ax_viab.text(left + pct / 2, 0, f"{count}/{total_d}",
+                         va='center', ha='center', fontsize=9,
+                         color="white" if group != "Covers Gas Only" else "black")
+        left += pct
+
+    prof_label = "Fixed" if use_fixed_prof and day_prof_prefix else "Negotiated"
+    ax_viab.set_xlim(0, 1)
+    ax_viab.set_yticks([])
+    ax_viab.set_title(f"Proportion of Drivers by Viability Group ({prof_label})", fontsize=10)
+    ax_viab.legend()
+    st.pyplot(fig_viab)
+
+## --- B8: Income Inequality ---
+st.subheader(f"Day {selected_day} — Income Inequality")
 st.markdown(
-    "The Gini coefficient measures how unevenly **gross income** is distributed among drivers. "
-    "It is derived from the Lorenz curve, which plots cumulative share of drivers against cumulative share of gross income. \n\n"
+    "The Gini coefficient measures how unevenly income is distributed among drivers. "
+    "It is derived from the Lorenz curve, which plots cumulative share of drivers against cumulative share of income. \n\n"
 
     "**Computation:**\n"
     "`Gini = Area between line of equality and Lorenz curve / Total area under equality line`\n\n"
 
-    "- **0 → Perfect equality** (all drivers earn the same gross income).\n"
-    "- **1 → Maximum inequality** (one driver earns all the gross income).\n\n"
-    
-    "This metric shows how concentrated gross income is among drivers in the transport market."
+    "- **0 → Perfect equality** (all drivers earn the same income).\n"
+    "- **1 → Maximum inequality** (one driver earns all the income).\n\n"
+
+    "Three variants are shown:\n"
+    "- **Gross Income**: Total income before any expenses.\n"
+    "- **After Gas**: Income minus gas expenses only.\n"
+    "- **Net Profit**: Income minus all expenses (gas + daily)."
 )
 
-#get the income per driver
-gross_income_per_driver = (
-    df_all.groupby('trike_id', as_index = False)['price']
-    .sum()
-    .rename(columns={'price': 'gross_income'})
-)
+# Compute gini for this day
+day_gross_income = day_transactions.groupby('trike_id')['price'].sum().reset_index(name='gross_income')
+day_gas_exp = day_expenses[day_expenses['expense_type'] == 'gas'].groupby('trike_id')['amount'].sum().reset_index(name='gas_expenses')
+day_all_exp = day_expenses.groupby('trike_id')['amount'].sum().reset_index(name='all_expenses')
 
-#Helper to compute for Gini
-def gini(series):
-    values = np.asarray(series, dtype=float)
-    if values.size == 0:
-        return 0.0
-    
-    values = values - values.min()
+day_inequality = day_gross_income.copy()
+day_inequality = pd.merge(day_inequality, day_gas_exp, on='trike_id', how='left')
+day_inequality = pd.merge(day_inequality, day_all_exp, on='trike_id', how='left')
+day_inequality.fillna(0, inplace=True)
+day_inequality['after_gas_profit'] = day_inequality['gross_income'] - day_inequality['gas_expenses']
+day_inequality['net_profit'] = day_inequality['gross_income'] - day_inequality['all_expenses']
 
-    total = values.sum()
+gini_gross = gini(day_inequality['gross_income'])
+gini_after_gas = gini(day_inequality['after_gas_profit'])
+gini_net = gini(day_inequality['net_profit'])
 
-    if total == 0:
-        return 0.0
-    
-    values = np.sort(values)
-    n = values.size
-    index = np.arange(1, n + 1)
-    g = np.sum((2 * index - n - 1) * values) / (n * total)
-    return float(g)
+col_g1, col_g2, col_g3 = st.columns(3)
+col_g1.metric("Gini (Gross Income)", f"{gini_gross:.3f}")
+col_g2.metric("Gini (After Gas)", f"{gini_after_gas:.3f}")
+col_g3.metric("Gini (Net Profit)", f"{gini_net:.3f}")
 
-gross_gini = gini(gross_income_per_driver['gross_income'])
-st.metric("Gini Coefficient (Gross Income)", f"{gross_gini:.3f}")
+# Combined Lorenz curves
+fig_lorenz, ax_lorenz = plt.subplots(figsize=(7, 7))
 
-#Graphing this out
-income_sorted = gross_income_per_driver.sort_values('gross_income')
-
-cumulative_income = income_sorted['gross_income'].cumsum()
-total_income = income_sorted['gross_income'].sum()
-
-lorenz_y = cumulative_income / total_income
-lorenz_x = np.arange(1, len(lorenz_y) + 1) / len(lorenz_y)
-
-# Create figure (keep size large for detail)
-fig, ax = plt.subplots(figsize=(6, 6))
-
-# Lorenz curve
-ax.plot(lorenz_x, lorenz_y, color='blue', linewidth=2, label="Lorenz Curve")
-
-# Line of equality
-ax.plot([0, 1], [0, 1], color='gray', linestyle="--", linewidth=1.5, label="Perfect Equality")
-
-# Labels and legend
-ax.set_xlabel("Cumulative Share of Drivers", fontsize=10)
-ax.set_ylabel("Cumulative Share of Income", fontsize=10)
-ax.set_title("Lorenz Curve — Gross Driver Income", fontsize=12)
-ax.legend(fontsize=9)
-ax.grid(True)
-fig.tight_layout()
-
-# Columns to center the graph and control width
-col1, col2, col3 = st.columns([1, 1.5, 1])
-with col2:
-    st.pyplot(fig, use_container_width=False)
-
-st.divider()
-st.header("Driver Income Inequality — After Gas Expenses")
-st.markdown(
-    "This section shows how **drivers’ income after paying gas expenses** is distributed, "
-    "using the Gini coefficient. \n\n"
-
-    "- Higher values indicate more concentration of post-gas income among fewer drivers.\n"
-    "- Lower values indicate a more even distribution of net income after gas costs."
-)
-
-
-gas_expenses = df_all_expenses[df_all_expenses['expense_type'] == 'gas']
-
-all_gas_expenses = (
-    gas_expenses.groupby('trike_id')['amount']
-    .sum()
-    .rename('gas_expenses')
-)
-
-
-#Merge gas expense and gross income
-income_and_gas = pd.merge(gross_income_per_driver, all_gas_expenses, on='trike_id', how='left')
-
-income_and_gas['gas_expenses'] = income_and_gas['gas_expenses'].fillna(0)
-income_and_gas['after_gas_profit'] = income_and_gas['gross_income'] - income_and_gas['gas_expenses']
-
-df_profit_after_gas = income_and_gas[['trike_id', 'after_gas_profit']]
-
-profit_after_gas_gini = gini(df_profit_after_gas['after_gas_profit'])
-st.metric("Gini Coefficient (After gas expenses)", f"{profit_after_gas_gini:.3f}")
-
-#Graphing this out
-income_sorted = df_profit_after_gas.sort_values('after_gas_profit')
-
-cumulative_profit = income_sorted['after_gas_profit'].cumsum()
-total_profit = income_sorted['after_gas_profit'].sum()
-
-lorenz_y = cumulative_profit / total_profit
-lorenz_x = np.arange(1, len(lorenz_y) + 1) / len(lorenz_y)
-
-fig, ax = plt.subplots(figsize=(5, 5))
-
-# Lorenz curve
-ax.plot(lorenz_x, lorenz_y, label="Lorenz Curve")
-
-# Equality line
-ax.plot([0, 1], [0, 1], linestyle="--", label="Perfect Equality")
-
-ax.set_xlabel("Cumulative Share of Drivers")
-ax.set_ylabel("Cumulative Share of Profit After Gas Expense")
-ax.set_title("Lorenz Curve — Profit After Gas Expenses")
-ax.legend()
-
-# Columns to center the graph and control width
-col1, col2, col3 = st.columns([1, 1.5, 1])
-with col2:
-    st.pyplot(fig, use_container_width=False)
-
-st.divider()
-st.header("Driver Income Inequality — Net Profit")
-st.markdown(
-    "This section shows how **drivers’ net profit** (income minus gas and daily expenses) "
-    "is distributed, using the Gini coefficient. \n\n"
-
-    "- Higher values indicate that net profit is concentrated among a few drivers.\n"
-    "- Lower values indicate a more even distribution of net profit across drivers."
-)
-
-all_expenses = (
-    df_all_expenses.groupby('trike_id')['amount']
-    .sum()
-    .rename('all_expenses')
-)
-
-profit = pd.merge(gross_income_per_driver, all_expenses, on='trike_id', how='left')
-profit['all_expenses'] = profit['all_expenses'].fillna(0)
-profit['profit'] = profit['gross_income'] - profit['all_expenses']
-
-profit = profit[['trike_id', 'profit']]
-
-profit_gini = gini(profit['profit'])
-st.metric("Gini Coefficient (After all expenses)", f"{profit_gini:.3f}")
-
-#Graphing this out
-profit_sorted = profit.sort_values('profit')
-
-cumulative_profit = profit_sorted['profit'].cumsum()
-total_profit = profit_sorted['profit'].sum()
-
-lorenz_y = cumulative_profit / total_profit
-lorenz_x = np.arange(1, len(lorenz_y) + 1) / len(lorenz_y)
-
-fig, ax = plt.subplots(figsize=(5, 5))
-
-# Lorenz curve
-ax.plot(lorenz_x, lorenz_y, label="Lorenz Curve")
-
-# Equality line
-ax.plot([0, 1], [0, 1], linestyle="--", label="Perfect Equality")
-
-ax.set_xlabel("Cumulative Share of Drivers")
-ax.set_ylabel("Cumulative Share of Net Profit")
-ax.set_title("Lorenz Curve — Profit After All Expenses")
-ax.legend()
-
-# Columns to center the graph and control width
-col1, col2, col3 = st.columns([1, 1.5, 1])
-with col2:
-    st.pyplot(fig, use_container_width=False)
-
-st.subheader("Profit Inequality Comparison — All Scenarios")
-
-
-# Helper to compute Lorenz curve
-def lorenz_curve(data_series):
-    sorted_series = data_series.sort_values()
-    cumulative = sorted_series.cumsum()
-    total = sorted_series.sum()
-    lorenz_y = cumulative / total
-    lorenz_x = np.arange(1, len(lorenz_y) + 1) / len(lorenz_y)
-    return lorenz_x, lorenz_y
-
-# Prepare the datasets
-datasets = [
-    (gross_income_per_driver['gross_income'], "Gross Income", "Cumulative Share of Income", gini(gross_income_per_driver['gross_income'])),
-    (df_profit_after_gas['after_gas_profit'], "Profit After Gas", "Cumulative Share of Profit After Gas", gini(df_profit_after_gas['after_gas_profit'])),
-    (profit['profit'], "Profit After All Expenses", "Cumulative Share of Net Profit", gini(profit['profit']))
+datasets_lorenz = [
+    (day_inequality['gross_income'], "Gross Income", gini_gross),
+    (day_inequality['after_gas_profit'], "After Gas", gini_after_gas),
+    (day_inequality['net_profit'], "Net Profit", gini_net),
 ]
 
-# Create single figure
-fig, ax = plt.subplots(figsize=(7, 7))
+colors_lorenz = ['blue', 'orange', 'green']
 
-colors = ['blue', 'orange', 'green']  # One color per dataset
+for (data, label, g_val), color in zip(datasets_lorenz, colors_lorenz):
+    if data.sum() > 0:
+        x, y = lorenz_curve(data)
+        ax_lorenz.plot(x, y, label=f"{label} (Gini: {g_val:.3f})", color=color)
 
-for (data, label, ylabel, gini_value), color in zip(datasets, colors):
-    x, y = lorenz_curve(data)
-    ax.plot(x, y, label=f"{label} (Gini: {gini_value:.3f})", color=color)
+ax_lorenz.plot([0, 1], [0, 1], linestyle="--", color='black', label="Perfect Equality")
+ax_lorenz.set_xlabel("Cumulative Share of Drivers")
+ax_lorenz.set_ylabel("Cumulative Share of Income / Profit")
+ax_lorenz.set_title(f"Lorenz Curves — Day {selected_day}")
+ax_lorenz.legend()
+ax_lorenz.grid(True)
+fig_lorenz.tight_layout()
 
-# Equality line
-ax.plot([0, 1], [0, 1], linestyle="--", color='black', label="Perfect Equality")
-
-ax.set_xlabel("Cumulative Share of Drivers")
-ax.set_ylabel("Cumulative Share of Income / Profit")
-ax.set_title("Lorenz Curves — Income and Profit Comparison")
-ax.legend()
-
-# Columns to center the graph and control width
-col1, col2, col3 = st.columns([1, 1.5, 1])
-with col2:
-    st.pyplot(fig, use_container_width=False)
-
-
+st.pyplot(fig_lorenz, use_container_width=True)

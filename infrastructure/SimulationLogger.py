@@ -48,7 +48,7 @@ class SimulationLogger:
     def addDriverInfo(self, tricycles: list):
         drivers_path = os.path.join(os.path.dirname(self.transactions_filename), "drivers.csv")
         drivers_path = os.path.normpath(drivers_path)
-        header = ["trike_id", "hub_id", "start_tick", "end_tick", "actual_start_tick", "actual_end_tick", "actual_duration", "daily_trips", "daily_income", "daily_distance"]
+        header = ["trike_id", "hub_id", "start_tick", "end_tick", "actual_start_tick", "actual_end_tick", "actual_duration", "daily_trips", "daily_income", "fixed_income", "daily_distance"]
 
         with self._lock:
             with open(drivers_path, mode="a", newline="", encoding="utf-8") as f:
@@ -66,6 +66,7 @@ class SimulationLogger:
                         daily_stats['actual_duration'],
                         daily_stats['trips'],
                         daily_stats['income'],
+                        daily_stats['fixed_income'],
                         daily_stats['distance']
                     ])
 
