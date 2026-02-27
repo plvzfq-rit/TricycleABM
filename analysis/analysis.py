@@ -7,6 +7,7 @@ import os
 import re
 
 import sys
+from scipy import stats
 
 # Add project root to Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -1203,6 +1204,7 @@ else:
     # Load and compute summaries for all selected scenarios
     scenario_summaries = []
     scenario_profitability = []
+    scenario_daily_fixed_income = {}  # scenario -> Series of per-run total_fixed_income
 
     with st.spinner("Loading scenario data..."):
         for scenario in selected_scenarios:
@@ -1211,6 +1213,10 @@ else:
                 continue
             df_all_s, df_exp_s, df_drv_s, df_trip_s, sim_count_s = result
             daily_sum_s, daily_prof_s = compute_daily_summary(df_all_s, df_exp_s, df_drv_s, df_trip_s)
+
+            # Store per-run total_fixed_income for t-tests
+            if 'total_fixed_income' in daily_sum_s.columns:
+                scenario_daily_fixed_income[scenario] = daily_sum_s['total_fixed_income'].dropna()
 
             # Average across all days in this scenario
             avg_row = daily_sum_s.mean(numeric_only=True).to_dict()
@@ -1365,3 +1371,33 @@ else:
         prof_table_cols.extend(['fixed_pct_covers_all', 'fixed_pct_covers_gas', 'fixed_pct_not_viable'])
     prof_table_cols = [c for c in prof_table_cols if c in df_prof_scenarios.columns]
     st.dataframe(df_prof_scenarios[prof_table_cols], use_container_width=True)
+
+    # --- Pairwise 2-Sample T-Test: Mean Total Fixed Income ---
+    st.divider()
+    st.subheader("2-Sample T-Test: Mean Total Fixed Income")
+    st.caption("Pairwise independent two-sample t-tests on per-run total fixed income between scenarios.")
+
+    ttest_scenarios = [s for s in selected_scenarios if s in scenario_daily_fixed_income and len(scenario_daily_fixed_income[s]) >= 2]
+
+    if len(ttest_scenarios) < 2:
+        st.warning("Need at least 2 scenarios with 2+ runs each to perform t-tests.")
+    else:
+        ttest_results = []
+        for i in range(len(ttest_scenarios)):
+            for j in range(i + 1, len(ttest_scenarios)):
+                s1, s2 = ttest_scenarios[i], ttest_scenarios[j]
+                data1, data2 = scenario_daily_fixed_income[s1], scenario_daily_fixed_income[s2]
+                t_stat, p_value = stats.ttest_ind(data1, data2, equal_var=False)
+                ttest_results.append({
+                    'Scenario A': s1,
+                    'Scenario B': s2,
+                    'Mean A': data1.mean(),
+                    'Mean B': data2.mean(),
+                    'n A': len(data1),
+                    'n B': len(data2),
+                    't-statistic': round(t_stat, 4),
+                    'p-value': round(p_value, 6),
+                    'Significant (p<0.05)': 'Yes' if p_value < 0.05 else 'No'
+                })
+        df_ttest = pd.DataFrame(ttest_results)
+        st.dataframe(df_ttest, use_container_width=True)
