@@ -138,8 +138,7 @@ def lorenz_curve(data_series):
 
 def classify_driver(row):
     """Classify driver viability based on income vs expenses."""
-    total_expenses = row['gas_expenses'] + row['daily_expenses']
-    if row['daily_income'] >= total_expenses:
+    if row['daily_income'] >= row['daily_expenses']:
         return "Covers All Expenses"
     elif row['daily_income'] >= row['gas_expenses']:
         return "Covers Gas Only"
@@ -448,6 +447,97 @@ if view_mode == "Per-Scenario View":
     cross_avg_profit_col = 'avg_fixed_profit_per_driver' if use_fixed_cross else 'avg_profit_per_driver'
     cross_label = "Fixed" if use_fixed_cross else "Negotiated"
 
+    # --- Overall Averages ---
+    trips_per_driver = daily_summary['total_trips'] / daily_summary['active_drivers']
+
+    st.subheader("Overall Averages Across All Days")
+    oa_col1, oa_col2, oa_col3, oa_col4, oa_col5 = st.columns(5)
+    oa_col1.metric("Avg Total Income", f"PHP {daily_summary[cross_income_col].mean():,.2f}")
+    oa_col2.metric("Avg Total Expenses", f"PHP {daily_summary['total_expenses'].mean():,.2f}")
+    oa_col3.metric("Avg Total Profit", f"PHP {daily_summary[cross_profit_col].mean():,.2f}")
+    oa_col4.metric("Avg Trips/Driver/Day", f"{trips_per_driver.mean():,.1f}")
+    oa_col5.metric("Avg Active Drivers/Day", f"{daily_summary['active_drivers'].mean():,.1f}")
+
+    oa2_col1, oa2_col2, oa2_col3, oa2_col4, oa2_col5 = st.columns(5)
+    oa2_col1.metric("Avg Income/Driver", f"PHP {daily_summary[cross_avg_income_col].mean():,.2f}")
+    oa2_col2.metric("Avg Profit/Driver", f"PHP {daily_summary[cross_avg_profit_col].mean():,.2f}")
+    oa2_col3.metric("Avg Gini (Gross)", f"{daily_summary['gini_gross_income'].mean():.4f}")
+    oa2_col4.metric("Avg Gini (Fixed)", f"{daily_summary['gini_fixed_income'].mean():.4f}")
+
+    # Compute per-driver profit per day
+    driver_income = df_all.groupby(['run_id', 'trike_id']).agg(
+        negotiated_income=('price', 'sum'),
+        fixed_income=('base_price', 'sum') if has_base_price else ('price', 'sum'),
+        trips=('price', 'count'),
+    ).reset_index()
+    driver_expenses = df_all_expenses.groupby(['run_id', 'trike_id'])['amount'].sum().reset_index(name='expenses')
+    driver_daily = pd.merge(driver_income, driver_expenses, on=['run_id', 'trike_id'], how='left')
+    driver_daily['expenses'] = driver_daily['expenses'].fillna(0)
+    driver_daily['negotiated_profit'] = driver_daily['negotiated_income'] - driver_daily['expenses']
+    driver_daily['fixed_profit'] = driver_daily['fixed_income'] - driver_daily['expenses']
+
+    # Best and worst driver overall
+    best_neg = driver_daily.loc[driver_daily['negotiated_profit'].idxmax()]
+    worst_neg = driver_daily.loc[driver_daily['negotiated_profit'].idxmin()]
+    best_fix = driver_daily.loc[driver_daily['fixed_profit'].idxmax()]
+    worst_fix = driver_daily.loc[driver_daily['fixed_profit'].idxmin()]
+
+    st.markdown("**Best & Worst Performing Driver**")
+    perf_table = pd.DataFrame({
+        'Day': [
+            best_neg['run_id'], worst_neg['run_id'],
+            best_fix['run_id'], worst_fix['run_id'],
+        ],
+        'Driver': [
+            best_neg['trike_id'], worst_neg['trike_id'],
+            best_fix['trike_id'], worst_fix['trike_id'],
+        ],
+        'Income': [
+            f"PHP {best_neg['negotiated_income']:,.2f}",
+            f"PHP {worst_neg['negotiated_income']:,.2f}",
+            f"PHP {best_fix['fixed_income']:,.2f}",
+            f"PHP {worst_fix['fixed_income']:,.2f}",
+        ],
+        'Expenses': [
+            f"PHP {best_neg['expenses']:,.2f}",
+            f"PHP {worst_neg['expenses']:,.2f}",
+            f"PHP {best_fix['expenses']:,.2f}",
+            f"PHP {worst_fix['expenses']:,.2f}",
+        ],
+        'Profit': [
+            f"PHP {best_neg['negotiated_profit']:,.2f}",
+            f"PHP {worst_neg['negotiated_profit']:,.2f}",
+            f"PHP {best_fix['fixed_profit']:,.2f}",
+            f"PHP {worst_fix['fixed_profit']:,.2f}",
+        ],
+        'Trips': [
+            f"{best_neg['trips']:.0f}",
+            f"{worst_neg['trips']:.0f}",
+            f"{best_fix['trips']:.0f}",
+            f"{worst_fix['trips']:.0f}",
+        ],
+    }, index=[
+        'Best (Negotiated)',
+        'Worst (Negotiated)',
+        'Best (Fixed)',
+        'Worst (Fixed)',
+    ])
+    st.table(perf_table)
+
+    st.markdown("**Avg Driver Profitability Per Day**")
+    oa3_col1, oa3_col2, oa3_col3 = st.columns(3)
+    oa3_col1.metric("Covers All (Negotiated)", f"{daily_profitability_df['pct_covers_all'].mean():,.1f}%")
+    oa3_col2.metric("Covers Gas Only (Negotiated)", f"{daily_profitability_df['pct_covers_gas'].mean():,.1f}%")
+    oa3_col3.metric("Not Viable (Negotiated)", f"{daily_profitability_df['pct_not_viable'].mean():,.1f}%")
+
+    if 'fixed_pct_covers_all' in daily_profitability_df.columns:
+        oa4_col1, oa4_col2, oa4_col3 = st.columns(3)
+        oa4_col1.metric("Covers All (Fixed)", f"{daily_profitability_df['fixed_pct_covers_all'].mean():,.1f}%")
+        oa4_col2.metric("Covers Gas Only (Fixed)", f"{daily_profitability_df['fixed_pct_covers_gas'].mean():,.1f}%")
+        oa4_col3.metric("Not Viable (Fixed)", f"{daily_profitability_df['fixed_pct_not_viable'].mean():,.1f}%")
+
+    st.divider()
+
     # --- A1: Income, Expenses, Profit trend ---
     st.subheader(f"Income, Expenses & Profit Across Days ({cross_label})")
     fig_trend, ax_trend = plt.subplots(figsize=(10, 5))
@@ -621,6 +711,8 @@ if view_mode == "Per-Scenario View":
     day_driver_table = pd.merge(day_driver_table, day_driver_distance, on='trike_id', how='left')
     day_driver_table.fillna(0, inplace=True)
     day_driver_table['profit'] = day_driver_table['income'] - day_driver_table['expenses']
+    if 'fixed_income' in day_driver_table.columns:
+        day_driver_table['fixed_profit'] = day_driver_table['fixed_income'] - day_driver_table['expenses']
 
     # Add duration info if available
     if has_duration_data and not day_drivers.empty:
