@@ -30,8 +30,12 @@ class SimulationConfig:
     gasPricePerLiter = gasPrices["DEFAULT"]
     GAS_CONSUMPTION_FROM_PAPER = 24.41
 
-    def __init__(self, gas_price_select, matrix_select):
-        self.matrix = fare_matrices[matrix_select]
+    def __init__(self, gas_price_select, base_price, base_distance, added_price, added_distance):
+        self.basePrice = base_price
+        self.baseDistance = base_distance
+        self.addedPrice = added_price
+        self.addedDistance = added_distance
+        self.matrix = lambda x: base_price if x <= base_distance else base_price + added_price * math.ceil((x-1000)/1000)
         self.gasPricePerLiter = self.gasPrices[gas_price_select]
 
     def getAssetDirectory(self) -> str:
