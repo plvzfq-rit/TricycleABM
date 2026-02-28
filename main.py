@@ -12,13 +12,16 @@ import argparse
 import traci
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--matrix", default="default")
+parser.add_argument("--base_price", type=int, default=16)
+parser.add_argument("--base_distance", type=int, default=1000)
+parser.add_argument("--added_price", type=int, default=5)
+parser.add_argument("--added_distance", type=int, default=500)
 parser.add_argument("--gas_price", default="default")
 
 args = parser.parse_args()
 
 # PHASE 1: INITIALIZING THE MAP ENVIRONMENT
-simulation_config = SimulationConfig(gas_price_select=args.gas_price, matrix_select=args.matrix)
+simulation_config = SimulationConfig(gas_price_select=args.gas_price, base_price=args.base_price, base_distance=args.base_distance, added_price=args.added_price, added_distance=args.added_distance)
 
 # PHASE 2: INITIALIZING SERVICES
 network_file_path = simulation_config.getNetworkFilePath()
@@ -29,7 +32,7 @@ toda_hub_descriptor = parseParkingAreaFile(parking_file_path)
 number_of_runs = 30
 number_of_days = 1
 duration = 57600
-run_name = args.matrix + "_" + args.gas_price
+run_name = str(args.base_price) + "_" + str(args.base_distance) + "_" + str(args.added_price) + "_" + str(args.added_distance) + "_" + args.gas_price
 
 startTime = datetime.now().strftime("%Y%m%d-%H%M%S")
 
