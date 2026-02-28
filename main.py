@@ -8,10 +8,17 @@ from application import *
 from config.SimulationConfig import SimulationConfig
 from utils.ParkingAreaParser import parseParkingAreaFile
 from datetime import datetime
+import argparse
 import traci
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--matrix", default="default")
+parser.add_argument("--gas_price", default="default")
+
+args = parser.parse_args()
+
 # PHASE 1: INITIALIZING THE MAP ENVIRONMENT
-simulation_config = SimulationConfig()
+simulation_config = SimulationConfig(gas_price_select=args.gas_price, matrix_select=args.matrix)
 
 # PHASE 2: INITIALIZING SERVICES
 network_file_path = simulation_config.getNetworkFilePath()
@@ -19,10 +26,10 @@ parking_file_path = simulation_config.getParkingFilePath()
 sumo_repository = SumoRepository(network_file_path)
 toda_hub_descriptor = parseParkingAreaFile(parking_file_path)
 
-number_of_runs = 10
+number_of_runs = 30
 number_of_days = 1
 duration = 57600
-run_name = "default"
+run_name = args.matrix + "_" + args.gas_price
 
 startTime = datetime.now().strftime("%Y%m%d-%H%M%S")
 

@@ -5,17 +5,35 @@ from scipy.stats import lognorm
 import random
 import numpy as np
 
+fare_matrices = {
+    "fifty_five_500": lambda x: 50 if x <= 1000 else 16 + 5 * math.ceil((x - 1000) / 500),
+    "fifty_five_1000": lambda x: 50 if x <= 1000 else 16 + 5 * math.ceil((x - 1000) / 1000),
+    "twenty_five_500": lambda x: 20 if x <= 1000 else 16 + 5 * math.ceil((x - 1000) / 500),
+    "sixteen_five_500": lambda x: 16 if x <= 1000 else 16 + 5 * math.ceil((x - 1000) / 500),
+    "sixteen_five_100": lambda x: 16 if x <= 1000 else 16 + 5 * math.ceil((x - 1000) / 100),
+    "sixteen_five_1000": lambda x: 16 if x <= 1000 else 16 + 5 * math.ceil((x - 1000) / 1000),
+    "flat_50": lambda x: 50,
+    "flat_100": lambda x: 100
+}
+
 class SimulationConfig:
     assetDirectoryName = "maps"
     networkFileName = "net.net.xml"
     parkingFileName = "parking.add.xml"
     decalFileName = "map.xml"
     routesFileName = "routes.xml"
-    gasPricePerLiter = 58.9
-    # lowGasPerLiter = 54.8
-    # highGasPerLiter = 61.0
+    gasPrices = {
+        "DEFAULT": 58.9,
+        "LOW": 54.8,
+        "HIGH": 61.0
+    }
+    gasPricePerLiter = gasPrices["DEFAULT"]
     GAS_CONSUMPTION_FROM_PAPER = 24.41
-    
+
+    def __init__(self, gas_price_select, matrix_select):
+        self.matrix = fare_matrices[matrix_select]
+        self.gasPricePerLiter = self.gasPrices[gas_price_select]
+
     def getAssetDirectory(self) -> str:
         script_dir = Path(__file__).resolve().parent.parent
         assets_dir = script_dir / self.assetDirectoryName
@@ -143,7 +161,6 @@ class SimulationConfig:
         return lambda size=1: round(np.random.choice([50, 70, 100, 60], size=size, p=[24/37, 6/37, 6/37, 1/37])[0], 2)
 
     def getPassengerAspiredPriceDistribution(self) -> callable:
-        
         return lambda size=1: round(lognorm.rvs(0.7234913879629307, loc=0, scale=36.844797800005615, size=size)[0], 2)
     
     def getMinimumPriceDistribution(self) -> callable:

@@ -34,9 +34,6 @@ def driver_matrix(given, base_price=50):
 
     return value
 
-def manila_matrix(given):
-    return 16 if given < 1000 else 16 + 5 * math.ceil((given - 1000) / 500)
-
 class TricycleRepository:
     def __init__(self, sumo_service: SumoRepository, tricycle_factory: TricycleFactory,simulation_config: SimulationConfig):
         self.tricycles = dict()
@@ -115,7 +112,7 @@ class TricycleRepository:
         init_passenger_asp = round(passenger.getAspiredPrice() * distance / 1000, 2)
         passenger_asp = init_passenger_asp
 
-        base_price = round(manila_matrix(distance), 2)
+        base_price = round(self.simulationConfig.matrix(distance), 2)
         curr_offer = base_price
 
         driver_sentinel = 0
