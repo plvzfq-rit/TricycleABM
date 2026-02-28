@@ -10,6 +10,11 @@ from utils.ParkingAreaParser import parseParkingAreaFile
 from datetime import datetime
 import argparse
 import traci
+import random
+import numpy as np
+
+random.seed(42)
+np.random.seed(42)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--base_price", type=int, default=16)
