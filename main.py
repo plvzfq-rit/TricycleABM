@@ -21,7 +21,7 @@ parser.add_argument("--base_price", type=int, default=16)
 parser.add_argument("--base_distance", type=int, default=1000)
 parser.add_argument("--added_price", type=int, default=5)
 parser.add_argument("--added_distance", type=int, default=500)
-parser.add_argument("--gas_price", default="default")
+parser.add_argument("--gas_price", default="DEFAULT")
 
 args = parser.parse_args()
 
