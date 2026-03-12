@@ -1,16 +1,26 @@
+"""Module for managing TODA queue management in the simulation.
+
+Provides the TodaRepository class which maintains queues of tricycles
+automatically assigned to each TODA hub.
+"""
+
 import traci
 from collections import deque
 from utils.TraciUtils import getListOfHubIds
 
-class TodaRepository:
-    """Repository for managing TODA queues in the simulation.
 
-    Attributes:
-        queues: A dictionary mapping TODA IDs to deques of tricycle IDs 
-            currently in the TODA.
+class TodaRepository:
+    """Manager for TODA queues and tricycle dispatch ordering.
+    
+    Maintains FIFO queues for each TODA hub for realistic dispatch.
+    Also updates queue from current SUMO network data.
+
+    :ivar queues: Dictionary mapping TODA hub IDs to deques of tricycle IDs.
     """
-    def __init__(self):
-        """Initializes the TODA repository and sets up queues for each TODA."""
+    
+    def __init__(self) -> None:
+        """Initialize by creating empty queues for all TODA hubs.
+        """
         todainmap = sorted(getListOfHubIds())
         self.queues = {toda: deque() for toda in todainmap}
 
@@ -35,26 +45,32 @@ class TodaRepository:
         """Get all TODA queues."""
         return self.queues
 
-    def canTodaDispatch(self, queue) -> bool:
-        """Check if TODA has any tricycles to dispatch.
+    def canTodaDispatch(self, queue: str) -> bool:
+        """Check if a TODA hub is not empty.
         
-        Args:
-            queue: TODA ID whose queue is to be checked.
+        :param queue: TODA hub to check.
+        :type queue: str
+        :return: True if the queue has at least one tricycle, False otherwise.
+        :rtype: bool
         """
         return len(self.queues[queue]) > 0
 
-    def peekToda(self, queue) -> str:
-        """Look at first tricycle in queue without removing it.
-
-        Args:
-            queue: TODA ID whose queue is to be peeked.
+    def peekToda(self, queue: str) -> str:
+        """Get the first tricycle in a TODA queue.
+        
+        :param queue: TODA hub to query.
+        :type queue: str
+        :return: ID of tricycle in front of queue.
+        :rtype: str
         """
         return self.queues[queue][0]
 
-    def dequeToda(self, queue) -> str:
-        """Remove and return first tricycle in queue.
-
-        Args:
-            queue: TODA ID whose queue is to be dequeued.
+    def dequeToda(self, queue: str) -> str:
+        """Remove and return the first tricycle from a TODA queue, for dispatch
+        
+        :param queue: TODA hub to dequeue from.
+        :type queue: str
+        :return: ID of tricycle removed from the queue.
+        :rtype: str
         """
         return self.queues[queue].popleft()

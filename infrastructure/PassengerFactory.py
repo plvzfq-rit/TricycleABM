@@ -1,3 +1,10 @@
+"""Creates passenger instances with random characteristics.
+
+Provides the PassengerFactory class which generates Passenger objects
+with random destinations, willingness-to-pay, and patience based on
+probabilistic configuration values.
+"""
+
 import random
 
 from config.SimulationConfig import SimulationConfig
@@ -7,24 +14,30 @@ from .SumoRepository import SumoRepository
 from domain.Passenger import Passenger
 from domain.Location import Location, getManhattanDistance
 
+
 class PassengerFactory:
-    """Generates Passenger objects with a random destination in the
-    simulation.
-
-    Attributes:
-        networkPedestrianEdges: list of pedestrian edges in the network.
-        wtpDistribution: distribution function for willingness to pay.
-        todaPositions: dictionary of Toda hub positions.
-        index: integer index for unique passenger naming.
+    """Generates passenger objects with random attributes.
+    
+    Generates passengers with random destinations, willingness-to-pay,
+    patience levels, and aspired prices based on set probability distributions.
+    
+    :ivar networkPedestrianEdges: List of pedestrian edges in the network.
+    :ivar wtpDistribution: Distribution function for willingness-to-pay.
+    :ivar todaPositions: Dictionary of TODA hub positions.
+    :ivar patienceDistribution: Distribution for passenger patience.
+    :ivar aspiredPriceDistribution: Distribution for aspired prices.
+    :ivar sumoRepository: Reference to SUMO network data.
+    :ivar index: Counter for unique passenger naming.
     """
+    
     def __init__(self, sumo_repository: SumoRepository, simulation_config: SimulationConfig) -> None:
-        """Initializes object with elements from SumoRepository and SimulationConfig.
-
-        Args:
-            sumo_repository: SumoRepository object to extract network edges.
-            simulation_config: SimulationConfig object to extract WTP and Toda positions.
+        """Initialize factory with data from config and SUMORepository.
+        
+        :param sumo_repository: SumoRepository object for network queries.
+        :type sumo_repository: SumoRepository
+        :param simulation_config: SimulationConfig object with distributions.
+        :type simulation_config: SimulationConfig
         """
-
         # Extract necessary data from SumoRepository and SimulationConfig
         self.networkPedestrianEdges = sumo_repository.getNetworkPedestrianEdges()
         self.wtpDistribution = simulation_config.getWTPDistribution()
@@ -36,16 +49,17 @@ class PassengerFactory:
         # Initialize passenger index for unique naming
         self.index = 0
 
-    def createRandomPassenger(self, starting_edge: str) -> tuple[str, Passenger]:
-        """Creates a Passenger object with a random destination edge.
+    def createRandomPassenger(self, starting_edge: str) -> Passenger:
+        """Create a passenger with a random destination and preferences.
+        
+        Generates a Passenger with a randomly selected destination edge, 
+        willingness-to-pay based on distance, and patience.
 
-        Args:
-            starting_edge: the edge ID where the passenger starts.
-
-        Returns:
-            A Passenger object with a random destination edge.
+        :param starting_edge: Edge ID where the passenger originates.
+        :type starting_edge: str
+        :return: Passenger object with random destination and preferences.
+        :rtype: Passenger
         """
-
         # select a random destination edge different from starting edge
         destination_edge = random.choice(self.networkPedestrianEdges)
         while destination_edge == starting_edge:
