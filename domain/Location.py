@@ -1,39 +1,47 @@
+"""Module for representing and manipulating locations within the SUMO application.
+
+This module provides the Location class which represents a specific position
+within the SUMO application, which is identified by an edge ID, position along
+the edge, and lane index. It also includes utility functions for calculating 
+distances and converting between coordinate systems.
+"""
+
 import traci
 import difflib
-class Location:
-    """A location identified by a position in a lane of a Sumo edge.
 
-    Attributes:
-        INVALID_POSITION_VALUE: constant representing an invalid value for 
-            position.
-        edge: the ID of a Sumo edge.
-        position: the position along the Sumo edge.
-        lane: ID of the lane in a particular edge
+
+class Location:
+    """A location identified by a position in a lane of a SUMO edge.
+    
+    :ivar INVALID_POSITION_VALUE: Constant representing an invalid position value.
+    :ivar edge: The ID of a SUMO edge.
+    :ivar position: The position along the SUMO edge in meters.
+    :ivar lane: The ID of the lane in the particular edge.
     """
     INVALID_POSITION_VALUE = -1073741824.0
 
     def __init__(self, edge: str, position: float, lane: int) -> None:
-        """Initializes an instance given a edge, position, and lane.
+        """Initialize a location with edge, position, and lane.
         
-        Args:
-            edge: the ID of a Sumo edge.
-            position: the position along the Sumo edge.
-            lane: ID of the lane in a particular edge
+        :param edge: The ID of a SUMO edge.
+        :type edge: str
+        :param position: The position along the SUMO edge in meters.
+        :type position: float
+        :param lane: The ID of the lane in the particular edge.
+        :type lane: int
         """
         self.edge = edge
         self.position = position
         self.lane = lane
 
     def __eq__(self, value: any) -> bool:
-        """Detects equality between this instance and another object.
+        """Check equality between this location and another object.
         
-        Args:
-            value: any object
-            
-        Returns:
-            True, if the objects are equal. False, otherwise.
+        :param value: Any object to compare for equality.
+        :type value: any
+        :return: True if both objects are Location instances with identical attributes, False otherwise.
+        :rtype: bool
         """
-
         # check for same type
         if type(self) != type(value):
             return False
@@ -44,43 +52,41 @@ class Location:
             self.lane == self.lane
     
     def getEdge(self) -> str:
-        """Get the edge of the location.
+        """Retrieve the edge ID of this location.
         
-        Returns:
-            Edge ID of location.
+        :return: The edge ID, as a string.
+        :rtype: str
         """
         return self.edge
     
     def getPosition(self) -> float:
-        """Get the position of the location.
+        """Retrieve the position of the location along the edge.
         
-        Returns:
-            Position of location.
+        :return: The position in meters as a float.
+        :rtype: float
         """
         return self.position
     
     def getLane(self) -> int:
-        """Get the lane of the location.
+        """Get the lane number of the current location respective of edge.
         
-        Returns:
-            Lane of location.
+        :return: The lane ID as an integer.
+        :rtype: int
         """
         return self.lane
 
     def isNear(self, another_location: 'Location',
                threshold: float = 1.0) -> bool:
-        """Shows if a location object is 'near' to another location object.
+        """Check if this location is near another location within a threshold.
         
-        Args:
-            another_location: another location within the simulation.
-            threshold: amount of tolerance before saying that two locations are
-                near enough.
-
-        Returns:
-            True, if the Euclidean distance is not more than the threshold.
-            False, otherwise.
+        :param another_location: Another Location object within the simulation.
+        :type another_location: Location
+        :param threshold: Distance tolerance in meters. Defaults to 1.0 meter.
+        :type threshold: float
+        :return: True if the Euclidean distance is within the threshold, False otherwise.
+        :rtype: bool
         """
-        # Check if the types of self and value match
+        # Check if the types match
         if type(self) != type(another_location):
             return False
 
@@ -93,48 +99,45 @@ class Location:
     def isInvalid(self) -> bool:
         """Shows if the Location object holds an invalid value.
         
-        Returns:
-            True, if the object is invalid. False, otherwise."""
+        :return: True if the location is invalid, False otherwise.
+        :rtype: bool
+        """
         return self.edge == '' and self.position == self.INVALID_POSITION_VALUE
 
 # Helper functions
 def get2DCoordinates(location: Location) -> tuple:
-    """Gets the 2D coordinates of a location.
+    """Converts a location to 2D Cartesian coordinates.
     
-    Args:
-        location: a location within the simulation.
-        
-    Returns:
-        A tuple with coordinates as related to the Cartesian plane.
+    :param location: A Location instance within the simulation.
+    :type location: Location
+    :return: A tuple (x, y) with Cartesian coordinates, or None if conversion fails.
+    :rtype: tuple or None
     """
-
     def getJunctionIds() -> tuple[str]:
-        """Gets the junction ID's within the simulation.
+        """Gets all junction IDs within the simulation.
         
-        Returns:
-            A list of junction IDs as strings.
+        :return: A tuple of junction ID strings.
+        :rtype: tuple
         """
         return traci.junction.getIDList()
     
     def getJunctionCoordinates(junction_id: str) -> tuple:
-        """Gets the coordinates of the center of a junction, given its ID.
-
-        Args:
-            junction_id: ID of a junction.
+        """Get the coordinates of a junction center given its ID.
         
-        Returns:
-            A tuple containing the Cartesian coordinates of a junction's center.
+        :param junction_id: The ID of a junction. Junction edges start with a 'J'
+        :type junction_id: str
+        :return: A tuple (x, y) containing the Cartesian coordinates.
+        :rtype: tuple
         """
         return traci.junction.getPosition(junction_id) 
     
     def getEdgeCoordinates(location: Location) -> tuple:
-        """Gets the location of a coordinate.
+        """Get the coordinates of an edge location. In SUMO, map edges start with an 'E'.
         
-        Args:
-            location: A location of a (presumed) edge.
-            
-        Returns:
-            The coordinates of an edge location.
+        :param location: A Location instance on a presumed edge.
+        :type location: Location
+        :return: A tuple (x, y) containing the Cartesian coordinates.
+        :rtype: tuple
         """
         edge = location.getEdge()
         position = location.getPosition()
@@ -155,20 +158,18 @@ def get2DCoordinates(location: Location) -> tuple:
         print("Didn't work")
         return None
 
+
 def getManhattanDistance(location: Location, 
                          another_Location: Location) -> float:
-    """Gets the Manhattan distance between two locations within the 
-    simulation (in meters).
+    """Calculate the Manhattan distance between two Location objects.
     
-    Args:
-        location: a location within the simulation.
-        another_location: another location within the simulation.
-        
-    Returns:
-        the Manhattan distance between the two locations. If the location
-        is invalid, 0 is returned.
+    :param location: A location within the simulation.
+    :type location: Location
+    :param another_Location: Another location within the simulation.
+    :type another_Location: Location
+    :return: The Manhattan distance in meters. Returns 0 if either location is invalid.
+    :rtype: float
     """
-
     # Unpacks values
     location_edge = location.getEdge()
     location_position = location.getPosition()
@@ -183,25 +184,24 @@ def getManhattanDistance(location: Location,
                                             another_Location_position, 
                                             is_manhattan_distance)
 
+
 def getEuclideanDistance(location: Location, 
                          another_location: Location) -> float:
-    """Gets the Euclidean distance between two locations within the 
-    simulation (in meters).
+    """Calculate the Euclidean distance between two Location objects.
     
-    Args:
-        location: a location within the simulation.
-        another_location: another location within the simulation.
-        
-    Returns:
-        the Euclidean distance between the two locations. If the location
-        is invalid, 0 is returned.
+    :param location: A location within the simulation.
+    :type location: Location
+    :param another_location: Another location within the simulation.
+    :type another_location: Location
+    :return: The Euclidean distance in meters. Returns 0 if either location is invalid.
+    :rtype: float
     """
-    # Get coordinates for location
+    # Get coordinates for first location
     coordinates_self = get2DCoordinates(location)
     if coordinates_self is None:
         return -1  # Invalid location, can't proceed
 
-    # Get coordinates for value
+    # Get coordinates for second location
     coordinates_value = get2DCoordinates(another_location)
     if coordinates_value is None:
         return -1  # Invalid location, can't proceed
