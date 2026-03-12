@@ -1,3 +1,11 @@
+"""Module for analyzing and visualizing simulation results.
+
+This module provides an exploration dashboard from the output simulation data,
+which saves in the *analysis* folder by default. By default, this dashboard
+shows data by-run and by-scenario, and also runs it through analysis by
+means of statistical metrics and economic indicators.
+"""
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -27,10 +35,14 @@ sns.set_theme(style="whitegrid")
 # Regex to find numbers in the amount column (handles floats, ints)
 AMOUNT_REGEX = re.compile(r"[-+]?\d*\.\d+|\d+")
 
-def extract_amount(amount_str):
-    """
-    Cleans the 'amount' column by extracting the first
-    number found in a string (e.g., from "[310.96]").
+
+def extract_amount(amount_str: str | float | int):
+    """Extract number from a string formatted with brackets or other text.
+    
+    :param amount_str: String, int, or float amount value.
+    :type amount_str: str | float | int
+    :return: Float value of the amount, or pd.NA if extraction fails.
+    :rtype: float
     """
     if isinstance(amount_str, (int, float)):
         return amount_str
@@ -42,9 +54,29 @@ def extract_amount(amount_str):
         return float(match.group(0))
     return pd.NA
 
-def plot_distribution_with_stats(data, x_col, title, xlabel, ylabel="Count", color="skyblue", bins=30):
-    """
-    Plots a distribution using Seaborn and adds a text box with Mean, Median, Mode, and Std Dev.
+
+def plot_distribution_with_stats(data: pd.DataFrame, x_col: str, title: str, 
+                                 xlabel: str, ylabel: str = "Count", 
+                                 color: str = "skyblue", bins: int = 30) -> None:
+    """Plot a distribution histogram.
+    
+    Creates a histogram with KDE overlay and adds a text box showing
+    mean, median, mode, and standard deviation.
+    
+    :param data: DataFrame containing the data.
+    :type data: pd.DataFrame
+    :param x_col: Column name to plot.
+    :type x_col: str
+    :param title: Plot title.
+    :type title: str
+    :param xlabel: Label for x-axis.
+    :type xlabel: str
+    :param ylabel: Label for y-axis. Defaults to "Count".
+    :type ylabel: str
+    :param color: Color for histogram bars. Defaults to "skyblue".
+    :type color: str
+    :param bins: Number of histogram bins. Defaults to 30.
+    :type bins: int
     """
     if data.empty:
         st.write(f"No data to plot for {title}")
@@ -97,8 +129,15 @@ def plot_distribution_with_stats(data, x_col, title, xlabel, ylabel="Count", col
     st.pyplot(fig, use_container_width=True)
 
 
-def ticks_to_time(ticks):
-    """Convert simulation ticks to time format (starting at 06:00)"""
+def ticks_to_time(ticks: int) -> str:
+    """Convert simulation ticks (seconds) to human-readable time format.
+    
+    :param ticks: Number of ticks/seconds.
+    :type ticks: int
+    :return: String in HH:MM:SS format.
+    :rtype: str
+    """
+
     if pd.isna(ticks) or ticks is None:
         return "N/A"
     ticks = int(ticks)
@@ -108,13 +147,23 @@ def ticks_to_time(ticks):
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 def ticks_to_hours(ticks):
-    """Convert ticks to hours (for duration display)"""
+    """Convert ticks to hours (for duration display).
+    
+    :param ticks: Number of ticks/seconds.
+    :return: Duration in hours as a float.
+    :rtype: float
+    """
     if pd.isna(ticks) or ticks is None:
         return 0
     return ticks / 3600
 
 def gini(series):
-    """Compute Gini coefficient from a series of values."""
+    """Compute Gini coefficient from a series of values.
+    
+    :param series: Series of numerical values.
+    :return: Gini coefficient as a float.
+    :rtype: float
+    """
     values = np.asarray(series, dtype=float)
     if values.size == 0:
         return 0.0
@@ -129,7 +178,12 @@ def gini(series):
     return float(g)
 
 def lorenz_curve(data_series):
-    """Compute Lorenz curve coordinates."""
+    """Compute Lorenz curve coordinates.
+    
+    :param data_series: Series of values to compute for.
+    :return: Tuple of (x_coordinates, y_coordinates) for Lorenz curve.
+    :rtype: tuple
+    """
     sorted_series = data_series.sort_values()
     cumulative = sorted_series.cumsum()
     total = sorted_series.sum()
@@ -138,7 +192,12 @@ def lorenz_curve(data_series):
     return lorenz_x, lorenz_y
 
 def classify_driver(row):
-    """Classify driver viability based on income vs expenses."""
+    """Classify driver viability based on income vs expenses.
+    
+    :param row: Data row with income and expense columns.
+    :return: Classification string indicating driver viability.
+    :rtype: str
+    """
     if row['daily_income'] >= row['daily_expenses']:
         return "Covers All Expenses"
     elif row['daily_income'] >= row['gas_expenses']:
@@ -155,7 +214,11 @@ GAS_CONSUMPTION = config.getGasConsumption()
 
 def load_scenario_data(log_directory):
     """Load all simulation data from a scenario directory.
-    Returns (df_all, df_expenses, df_drivers, df_trip_summary_list, sim_count, feature_flags)
+    
+    :param log_directory: Path to the directory containing simulation logs.
+    :type log_directory: str
+    :return: Tuple of (df_all, df_expenses, df_drivers, df_trip_summary_list, sim_count, feature_flags).
+    :rtype: tuple
     """
     all_folders = []
     if os.path.isdir(log_directory):

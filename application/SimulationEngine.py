@@ -1,3 +1,8 @@
+"""Module for the main simulation engine orchestrating ABMS execution.
+
+Bridges custom vehicle and passenger events/flow to SUMO simulation instance.
+"""
+
 import traci
 import random
 import math
@@ -9,8 +14,44 @@ from infrastructure.TricycleStateManager import TricycleStateManager
 from infrastructure.SimulationLogger import SimulationLogger
 from infrastructure.TodaRepository import TodaRepository
 
+
 class SimulationEngine:
-    def __init__(self, toda_hub_descriptor: TodaHubDescriptor, simulation_config: SimulationConfig, tricycle_dispatcher: TricycleDispatcher, tricycle_repository: TricycleRepository, tricycle_state_manager: TricycleStateManager, logger: SimulationLogger, duration: int, first_run: bool = True) -> None:
+    """Control SUMO simulation through the main simulation loop.
+    
+    :ivar tick: Current simulation time in seconds.
+    :ivar tricycleRepository: Repository of all tricycles.
+    :ivar tricycleDispatcher: Dispatcher for assigning passengers to tricycles.
+    :ivar simulationConfig: Simulation configuration parameters.
+    :ivar tricycleStateManager: Manager for tricycle state transitions.
+    :ivar simulationLogger: Logger for recording all trips.
+    :ivar duration: Total simulation duration in seconds.
+    :ivar first_run: Whether this is the first simulation run.
+    :ivar todaRepository: Repository for TODA hub queues.
+    """
+    
+    def __init__(self, toda_hub_descriptor: TodaHubDescriptor, simulation_config: SimulationConfig, 
+                 tricycle_dispatcher: TricycleDispatcher, tricycle_repository: TricycleRepository, 
+                 tricycle_state_manager: TricycleStateManager, logger: SimulationLogger, 
+                 duration: int, first_run: bool = True) -> None:
+        """Initialize the simulation engine.
+        
+        :param toda_hub_descriptor: TODA Information.
+        :type toda_hub_descriptor: TodaHubDescriptor
+        :param simulation_config: Configuration parameters.
+        :type simulation_config: SimulationConfig
+        :param tricycle_dispatcher: Dispatcher for passenger assignments.
+        :type tricycle_dispatcher: TricycleDispatcher
+        :param tricycle_repository: Repository of tricycles.
+        :type tricycle_repository: TricycleRepository
+        :param tricycle_state_manager: Manager for state updates.
+        :type tricycle_state_manager: TricycleStateManager
+        :param logger: Logger for recording data.
+        :type logger: SimulationLogger
+        :param duration: Simulation duration (ticks).
+        :type duration: int
+        :param first_run: Whether this is the first run (creates tricycles).
+        :type first_run: bool
+        """
         self.tick = 0
         self.tricycleRepository = tricycle_repository
         self.tricycleDispatcher = tricycle_dispatcher
@@ -24,6 +65,10 @@ class SimulationEngine:
         self.todaRepository = None
 
     def startTraci(self) -> None:
+        """Initialize and start the SUMO TraCI connection.
+        
+        Loads routes and tricycle configurations, then starts the simulation in the shell.
+        """
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()},{self.simulationConfig.getDecalFilePath()}"
         additionalFiles = f"{self.simulationConfig.getParkingFilePath()}"
         traci.start([
@@ -35,10 +80,15 @@ class SimulationEngine:
         ])
 
     def doMainLoop(self, simulation_duration: int) -> None:
+        """Execute the main simulation loop.
+        
+        :param simulation_duration: Length of simulation (in ticks)
+        :type simulation_duration: int
+        """
         if self.first_run:
             self.startTraci()
         self.todaRepository = TodaRepository()
-        #TODO:
+        # TODO: Add more specific loop logic
         while self.tick < simulation_duration:
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.todaRepository.manageTodaQueues()

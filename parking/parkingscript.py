@@ -1,20 +1,34 @@
+"""Utility script for generating SUMO flow XML from parking demand data.
+
+Reads parking/demand data from demand.csv and generates SUMO-compatible route
+flow definitions based on hourly demand patterns. The csv file uses the current
+routes located in maps/routes.xml, as such running this script overwrites
+the existing traffic flow that is in the SUMO file.
+"""
+
 import pandas as pd
 
 # --------------------------------------------------------
 # 1. Load CSV (no header in first column, so index_col=0)
 # --------------------------------------------------------
-df = pd.read_csv("./parking/Book1.csv", index_col=0)
+df = pd.read_csv("./parking/demand.csv", index_col=0)
 
-# --------------------------------------------------------
-# 2. Convert hour labels to begin/end seconds
-# --------------------------------------------------------
-def hour_to_seconds(hour_index):
+
+def hour_to_seconds(hour_index: int) -> tuple[int, int]:
+    """Convert hour index to simulation time range in seconds.
+    
+    :param hour_index: Hour index (0-23).
+    :type hour_index: int
+    :return: Tuple of (begin_seconds, end_seconds).
+    :rtype: tuple[int, int]
+    """
     begin = hour_index * 60
     end = (hour_index + 1) * 60
     return begin, end
 
+
 # --------------------------------------------------------
-# 3. Generate XML flows
+# 2. Generate XML flows
 #    Each row = road
 #    Each column = hour slot
 # --------------------------------------------------------
@@ -22,7 +36,7 @@ flow_list = []
 
 for road, row in df.iterrows():
     for i, flow in enumerate(row):
-        begin, end = hour_to_seconds(i)   # because your first column is "6–7"
+        begin, end = hour_to_seconds(i)   # because first column is "6–7"
         flow = int(flow)
 
         # Skip zero-flows
@@ -40,14 +54,19 @@ for road, row in df.iterrows():
 # ------------------------------
 flow_list = sorted(flow_list, key=lambda x: x["begin"])
 
-for i in flow_list:
-    print(i['xml'])
-
 # ------------------------------
 # Write XML
 # ------------------------------
-# with open("script/sorted_flows.xml", "w") as f:
-#     for ftag in flow_list:
-#         f.write(ftag["xml"] + "\n")
+file_path = "../maps/routes.xml"
 
-# print("Generated sorted_flows.xml (flows sorted by departure time).")
+with open(file_path, "r") as f:
+    lines = f.readlines()
+
+with open(file_path, "w") as f:
+    f.writelines(lines[:82])
+
+with open(file_path, "a") as f:
+    for ftag in flow_list:
+        f.write(ftag["xml"] + "\n")
+
+print("Generated sorted_flows.xml (flows sorted by departure time).")

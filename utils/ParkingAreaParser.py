@@ -1,22 +1,25 @@
+"""Module for parsing SUMO parking area XML files.
+
+Provides utilities to extract TODA hub information from SUMO parking area
+configuration files and populate TodaHubDescriptor objects.
+"""
+
 import xml.etree.ElementTree as ET
 from domain.TodaHubDescriptor import TodaHubDescriptor
 
+
 def parseParkingAreaFile(parking_file_path: str) -> TodaHubDescriptor:
-    """Parses the parking area XML file in the provided file path.
+    """Parse a SUMO parking area XML file to extract TODA hub information.
     
-    It extracts TODA hub IDs and their corresponding capacities, and
-    consolidates them in a TodaHubDescriptor object. It assumes that parking
-    areas represented by TODA hubs starts with 'hub'; it ignores other types of 
-    parking areas, e.g. 'gas'.
+    Extracts TODA hub IDs and their parking capacities, consolidating them
+    into a TodaHubDescriptor object. Only parking areas with IDs starting 
+    with 'hub' are included; other areas (e.g., 'gas') are ignored.
 
-    Args:
-        parking_file_path: string containing file path to parking XML file.
-
-    Returns:
-        A TodaHubDescriptor object initialized with the values from the parking
-        file object i.e., TODA hub IDs and capacities.
+    :param parking_file_path: Path to the parking area XML file.
+    :type parking_file_path: str
+    :return: TodaHubDescriptor object initialized with hub IDs and capacities from the parking file.
+    :rtype: TodaHubDescriptor
     """
-
     tree = ET.parse(parking_file_path)
     root = tree.getroot()
     toda_hub_descriptor = TodaHubDescriptor()
