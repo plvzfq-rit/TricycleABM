@@ -8,9 +8,7 @@ the existing traffic flow that is in the SUMO file.
 
 import pandas as pd
 
-# --------------------------------------------------------
-# 1. Load CSV (no header in first column, so index_col=0)
-# --------------------------------------------------------
+# Load CSV
 df = pd.read_csv("./parking/demand.csv", index_col=0)
 
 
@@ -27,11 +25,7 @@ def hour_to_seconds(hour_index: int) -> tuple[int, int]:
     return begin, end
 
 
-# --------------------------------------------------------
-# 2. Generate XML flows
-#    Each row = road
-#    Each column = hour slot
-# --------------------------------------------------------
+# Generate XML flows, Each row = road, Each column = hour slot
 flow_list = []
 
 for road, row in df.iterrows():
@@ -49,14 +43,10 @@ for road, row in df.iterrows():
             "xml": f'<flow id="{road}_{begin}" route="{road}" begin="{begin}" end="{end}" vehsPerHour="{int(flow)}"/>'
         })
 
-# ------------------------------
 # Sort by departure time
-# ------------------------------
 flow_list = sorted(flow_list, key=lambda x: x["begin"])
 
-# ------------------------------
 # Write XML
-# ------------------------------
 file_path = "../maps/routes.xml"
 
 with open(file_path, "r") as f:

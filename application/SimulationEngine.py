@@ -88,7 +88,6 @@ class SimulationEngine:
         if self.first_run:
             self.startTraci()
         self.todaRepository = TodaRepository()
-        # TODO: Add more specific loop logic
         while self.tick < simulation_duration:
             self.tricycleStateManager.updateTricycleStates(self.tick)
             self.todaRepository.manageTodaQueues()

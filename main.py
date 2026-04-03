@@ -26,11 +26,6 @@ from utils.ParkingAreaParser import parseParkingAreaFile
 from datetime import datetime
 import argparse
 import traci
-# import random
-# import numpy as np
-
-# random.seed(42)
-# np.random.seed(42)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--base_price", type=int, default=16)
@@ -50,7 +45,6 @@ simulation_config = SimulationConfig(
     added_distance=args.added_distance
 )
 
-# PHASE 2: INITIALIZING SERVICES
 """Initialize Services"""
 network_file_path = simulation_config.getNetworkFilePath()
 parking_file_path = simulation_config.getParkingFilePath()
@@ -65,7 +59,6 @@ run_name = (str(args.base_price) + "_" + str(args.base_distance) + "_" +
 
 startTime = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-# PHASE 3: INITIALIZING TRICYCLE REPOSITORY
 """Initialize infrastructure/TricycleRepository"""
 for run in range(number_of_runs):
     tricycle_factory = TricycleFactory(simulation_config)

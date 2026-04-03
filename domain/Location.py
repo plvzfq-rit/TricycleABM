@@ -42,7 +42,6 @@ class Location:
         :return: True if both objects are Location instances with identical attributes, False otherwise.
         :rtype: bool
         """
-        # check for same type
         if type(self) != type(value):
             return False
         
@@ -86,14 +85,9 @@ class Location:
         :return: True if the Euclidean distance is within the threshold, False otherwise.
         :rtype: bool
         """
-        # Check if the types match
         if type(self) != type(another_location):
             return False
-
-        # Get Euclidean distance
         distance = getEuclideanDistance(self, another_location)
-
-        # Return whether the distance is within the threshold
         return distance <= threshold
     
     def isInvalid(self) -> bool:
@@ -144,7 +138,7 @@ def get2DCoordinates(location: Location) -> tuple:
         return traci.simulation.convert2D(edge, position)
 
     try:
-        # if, the location is a junction...
+        # if the location is a junction...
         if "J" in location.getEdge():
             junctions = list(getJunctionIds())
             closest_junction = difflib.get_close_matches(location.getEdge(), junctions, n=1)[0]
@@ -155,7 +149,6 @@ def get2DCoordinates(location: Location) -> tuple:
     
     # everything fails
     except traci.TraCIException:
-        print("Didn't work")
         return None
 
 
@@ -170,14 +163,12 @@ def getManhattanDistance(location: Location,
     :return: The Manhattan distance in meters. Returns 0 if either location is invalid.
     :rtype: float
     """
-    # Unpacks values
     location_edge = location.getEdge()
     location_position = location.getPosition()
     another_location_edge = another_Location.getEdge()
     another_Location_position = another_Location.getPosition()
     is_manhattan_distance = True
 
-    # Computes Manhattan distance
     return traci.simulation.getDistanceRoad(location_edge, 
                                             location_position, 
                                             another_location_edge, 
