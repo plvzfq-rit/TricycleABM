@@ -81,7 +81,7 @@ After execution, run results are saved in the `analysis/` folder.
 
 Folder format: `<base_price>_<base_distance>_<added_price>_<added_distance>`
  
-Go to analyses then run the analysis dashboard using:
+Go to `/analysis` then run the analysis dashboard using:
 
 ```bash
 streamlit run analysis.py
