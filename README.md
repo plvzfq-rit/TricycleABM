@@ -41,6 +41,7 @@ Install using `pip`:
 - pandas
 - scipy
 - sumolib
+- seaborn
 
 ---
 
@@ -51,7 +52,7 @@ Install using `pip`:
 3. Install required external libraries:
 
 ```bash
-pip install streamlit traci eclipse-sumo numpy pandas scipy sumolib
+pip install streamlit traci eclipse-sumo numpy pandas scipy sumolib seaborn
 ```
 
 ## Usage
