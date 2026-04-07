@@ -4,7 +4,7 @@
 
 ## Overview
 
-This repository contains the command-line traffic simulation program and analysis dashboard used for the study **A Fair Fare? An Agent-Based Model of Tricycle Fare Fairness in Manila**.
+This repository contains the command-line traffic simulation program and analysis dashboard used for the study **A Fair Fare? An Agent-Based Model of Tricycle Fare Sustainability in Manila**.
 
 The application uses the SUMO software by interfacing with Python libraries for operation and analysis. The goal is to create a springboard for analysts, traffic engineers, and policymakers to infer traffic policy changes, particularly on tricycle fare matrices.
 
