@@ -9,7 +9,7 @@ config/SimulationConfig) and a fare matrix:
 *16* for trip distances less than or equal to *1000*m
 *5* increase for each distance increase of *500*m or fraction thereof
 
-Each param can be changed through user args with flags --gas_price,
+Each param can be changed through user args with flags
 --base_price, --base_distance, --added_price, and --added_distance,
 respectively.
 
@@ -32,6 +32,8 @@ parser.add_argument("--base_price", type=int, default=16)
 parser.add_argument("--base_distance", type=int, default=1000)
 parser.add_argument("--added_price", type=int, default=5)
 parser.add_argument("--added_distance", type=int, default=500)
+
+# Deprecated flag
 parser.add_argument("--gas_price", default="DEFAULT")
 
 args = parser.parse_args()

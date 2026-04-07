@@ -28,7 +28,6 @@ FairFare is able to:
 ### Software Prerequisites
 
 - Source Code Repository
-- SUMO 1.26 or above
 - Python 3.13 or above
 
 ### External Python Packages
@@ -37,9 +36,11 @@ Install using `pip`:
 
 - streamlit
 - traci
+- eclipse-sumo
 - numpy
 - pandas
-- altair
+- scipy
+- sumolib
 
 ---
 
@@ -50,7 +51,7 @@ Install using `pip`:
 3. Install required external libraries:
 
 ```bash
-pip install traci numpy pandas altair streamlit
+pip install streamlit traci eclipse-sumo numpy pandas scipy sumolib
 ```
 
 ## Usage
@@ -58,7 +59,7 @@ pip install traci numpy pandas altair streamlit
 To run a simulation scenario, execute the following command in the project directory:
 
 ```bash
-py main.py --base_price <base_price> --base_distance <base_distance> --added_price <added_price> --added_distance <added_distance> --gas_price <gas_price>
+py main.py --base_price <base_price> --base_distance <base_distance> --added_price <added_price> --added_distance <added_distance>
 ```
 
 ### Flags
@@ -69,17 +70,17 @@ py main.py --base_price <base_price> --base_distance <base_distance> --added_pri
 | `--base_distance`  | Integer representing the base distance.                                                                 |
 | `--added_price`    | Integer representing the added price for every distance (or fraction thereof) beyond the base distance. |
 | `--added_distance` | Integer representing the distance interval for each added price beyond the base distance.               |
-| `--gas_price`      | String enum representing the gas price used in the model: `"DEFAULT"`, `"LOW"`, or `"HIGH"`.            |
+<!-- | `--gas_price`      | String enum representing the gas price used in the model: `"DEFAULT"`, `"LOW"`, or `"HIGH"`.            | -->
 
-By default, the system runs 30 simulation runs. This can be modified in: `config/SimulationConfig.py`
+By default, the system runs 30 simulation runs. This can be modified in: `main.py`
 
 ## Post-Usage Analysis
 
 After execution, run results are saved in the `analysis/` folder.
 
 Folder format: `<base_price>_<base_distance>_<added_price>_<added_distance>`
-
-Run the analysis dashboard using:
+ 
+Go to analyses then run the analysis dashboard using:
 
 ```bash
 streamlit run analysis.py
