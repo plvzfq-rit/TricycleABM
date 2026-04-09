@@ -79,11 +79,35 @@ After execution, run results are saved in the `analysis/` folder.
 
 Folder format: `<base_price>_<base_distance>_<added_price>_<added_distance>`
  
-Go to `/analysis` then run the analysis dashboard using:
+The folder would have a number of subfolders, each corresponding to a run done. In each folder, four CSV files are generated: `drivers.csv`, `expenses.csv`, `transactions.csv`, and `trip_summary.csv`. Each has the following fields recommended for study:
 
-```bash
-streamlit run analysis.py
-```
+### drivers.csv
+- `trike_id` - an alphanumeric ID for the tricycle agent
+- `hub_id` - an alphanumeric ID for the hub that the tricycle agent belongs to
+- `start_tick` - integer time tick that the agent is supposed to enter the simulaiton
+- `end_tick` - integer time tick that the agent is supposed to leave the simulaiton
+
+### expenses.csv
+- `trike_id` - an alphanumeric ID for the tricycle agent
+- `expense_type` - the type of expense incurred (note that the gas_expense type is deprecated in favor of applying it during post-simulation analysis)
+- `amount` - float representing the amount incurred
+- `tick` - integer tick of when the expense was incurred
+
+### `transactions.csv
+- `run_id` - the ID number of the run
+- `trike_id` - an alphanumeric ID for the tricycle agent
+- `origin_edge` - ID representing the edge the tricycle is coming from
+- `dest_edge` - ID representing the edge the tricycle is going to
+- `distance` - float representing the distance of the trip in meters
+- `price` - the final price after negotiations
+- `tick` - the tick when the transaction started
+- `driver_asp` - the aspired price of the driver
+- `passenger_asp` - the aspired price of the passenger
+- `base_price` - the base price of the transaction
+- `init_driver_asp` - the initial aspired price of the driver
+- `init_passenger_asp` - the initial aspired price of the passenger
+
+Please note that there are other fields inside the CSV, but those fields have been deprecated in favor of structures more friendly to ACID principles.
 
 ## Making Changes
 
