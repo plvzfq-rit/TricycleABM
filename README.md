@@ -79,7 +79,7 @@ After execution, run results are saved in the `analysis/` folder.
 
 Folder format: `<base_price>_<base_distance>_<added_price>_<added_distance>`
  
-The folder would have a number of subfolders, each corresponding to a run done. In each folder, four CSV files are generated: `drivers.csv`, `expenses.csv`, `transactions.csv`, and `trip_summary.csv`. Each has the following fields recommended for study:
+The folder would have a number of subfolders, each corresponding to a run done. In each folder, four CSV files are generated: `drivers.csv`, `expenses.csv`, `transactions.csv`, and `trip_summary.csv`. The following fields are recommended for study:
 
 ### drivers.csv
 - `trike_id` - an alphanumeric ID for the tricycle agent
@@ -93,7 +93,7 @@ The folder would have a number of subfolders, each corresponding to a run done. 
 - `amount` - float representing the amount incurred
 - `tick` - integer tick of when the expense was incurred
 
-### `transactions.csv
+### transactions.csv
 - `run_id` - the ID number of the run
 - `trike_id` - an alphanumeric ID for the tricycle agent
 - `origin_edge` - ID representing the edge the tricycle is coming from
