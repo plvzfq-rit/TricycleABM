@@ -34,14 +34,12 @@ FairFare is able to:
 
 Install using `pip`:
 
-- streamlit
 - traci
 - eclipse-sumo
 - numpy
 - pandas
 - scipy
 - sumolib
-- seaborn
 
 ---
 
@@ -52,7 +50,7 @@ Install using `pip`:
 3. Install required external libraries:
 
 ```bash
-pip install streamlit traci eclipse-sumo numpy pandas scipy sumolib seaborn
+pip install traci eclipse-sumo numpy pandas scipy sumolib
 ```
 
 ## Usage
